@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Popping Game</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="score-display">
+                <span class="score-label">Score:</span>
+                <span id="score-value">0</span>
+            </div>
+            <div class="controls">
+                <button id="pause-btn" class="control-btn">Pause</button>
+                <div class="speed-controls">
+                    <button id="slow-btn" class="speed-btn">Slow</button>
+                    <button id="normal-btn" class="speed-btn active">Normal</button>
+                    <button id="fast-btn" class="speed-btn">Fast</button>
+                </div>
+                <button id="pictogram-toggle" class="control-btn">Tokyo2020小人: 关</button>
+                <button id="camera-toggle" class="control-btn">摄像头: 关</button>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div class="game-main">
+                <canvas id="game-canvas" width="1024" height="768"></canvas>
+                <div id="hand-cursor" class="hand-cursor"></div>
+                <div id="encouragement-message" class="encouragement-message"></div>
+                <div id="pause-overlay" class="pause-overlay hidden">
+                    <h2>PAUSED</h2>
+                    <p>Click Resume to continue playing</p>
+                </div>
+            </div>
+            
+            <div class="pose-panel">
+                <div class="pose-panel-header">
+                    <h3>Tokyo2020 姿势检测</h3>
+                    <div class="pose-controls">
+                        <button id="pose-mode-toggle" class="pose-btn">小人模式</button>
+                    </div>
+                </div>
+                <div class="pose-display">
+                    <video id="pose-video" class="pose-video" autoplay muted playsinline></video>
+                    <canvas id="pose-canvas" class="pose-canvas"></canvas>
+                </div>
+                <div class="pose-status">
+                    <div class="status-item">
+                        <span>手势状态: </span>
+                        <span id="gesture-status">未检测</span>
+                    </div>
+                    <div class="status-item">
+                        <span>左手: </span>
+                        <span id="left-hand-status">❌</span>
+                    </div>
+                    <div class="status-item">
+                        <span>右手: </span>
+                        <span id="right-hand-status">❌</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="game-footer">
+            <div class="instructions">
+                <p>🎯 移动光标戳泡泡！点击"摄像头"按钮启用手势控制</p>
+                <div class="status-display" style="display: flex; gap: 20px; justify-content: center; margin: 10px 0;">
+                    <div class="status-item">
+                        <span>输入方式: </span>
+                        <span id="input-mode" style="font-weight: bold; color: #2196F3;">鼠标</span>
+                    </div>
+                    <div class="status-item">
+                        <span>泡泡数: </span>
+                        <span id="bubble-count" style="font-weight: bold; color: #4CAF50;">0</span>
+                    </div>
+                </div>
+                <div id="debug-info" class="debug-info" style="font-size: 0.9rem; color: #6C757D; margin-top: 10px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MediaPipe Pose (Tokyo2020 Style) -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils@0.6/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.js" crossorigin="anonymous"></script>
+
+    <script src="js/bubble-manager.js"></script>
+    <script src="js/pose-detector.js"></script>
+    <script src="js/collision-detector.js"></script>
+    <script src="js/hand-tracker.js"></script>
+    <script src="js/game-engine.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

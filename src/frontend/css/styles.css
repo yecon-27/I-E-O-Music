@@ -1,0 +1,446 @@
+/* Autism-friendly color palette and design */
+:root {
+    /* Soft, calming colors */
+    --bg-primary: #F8F9FA;
+    --bg-secondary: #E9ECEF;
+    --text-primary: #2C3E50;
+    --text-secondary: #6C757D;
+    --accent-soft: #B8E6B8;
+    --accent-calm: #B8D4E6;
+    --accent-warm: #E6D4B8;
+    --button-primary: #95C3D8;
+    --button-hover: #7AB3CC;
+    --success-soft: #D4EDDA;
+    --border-light: #DEE2E6;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    overflow: hidden;
+}
+
+.game-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header with score and controls */
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.score-display {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.score-label {
+    margin-right: 10px;
+}
+
+#score-value {
+    color: var(--accent-calm);
+    font-weight: 700;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Button styles with autism-friendly design */
+.control-btn, .speed-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: var(--button-primary);
+    color: var(--text-primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.control-btn:hover, .speed-btn:hover {
+    background-color: var(--button-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.speed-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.speed-btn.active {
+    background-color: var(--accent-soft);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Game area layout - Tokyo2020 Integration */
+.game-area {
+    display: flex;
+    gap: 20px;
+    flex: 1;
+    min-height: 0;
+}
+
+.game-main {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    overflow: visible;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 820px;
+    height: 620px;
+    flex-shrink: 0;
+}
+
+#game-canvas {
+    background: linear-gradient(180deg, #E3F2FD 0%, #F3E5F5 100%);
+    border-radius: 8px;
+    width: 800px;
+    height: 600px;
+    max-width: none;
+    max-height: none;
+}
+
+/* Pose panel styles */
+.pose-panel {
+    width: 320px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.pose-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border-light);
+}
+
+.pose-panel-header h3 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+}
+
+.pose-display {
+    position: relative;
+    width: 100%;
+    height: 240px;
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.pose-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1); /* 视频镜像 - 让用户看到镜像效果 */
+}
+
+.pose-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    /* 不对canvas进行CSS镜像，在代码中处理 */
+}
+
+.pose-status {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pose-btn {
+    padding: 6px 12px;
+    background: var(--button-primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.pose-btn:hover {
+    background: var(--button-hover);
+    transform: translateY(-1px);
+}
+
+.pose-btn.active {
+    background: #FF9800;
+}
+
+/* Hand status indicators */
+#left-hand-status, #right-hand-status {
+    font-weight: bold;
+}
+
+#left-hand-status.active, #right-hand-status.active {
+    color: #4CAF50;
+}
+
+/* Encouragement messages */
+.encouragement-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent-soft);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Pause overlay */
+.pause-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(248, 249, 250, 0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+    border-radius: 12px;
+}
+
+.pause-overlay h2 {
+    font-size: 3rem;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+}
+
+.pause-overlay p {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Footer instructions */
+.game-footer {
+    padding: 15px 20px;
+    text-align: center;
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    margin-top: 20px;
+}
+
+.instructions p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* Status display styles */
+.status-display {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin: 10px 0;
+    flex-wrap: wrap;
+}
+
+.status-item {
+    background: var(--bg-secondary);
+    padding: 8px 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-size: 0.9rem;
+}
+
+.status-item span {
+    color: var(--text-primary);
+}
+
+/* Hand cursor visualization */
+.hand-cursor {
+    position: fixed;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #FF6B6B;
+    border: 3px solid #FFFFFF;
+    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
+    pointer-events: none;
+    z-index: 15;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    transform: translate(-50%, -50%);
+}
+
+.hand-cursor.visible {
+    opacity: 1;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.1);
+        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.6);
+    }
+}
+
+/* Enhanced button styles for new features */
+.control-btn {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.control-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.control-btn:active {
+    transform: translateY(0);
+}
+
+/* Camera and pictogram specific styles */
+#camera-toggle {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+}
+
+#camera-toggle:hover {
+    background: linear-gradient(135deg, #45a049, #3d8b40);
+}
+
+#pictogram-toggle {
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+}
+
+#pictogram-toggle:hover {
+    background: linear-gradient(135deg, #F57C00, #E65100);
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+    .game-area {
+        flex-direction: column;
+    }
+    
+    .pose-panel {
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .pose-display {
+        height: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .game-container {
+        padding: 10px;
+    }
+    
+    .game-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .controls {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+    
+    .status-display {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .status-item {
+        text-align: center;
+    }
+    
+    #game-canvas {
+        width: 100%;
+        height: auto;
+    }
+    
+    .encouragement-message {
+        font-size: 1.5rem;
+    }
+    
+    .pause-overlay h2 {
+        font-size: 2rem;
+    }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+.control-btn:focus {
+    outline: 3px solid var(--accent-calm);
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --text-primary: #000000;
+        --text-secondary: #333333;
+        --bg-primary: #FFFFFF;
+        --bg-secondary: #F0F0F0;
+    }
+}

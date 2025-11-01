@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>摄像头测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        video {
+            width: 100%;
+            max-width: 640px;
+            height: auto;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .debug {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 摄像头测试工具</h1>
+        <p>这个工具可以帮助诊断摄像头访问问题</p>
+        
+        <div id="status" class="status info">
+            点击"启动摄像头"按钮开始测试
+        </div>
+        
+        <div>
+            <button id="startBtn" onclick="startCamera()">启动摄像头</button>
+            <button id="stopBtn" onclick="stopCamera()" disabled>停止摄像头</button>
+            <button id="checkBtn" onclick="checkPermissions()">检查权限</button>
+        </div>
+        
+        <video id="video" autoplay muted playsinline style="display: none;"></video>
+        
+        <div id="debug" class="debug" style="display: none;"></div>
+        
+        <div style="margin-top: 20px;">
+            <h3>常见问题解决方案：</h3>
+            <ul>
+                <li><strong>权限被拒绝：</strong> 点击地址栏左侧的摄像头图标，允许访问</li>
+                <li><strong>HTTPS要求：</strong> 尝试使用 <code>https://localhost:8443</code> 访问</li>
+                <li><strong>浏览器兼容性：</strong> 建议使用Chrome、Firefox或Edge最新版本</li>
+                <li><strong>摄像头被占用：</strong> 关闭其他使用摄像头的应用程序</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let stream = null;
+        const video = document.getElementById('video');
+        const status = document.getElementById('status');
+        const debug = document.getElementById('debug');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+
+        function updateStatus(message, type = 'info') {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            logDebug(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function logDebug(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            debug.textContent += `[${timestamp}] ${message}\n`;
+            debug.style.display = 'block';
+            debug.scrollTop = debug.scrollHeight;
+            console.log(message);
+        }
+
+        async function checkPermissions() {
+            try {
+                logDebug('检查摄像头权限...');
+                
+                // 检查浏览器支持
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    updateStatus('浏览器不支持摄像头访问', 'error');
+                    return;
+                }
+
+                // 检查权限状态
+                if (navigator.permissions) {
+                    const permission = await navigator.permissions.query({ name: 'camera' });
+                    logDebug(`摄像头权限状态: ${permission.state}`);
+                    
+                    switch (permission.state) {
+                        case 'granted':
+                            updateStatus('摄像头权限已授予', 'success');
+                            break;
+                        case 'denied':
+                            updateStatus('摄像头权限被拒绝，请在浏览器设置中允许访问', 'error');
+                            break;
+                        case 'prompt':
+                            updateStatus('需要请求摄像头权限', 'info');
+                            break;
+                    }
+                } else {
+                    logDebug('浏览器不支持权限查询API');
+                }
+
+                // 检查可用设备
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const cameras = devices.filter(device => device.kind === 'videoinput');
+                logDebug(`发现 ${cameras.length} 个摄像头设备`);
+                
+                cameras.forEach((camera, index) => {
+                    logDebug(`摄像头 ${index + 1}: ${camera.label || '未知设备'}`);
+                });
+
+                if (cameras.length === 0) {
+                    updateStatus('未检测到摄像头设备', 'error');
+                } else {
+                    updateStatus(`检测到 ${cameras.length} 个摄像头设备`, 'success');
+                }
+
+            } catch (error) {
+                logDebug(`权限检查失败: ${error.message}`);
+                updateStatus(`权限检查失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function startCamera() {
+            try {
+                updateStatus('正在启动摄像头...', 'info');
+                startBtn.disabled = true;
+
+                // 请求摄像头访问
+                const constraints = {
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    }
+                };
+
+                logDebug('请求摄像头访问...');
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                // 设置视频流
+                video.srcObject = stream;
+                video.style.display = 'block';
+                
+                // 等待视频加载
+                await new Promise((resolve) => {
+                    video.onloadedmetadata = resolve;
+                });
+
+                updateStatus('摄像头启动成功！', 'success');
+                startBtn.disabled = false;
+                stopBtn.disabled = false;
+
+                // 显示视频信息
+                const track = stream.getVideoTracks()[0];
+                const settings = track.getSettings();
+                logDebug(`视频分辨率: ${settings.width}x${settings.height}`);
+                logDebug(`设备标签: ${track.label}`);
+
+            } catch (error) {
+                logDebug(`摄像头启动失败: ${error.name} - ${error.message}`);
+                
+                let errorMessage = '摄像头启动失败: ';
+                switch (error.name) {
+                    case 'NotAllowedError':
+                        errorMessage += '权限被拒绝，请允许摄像头访问';
+                        break;
+                    case 'NotFoundError':
+                        errorMessage += '未找到摄像头设备';
+                        break;
+                    case 'NotReadableError':
+                        errorMessage += '摄像头被其他应用占用';
+                        break;
+                    case 'OverconstrainedError':
+                        errorMessage += '摄像头不支持请求的配置';
+                        break;
+                    case 'SecurityError':
+                        errorMessage += '安全限制，请使用HTTPS访问';
+                        break;
+                    default:
+                        errorMessage += error.message;
+                }
+                
+                updateStatus(errorMessage, 'error');
+                startBtn.disabled = false;
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                logDebug('停止摄像头...');
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+                video.srcObject = null;
+                video.style.display = 'none';
+                updateStatus('摄像头已停止', 'info');
+                stopBtn.disabled = true;
+            }
+        }
+
+        // 页面加载时自动检查权限
+        window.addEventListener('load', () => {
+            logDebug('页面加载完成，开始检查摄像头支持...');
+            checkPermissions();
+        });
+
+        // 页面卸载时清理资源
+        window.addEventListener('beforeunload', () => {
+            stopCamera();
+        });
+    </script>
+</body>
+</html>

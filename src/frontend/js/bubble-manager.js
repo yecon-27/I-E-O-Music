@@ -1,0 +1,334 @@
+/**
+ * Bubble Manager - Handles bubble creation, movement, and lifecycle management
+ * Implements autism-friendly design with calming colors and smooth animations
+ */
+class BubbleManager {
+    constructor(canvasWidth, canvasHeight) {
+        this.canvasWidth = canvasWidth;
+        this.canvasHeight = canvasHeight;
+        
+        // Bubble collection
+        this.bubbles = [];
+        this.nextBubbleId = 0;
+        
+        // Timing for spawning
+        this.lastSpawnTime = 0;
+        this.baseSpawnInterval = 1500; // 1.5 seconds between spawns (matches requirement)
+        
+        // Bubble configuration (matches design document specifications)
+        this.config = {
+            minRadius: 30,
+            maxRadius: 60,
+            baseSpeed: 2, // pixels per frame at 60fps (consistent upward movement)
+            spawnMargin: 50 // margin from screen edges for spawning
+        };
+        
+        // Autism-friendly color palette (soft, calming colors)
+        this.colors = [
+            '#FFE5E5', // Soft pink
+            '#E5F3FF', // Soft blue
+            '#E5FFE5', // Soft green
+            '#FFF5E5', // Soft yellow
+            '#F0E5FF', // Soft purple
+            '#B8E6B8', // Calming green
+            '#B8D4E6', // Calming blue
+            '#E6D4B8', // Warm beige
+            '#E6B8D4', // Soft rose
+            '#D4E6B8'  // Light lime
+        ];
+    }
+    
+    /**
+     * Update all bubbles - movement, lifecycle, and spawning
+     */
+    update(deltaTime, gameSpeed = 1.0) {
+        const currentTime = performance.now();
+        
+        // Spawn new bubbles based on timing
+        this.handleBubbleSpawning(currentTime, gameSpeed);
+        
+        // Update existing bubbles
+        this.updateBubblePositions(deltaTime, gameSpeed);
+        
+        // Remove bubbles that have left the screen
+        this.removeOffscreenBubbles();
+    }
+    
+    /**
+     * Handle spawning of new bubbles
+     */
+    handleBubbleSpawning(currentTime, gameSpeed) {
+        // Adjust spawn rate based on game speed
+        const adjustedSpawnInterval = this.baseSpawnInterval / gameSpeed;
+        
+        if (currentTime - this.lastSpawnTime >= adjustedSpawnInterval) {
+            this.spawnBubble();
+            this.lastSpawnTime = currentTime;
+        }
+    }
+    
+    /**
+     * Create a new bubble at the bottom of the screen
+     */
+    spawnBubble() {
+        // Random position along the bottom, with margins
+        const x = this.config.spawnMargin + 
+                 Math.random() * (this.canvasWidth - 2 * this.config.spawnMargin);
+        
+        // Start just below the screen
+        const y = this.canvasHeight + 50;
+        
+        // Random size within configured range
+        const radius = this.config.minRadius + 
+                      Math.random() * (this.config.maxRadius - this.config.minRadius);
+        
+        // Random color from autism-friendly palette
+        const color = this.colors[Math.floor(Math.random() * this.colors.length)];
+        
+        // Random speed variation (±20% of base speed)
+        const speedVariation = 0.8 + Math.random() * 0.4;
+        const speed = this.config.baseSpeed * speedVariation;
+        
+        // Create bubble object
+        const bubble = {
+            id: this.nextBubbleId++,
+            x: x,
+            y: y,
+            radius: radius,
+            color: color,
+            speed: speed,
+            isPopping: false,
+            popAnimation: null,
+            // Add subtle floating motion for natural appearance
+            floatOffset: Math.random() * Math.PI * 2, // Random phase for floating
+            floatAmplitude: 1 + Math.random() * 2 // Small horizontal drift
+        };
+        
+        this.bubbles.push(bubble);
+        
+        // Debug logging (can be removed in production)
+        console.log(`Spawned bubble ${bubble.id} at (${Math.round(x)}, ${Math.round(y)}) with color ${color}, radius ${Math.round(radius)}`);
+    }
+    
+    /**
+     * Update positions of all bubbles
+     */
+    updateBubblePositions(deltaTime, gameSpeed) {
+        const time = performance.now() * 0.001; // Convert to seconds for smooth animation
+        
+        this.bubbles.forEach(bubble => {
+            if (!bubble.isPopping) {
+                // Move bubble upward at consistent speed
+                // gameSpeed: 0.5 = slow (50%), 1.0 = normal (100%), 1.5 = fast (150%)
+                bubble.y -= bubble.speed * gameSpeed;
+                
+                // Add subtle horizontal floating motion for natural appearance
+                const floatX = Math.sin(time * 0.5 + bubble.floatOffset) * bubble.floatAmplitude;
+                bubble.x += floatX * 0.1; // Very subtle horizontal drift
+                
+                // Keep bubbles within horizontal bounds
+                if (bubble.x < bubble.radius) {
+                    bubble.x = bubble.radius;
+                } else if (bubble.x > this.canvasWidth - bubble.radius) {
+                    bubble.x = this.canvasWidth - bubble.radius;
+                }
+            }
+        });
+    }
+    
+    /**
+     * Remove bubbles that have moved off screen
+     */
+    removeOffscreenBubbles() {
+        const initialCount = this.bubbles.length;
+        
+        // Remove bubbles that are above the screen (with some margin)
+        this.bubbles = this.bubbles.filter(bubble => {
+            return bubble.y > -bubble.radius - 50;
+        });
+        
+        const removedCount = initialCount - this.bubbles.length;
+        if (removedCount > 0) {
+            console.log(`Removed ${removedCount} offscreen bubbles`);
+        }
+    }
+    
+    /**
+     * Render all bubbles with smooth animations
+     */
+    render(ctx) {
+        this.bubbles.forEach(bubble => {
+            this.renderBubble(ctx, bubble);
+        });
+    }
+    
+    /**
+     * Render a single bubble with autism-friendly styling
+     */
+    renderBubble(ctx, bubble) {
+        ctx.save();
+        
+        // Create radial gradient for smooth, calming bubble appearance
+        const gradient = ctx.createRadialGradient(
+            bubble.x - bubble.radius * 0.3, // Highlight offset for 3D effect
+            bubble.y - bubble.radius * 0.3,
+            0,
+            bubble.x,
+            bubble.y,
+            bubble.radius
+        );
+        
+        // Soft gradient stops for autism-friendly appearance
+        gradient.addColorStop(0, this.lightenColor(bubble.color, 0.3)); // Bright center
+        gradient.addColorStop(0.7, bubble.color); // Main color
+        gradient.addColorStop(1, this.darkenColor(bubble.color, 0.2)); // Darker edge
+        
+        // Draw main bubble
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Add very subtle border for definition (autism-friendly)
+        ctx.strokeStyle = this.darkenColor(bubble.color, 0.1);
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        // Add shine effect for realistic bubble appearance
+        this.addBubbleShine(ctx, bubble);
+        
+        ctx.restore();
+    }
+    
+    /**
+     * Add shine effect to make bubbles look more realistic
+     */
+    addBubbleShine(ctx, bubble) {
+        // Small highlight circle
+        const shineRadius = bubble.radius * 0.25;
+        const shineX = bubble.x - bubble.radius * 0.25;
+        const shineY = bubble.y - bubble.radius * 0.25;
+        
+        const shineGradient = ctx.createRadialGradient(
+            shineX, shineY, 0,
+            shineX, shineY, shineRadius
+        );
+        
+        shineGradient.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
+        shineGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        
+        ctx.fillStyle = shineGradient;
+        ctx.beginPath();
+        ctx.arc(shineX, shineY, shineRadius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    /**
+     * Get all active bubbles
+     */
+    getBubbles() {
+        return this.bubbles;
+    }
+    
+    /**
+     * Remove a specific bubble by ID
+     */
+    removeBubble(bubbleId) {
+        const initialLength = this.bubbles.length;
+        this.bubbles = this.bubbles.filter(bubble => bubble.id !== bubbleId);
+        
+        if (this.bubbles.length < initialLength) {
+            console.log(`Removed bubble ${bubbleId}`);
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Trigger pop animation for a bubble (will be expanded in later tasks)
+     */
+    popBubble(bubbleId) {
+        const bubble = this.bubbles.find(b => b.id === bubbleId);
+        if (bubble && !bubble.isPopping) {
+            bubble.isPopping = true;
+            bubble.popAnimation = {
+                startTime: performance.now(),
+                duration: 300, // 300ms pop animation
+                initialRadius: bubble.radius,
+                initialOpacity: 1.0
+            };
+            
+            console.log(`Started pop animation for bubble ${bubbleId}`);
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Set spawn rate (bubbles per second)
+     */
+    setSpawnRate(bubblesPerSecond) {
+        this.baseSpawnInterval = 1000 / bubblesPerSecond;
+        console.log(`Spawn rate set to ${bubblesPerSecond} bubbles per second`);
+    }
+    
+    /**
+     * Clear all bubbles
+     */
+    clearAllBubbles() {
+        const count = this.bubbles.length;
+        this.bubbles = [];
+        console.log(`Cleared ${count} bubbles`);
+    }
+    
+    /**
+     * Get bubble count
+     */
+    getBubbleCount() {
+        return this.bubbles.length;
+    }
+    
+    /**
+     * Utility function to lighten a color
+     */
+    lightenColor(color, amount) {
+        // Convert hex to RGB, lighten, and convert back
+        const hex = color.replace('#', '');
+        const r = Math.min(255, parseInt(hex.substr(0, 2), 16) + Math.round(255 * amount));
+        const g = Math.min(255, parseInt(hex.substr(2, 2), 16) + Math.round(255 * amount));
+        const b = Math.min(255, parseInt(hex.substr(4, 2), 16) + Math.round(255 * amount));
+        
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+    
+    /**
+     * Utility function to darken a color
+     */
+    darkenColor(color, amount) {
+        // Convert hex to RGB, darken, and convert back
+        const hex = color.replace('#', '');
+        const r = Math.max(0, parseInt(hex.substr(0, 2), 16) - Math.round(255 * amount));
+        const g = Math.max(0, parseInt(hex.substr(2, 2), 16) - Math.round(255 * amount));
+        const b = Math.max(0, parseInt(hex.substr(4, 2), 16) - Math.round(255 * amount));
+        
+        return `rgb(${r}, ${g}, ${b})`;
+    }
+    
+    /**
+     * Handle canvas resize
+     */
+    handleResize(newWidth, newHeight) {
+        this.canvasWidth = newWidth;
+        this.canvasHeight = newHeight;
+        
+        // Remove any bubbles that are now outside the new bounds
+        this.bubbles = this.bubbles.filter(bubble => {
+            return bubble.x >= 0 && bubble.x <= newWidth;
+        });
+        
+        console.log(`BubbleManager resized to ${newWidth}x${newHeight}`);
+    }
+}
+
+// Export for use in other modules
+window.BubbleManager = BubbleManager;
