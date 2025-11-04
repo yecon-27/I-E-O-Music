@@ -24,7 +24,21 @@ class GameEngine {
         this.soundManager = null;
         this.scoreManager = null;
         this.animationManager = null;
-        
+
+        // --- Round (一局) 采集状态 ---
+        this.roundActive = false;
+        this.roundStart = 0;
+        this.roundNotes = [];     // 仅存本局的命中事件（相对时间）
+        this.roundTimer = null;
+        this.onRoundEnd = null;   // 结束回调（供步骤C用）
+        window.Sessions ??= [];   // 所有历史局的归档
+
+        // 为暂停倒计时新增的字段
+        this.roundDurationMs = 0;   // 本局总时长（毫秒）
+        this.roundEndAt = 0;        // 计划结束的绝对时间戳
+        this.roundRemainingMs = null; // 暂停时的剩余毫秒
+        this.roundPausedAt = 0;     // 进入暂停的时间戳
+                
         // Canvas setup
         this.setupCanvas();
         
@@ -56,64 +70,72 @@ class GameEngine {
      */
     async init() {
         console.log('Initializing Game Engine...');
-        
-        // Initialize bubble manager
+      
+        // 1) Bubble + Collision
         this.bubbleManager = new BubbleManager(this.canvas.width, this.canvas.height);
-        console.log('BubbleManager initialized');
-        
-        // Clear canvas with initial background
-        this.clearCanvas();
-        this.drawBackground();
-        
-        // Draw initial message
-        this.drawCenteredMessage('Game Ready!', '#95C3D8');
-        
-        // Add: score and handPositions
-        this.score = 0;
-        this.handPositions = {
-            leftHand: { x: 0, y: 0, visible: false },
-            rightHand: { x: 0, y: 0, visible: false }
-        };
+        // —— 在 init() 里 —-
+        // 让 PopSynth 可用（如未创建则创建一次）
+        window.popSynth ??= new PopSynth();
 
-        // Collision + Hand tracking setup
+        // 解锁 AudioContext（一次用户手势即可，兜底）
+        const unlockAudio = () => window.popSynth?.resume?.();
+        window.addEventListener('pointerdown', unlockAudio, { once: true });
+
+        // GameEngine.init() 里
+        this.bubbleManager.setOnPop((b) => {
+            if (!b?.note) return;
+        
+            // 声音
+            window.popSynth?.resume?.();
+            window.popSynth?.play?.(b.note.freq);
+        
+            // ✅ 只记录到“本局”的 notes
+            if (this.roundActive) {
+            this.roundNotes.push({
+                dt: performance.now() - this.roundStart,
+                id: b.id,
+                midi: b.note.midi,
+                freq: b.note.freq,
+                name: b.note.name,
+            });
+            }
+        
+            // 可选 UI 提示
+            window.gameApp?.showEncouragementMessage?.(`♪ ${b.note.name}`, 600);
+        });
         this.collisionDetector = new CollisionDetector();
         this.collisionDetector.addCollisionCallback(this.handleBubblePop.bind(this));
-
+      
+        // 背景/文案/分数
+        this.clearCanvas();
+        this.drawBackground();
+        this.drawCenteredMessage('Game Ready!', '#95C3D8');
+        this.score = 0;
+        this.handPositions = {
+          leftHand:  { x: 0, y: 0, visible: false },
+          rightHand: { x: 0, y: 0, visible: false }
+        };
+      
+        // 2) HandTracker（先 new 再绑回调）
         this.handTracker = new HandTracker();
         this.handTracker.onPositionUpdate = (pos) => {
-            this.handPositions.rightHand = { x: pos.x, y: pos.y, visible: true };
+          this.handPositions.rightHand = { x: pos.x, y: pos.y, visible: true };
         };
-        this.handTracker.onHandDetected = () => {
-            this.handPositions.rightHand.visible = true;
-        };
-        this.handTracker.onHandLost = () => {
-            this.handPositions.rightHand.visible = false;
-        };
+        this.handTracker.onHandDetected = () => { this.handPositions.rightHand.visible = true; };
+        this.handTracker.onHandLost     = () => { this.handPositions.rightHand.visible = false; };
         this.handTracker.initialize();
-
-        // PoseDetector for gesture control and pictogram overlay
+      
+        // 3) PoseDetector
         this.poseDetector = new PoseDetector(this.canvas.width, this.canvas.height);
-        
-        // 连接pose-detector的手势数据到game-engine
         this.poseDetector.setHandMoveCallback((positions) => {
-            // 更新game-engine的手势位置
-            this.handPositions.leftHand = {
-                x: positions.leftHand.x,
-                y: positions.leftHand.y,
-                visible: positions.leftHand.visible
-            };
-            this.handPositions.rightHand = {
-                x: positions.rightHand.x,
-                y: positions.rightHand.y,
-                visible: positions.rightHand.visible
-            };
+          this.handPositions.leftHand  = { ...positions.leftHand  };
+          this.handPositions.rightHand = { ...positions.rightHand };
         });
-        
         await this.poseDetector.init();
-
+      
         console.log('Game Engine initialized successfully');
         return true;
-    }
+      }
     
     /**
      * Start the game loop
@@ -138,15 +160,33 @@ class GameEngine {
      */
     togglePause() {
         this.isPaused = !this.isPaused;
-        console.log(this.isPaused ? 'Game paused' : 'Game resumed');
-        
-        if (!this.isPaused) {
-            // Reset timing when resuming
-            this.lastFrameTime = performance.now();
+        const now = performance.now();
+      
+        if (!this.roundActive) {
+          // 仅切换暂停状态用于渲染“PAUSED”，不动计时器
+          this.lastFrameTime = now;
+          return this.isPaused;
         }
-        
+      
+        if (this.isPaused) {
+          if (this.roundTimer) {
+            clearTimeout(this.roundTimer);
+            this.roundTimer = null;
+          }
+          this.roundRemainingMs = Math.max(0, this.roundEndAt - now);
+          this.roundPausedAt = now;
+        } else {
+          const pausedMs = now - (this.roundPausedAt || now);
+          this.roundStart += pausedMs;
+          this.roundEndAt = now + (this.roundRemainingMs ?? 0);
+          this.roundTimer = setTimeout(() => this.stopRound({ save: true }),
+                                       this.roundRemainingMs ?? 0);
+          this.roundPausedAt = 0;
+          this.roundRemainingMs = null;
+          this.lastFrameTime = now;
+        }
         return this.isPaused;
-    }
+      }
     
     /**
      * Stop the game
@@ -155,7 +195,9 @@ class GameEngine {
         console.log('Stopping game...');
         this.isRunning = false;
         this.isPaused = false;
-    }
+        // 取消本局倒计时，不入库，防止残留计时器
+        this.stopRound?.({ save: false });
+      }
     
     /**
      * Set game speed (0.5 = slow, 1.0 = normal, 1.5 = fast)
@@ -326,37 +368,116 @@ class GameEngine {
             this.poseDetector.updateCanvasDimensions(this.canvas.width, this.canvas.height);
         }
     }
+        /**
+     * 开始一局采样
+     * @param {number} seconds  本局时长（秒）
+     * @param {{onEnd?: (session) => void, clearHistory?: boolean}} opts
+     */
+    startRound(seconds = 30, opts = {}) {
+        if (this.roundActive) this.stopRound({ save: false });
+
+        this.roundActive = true;
+        this.roundStart = performance.now();
+        this.roundNotes = [];
+        this.onRoundEnd = (typeof opts.onEnd === 'function') ? opts.onEnd : null;
+        if (opts.clearHistory) window.Sessions = [];
+
+        // 记录总时长与计划结束时间
+        this.roundDurationMs = seconds * 1000;
+        this.roundEndAt = this.roundStart + this.roundDurationMs;
+        this.roundRemainingMs = this.roundDurationMs; // 初始剩余=总时长
+        this.roundPausedAt = 0;
+
+        window.gameApp?.showEncouragementMessage?.(`开始采样：${seconds}s`, 1000);
+
+        // 用“剩余毫秒数”启动计时器
+        this.roundTimer = setTimeout(() => this.stopRound({ save: true }),
+                                    this.roundRemainingMs);
+        }
+
+    /**
+     * 结束当前一局
+     * @param {{save?: boolean}} param0
+     */
+    stopRound({ save = true } = {}) {
+        if (!this.roundActive) return;
+      
+        if (this.roundTimer) { clearTimeout(this.roundTimer); this.roundTimer = null; }
+      
+        this.roundActive = false;
+      
+        const endedAt = performance.now();
+        const session = {
+          startedAt: this.roundStart,
+          endedAt,
+          durationSec: (endedAt - this.roundStart) / 1000, // 已自动不含暂停
+          notes: this.roundNotes.slice(),
+          meta: { seed: window.__LEVEL_SEED ?? null, scale: 'pentatonic', gameSpeed: this.gameSpeed }
+        };
+      
+        if (save) window.Sessions.push(session);
+      
+        try { this.onRoundEnd?.(session); } catch(e) { console.warn(e); }
+        window.dispatchEvent(new CustomEvent('round:ended', { detail: session }));
+        window.gameApp?.showEncouragementMessage?.(`采样完成，共 ${session.notes.length} 个音符`, 1200);
+      
+        // 清理
+        this.onRoundEnd = null;
+        this.roundRemainingMs = null;
+        this.roundPausedAt = 0;
+      }
     
+    // ← 建议紧跟在 stopRound() 之后加入
+    getRoundRemainingMs() {
+        if (!this.roundActive) return 0;
+        if (this.isPaused && this.roundRemainingMs != null) return this.roundRemainingMs;
+        return Math.max(0, this.roundEndAt - performance.now());
+    }
+      
+
+    /** 便捷获取最近一局 */
+    getLastSession() {
+    return window.Sessions?.[window.Sessions.length - 1] ?? null;
+    }
+
+    /** 导出最近一局为 JSON（可选） */
+    downloadLastSessionJSON(filename = 'session.json') {
+    const s = this.getLastSession();
+    if (!s) { console.warn('No session'); return; }
+    const blob = new Blob([JSON.stringify(s, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+    }
     /**
      * Handle bubble pop collision
      */
     handleBubblePop(collision) {
-        // Remove the bubble
-        if (this.bubbleManager) {
-            const success = this.bubbleManager.removeBubble(collision.bubble.id);
-            if (success) {
-                // Update score
-                this.score += 10;
-                
-                // Notify UI
-                if (window.gameApp && window.gameApp.updateScoreDisplay) {
-                    window.gameApp.updateScoreDisplay(this.score);
-                }
-                
-                // Show encouragement
-                if (window.gameApp && window.gameApp.showEncouragementMessage) {
-                    const messages = [
-                        'Great job!', 'Nice pop!', 'Awesome!', 
-                        'Keep going!', 'Fantastic!', 'Well done!'
-                    ];
-                    const message = messages[Math.floor(Math.random() * messages.length)];
-                    window.gameApp.showEncouragementMessage(message, 1000);
-                }
-                
-                console.log(`Bubble popped! Score: ${this.score}`);
-            }
-        }
-    }
+        if (!this.bubbleManager) return;
+      
+        // 1) 命中 -> 触发“爆炸”（动画 + onPop → 播放声音 + 记录）
+        const popped = this.bubbleManager.popBubble(collision.bubble.id);
+        if (!popped) return;  // 已在冷却中或正在爆炸，忽略
+      
+        // 2) 计分 & UI
+        this.score += 10;
+        window.gameApp?.updateScoreDisplay?.(this.score);
+      
+        const messages = ['Great job!','Nice pop!','Awesome!','Keep going!','Fantastic!','Well done!'];
+        window.gameApp?.showEncouragementMessage?.(
+          messages[Math.floor(Math.random() * messages.length)],
+          1000
+        );
+      
+        // 3) （可选）在爆炸动画结束后再真正移除气泡
+        //    popAnimation.duration 目前为 300ms，这里给一点余量
+        setTimeout(() => {
+          this.bubbleManager?.removeBubble(collision.bubble.id);
+        }, 320);
+      
+        console.log(`Bubble popped! Score: ${this.score}`);
+      }
     
     /**
      * Setup mouse fallback for testing without camera
@@ -400,20 +521,15 @@ class GameEngine {
     /**
      * Reset game state
      */
+    
     reset() {
+        // 先确保当前局被取消且不入库，避免影响下一局
+        this.stopRound?.({ save: false });
+    
         this.score = 0;
-        if (this.bubbleManager) {
-            this.bubbleManager.clearAllBubbles();
-        }
-        if (this.collisionDetector) {
-            this.collisionDetector.reset();
-        }
-        
-        // Update UI
-        if (window.gameApp && window.gameApp.updateScoreDisplay) {
-            window.gameApp.updateScoreDisplay(this.score);
-        }
-        
+        this.bubbleManager?.clearAllBubbles();
+        this.collisionDetector?.reset();
+        window.gameApp?.updateScoreDisplay?.(this.score);
         console.log('Game reset');
     }
     

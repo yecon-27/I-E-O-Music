@@ -36,6 +36,16 @@ class BubbleManager {
             '#E6B8D4', // Soft rose
             '#D4E6B8'  // Light lime
         ];
+
+        this.noteOptions = {
+            rootMidi: 60,               // C 调
+            scale: 'pentatonic_major',  // 想更柔和可换 'pentatonic_minor'
+            octaves: [0, 1, 2],
+            preferRange: [60, 84]       // C4..C6
+          };
+        
+        // ★ 新增：命中回调占位（外部可订阅）
+        this.onPop = null;
     }
     
     /**
@@ -68,47 +78,67 @@ class BubbleManager {
     }
     
     /**
-     * Create a new bubble at the bottom of the screen
-     */
+    * Create a new bubble at the bottom of the screen
+    */
     spawnBubble() {
-        // Random position along the bottom, with margins
+    // Random position along the bottom, with margins
         const x = this.config.spawnMargin + 
-                 Math.random() * (this.canvasWidth - 2 * this.config.spawnMargin);
-        
-        // Start just below the screen
+                Math.random() * (this.canvasWidth - 2 * this.config.spawnMargin);
+
+    // Start just below the screen
         const y = this.canvasHeight + 50;
-        
-        // Random size within configured range
+
+    // Random size within configured range
         const radius = this.config.minRadius + 
-                      Math.random() * (this.config.maxRadius - this.config.minRadius);
-        
-        // Random color from autism-friendly palette
+                Math.random() * (this.config.maxRadius - this.config.minRadius);
+
+    // Random color from autism-friendly palette
         const color = this.colors[Math.floor(Math.random() * this.colors.length)];
-        
-        // Random speed variation (±20% of base speed)
+
+    // Random speed variation (±20% of base speed)
         const speedVariation = 0.8 + Math.random() * 0.4;
         const speed = this.config.baseSpeed * speedVariation;
-        
-        // Create bubble object
+
+    // Create bubble object
         const bubble = {
             id: this.nextBubbleId++,
-            x: x,
-            y: y,
-            radius: radius,
-            color: color,
-            speed: speed,
+            x, y,
+            radius,
+            color,
+            speed,
             isPopping: false,
             popAnimation: null,
-            // Add subtle floating motion for natural appearance
             floatOffset: Math.random() * Math.PI * 2, // Random phase for floating
-            floatAmplitude: 1 + Math.random() * 2 // Small horizontal drift
-        };
-        
+            floatAmplitude: 1 + Math.random() * 2,    // Small horizontal drift
+
+            // ★ 音符：命中前就决定 —— A 步骤的关键
+            note: null,
+
+            // ★ 命中冷却的时间戳（B 步骤会用）
+            lastHitAt: 0
+    };
+
+        // 绑定“悦耳”的随机音调（五声音阶，可复现随机用 __LEVEL_SEED）
+        const pick = window.AudioNotes && window.AudioNotes.pickNoteForBubble;
+        if (pick) {
+            bubble.note = pick(bubble.id, {
+                ...this.noteOptions,
+                rngSeedBase: window.__LEVEL_SEED || 0
+            });
+        } else {
+            // 兜底：AudioNotes 未加载时用 C4（避免运行时报错）
+            bubble.note = { midi: 60, freq: 261.6256, name: 'C4', rootMidi: 60, scale: 'fallback' };
+            console.warn('[BubbleManager] AudioNotes not found, using fallback note.');
+        }
+
         this.bubbles.push(bubble);
-        
-        // Debug logging (can be removed in production)
-        console.log(`Spawned bubble ${bubble.id} at (${Math.round(x)}, ${Math.round(y)}) with color ${color}, radius ${Math.round(radius)}`);
-    }
+
+        // Debug logging（可删）
+        console.log(
+            `Spawned bubble ${bubble.id} (${Math.round(x)},${Math.round(y)}) ` +
+            `r=${Math.round(radius)} color=${color} note=${bubble.note.name}`
+        );
+}
     
     /**
      * Update positions of all bubbles
@@ -229,6 +259,14 @@ class BubbleManager {
     getBubbles() {
         return this.bubbles;
     }
+
+    /**
+     * Register a callback to be invoked when a bubble is popped.
+     * @param {(bubble: object) => void} cb
+     */
+    setOnPop(cb) {
+        this.onPop = (typeof cb === 'function') ? cb : null;
+    }
     
     /**
      * Remove a specific bubble by ID
@@ -250,6 +288,11 @@ class BubbleManager {
     popBubble(bubbleId) {
         const bubble = this.bubbles.find(b => b.id === bubbleId);
         if (bubble && !bubble.isPopping) {
+            // 可选：命中冷却，避免同一帧/抖动重复触发
+            const now = performance.now();
+            if (bubble.lastHitAt && (now - bubble.lastHitAt) < 120) return false;
+            bubble.lastHitAt = now;
+
             bubble.isPopping = true;
             bubble.popAnimation = {
                 startTime: performance.now(),
@@ -257,6 +300,12 @@ class BubbleManager {
                 initialRadius: bubble.radius,
                 initialOpacity: 1.0
             };
+
+            // ★ 触发命中回调（下一步 B 会在这里播放音调 + 记录）
+        if (this.onPop) {
+            try { this.onPop(bubble); }
+            catch (e) { console.warn('[BubbleManager] onPop callback error:', e); }
+        }
             
             console.log(`Started pop animation for bubble ${bubbleId}`);
             return true;

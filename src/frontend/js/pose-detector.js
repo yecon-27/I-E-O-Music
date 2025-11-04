@@ -54,96 +54,24 @@ class PoseDetector {
    */
   async init() {
     try {
-      console.log("Initializing MediaPipe pose detection...");
-
-      // Check if MediaPipe is available
-      if (typeof window.Pose === "undefined") {
-        console.log("MediaPipe not found, loading from CDN...");
-        await this.loadMediaPipeScripts();
+      console.log('Initializing MediaPipe pose detection...');
+      if (!(window.Pose && window.Camera && window.drawConnectors)) {
+        throw new Error('MediaPipe scripts not loaded. Check index.html local paths.');
       }
-
-      // Create video element for camera feed
       await this.setupCamera();
-
-      // Initialize MediaPipe Pose
       await this.initializeMediaPipe();
-
-      // Create pose visualization overlay
       this.createPoseOverlay();
-
-      // Start pose detection
       await this.startPoseDetection();
-
       this.isInitialized = true;
-      console.log("MediaPipe pose detection initialized successfully");
-      console.log(
-        "Move your hands in front of the camera to control the game!"
-      );
-
+      console.log('MediaPipe pose detection initialized successfully');
+      console.log('Move your hands in front of the camera to control the game!');
       return true;
-    } catch (error) {
-      console.error("Failed to initialize MediaPipe pose detection:", error);
-      console.log("Falling back to mouse control...");
+    } catch (err) {
+      console.error('Failed to initialize MediaPipe pose detection:', err);
+      console.log('Falling back to mouse control...');
       this.setupMouseFallback();
       return true;
     }
-  }
-
-  /**
-   * Load MediaPipe scripts from CDN
-   */
-  async loadMediaPipeScripts() {
-    return new Promise((resolve, reject) => {
-      // Load MediaPipe Pose
-      const script1 = document.createElement("script");
-      script1.src =
-        "https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js";
-      script1.crossOrigin = "anonymous";
-
-      const script2 = document.createElement("script");
-      script2.src =
-        "https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js";
-      script2.crossOrigin = "anonymous";
-
-      const script3 = document.createElement("script");
-      script3.src =
-        "https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js";
-      script3.crossOrigin = "anonymous";
-
-      const script4 = document.createElement("script");
-      script4.src = "https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js";
-      script4.crossOrigin = "anonymous";
-
-      let loadedCount = 0;
-      const totalScripts = 4;
-
-      const onLoad = () => {
-        loadedCount++;
-        if (loadedCount === totalScripts) {
-          console.log("MediaPipe scripts loaded successfully");
-          resolve();
-        }
-      };
-
-      const onError = (error) => {
-        console.error("Failed to load MediaPipe script:", error);
-        reject(error);
-      };
-
-      script1.onload = onLoad;
-      script1.onerror = onError;
-      script2.onload = onLoad;
-      script2.onerror = onError;
-      script3.onload = onLoad;
-      script3.onerror = onError;
-      script4.onload = onLoad;
-      script4.onerror = onError;
-
-      document.head.appendChild(script1);
-      document.head.appendChild(script2);
-      document.head.appendChild(script3);
-      document.head.appendChild(script4);
-    });
   }
 
   /**
@@ -197,9 +125,7 @@ class PoseDetector {
 
     // Create Pose instance
     this.pose = new window.Pose({
-      locateFile: (file) => {
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
-      },
+      locateFile: (file) => `vendor/mediapipe/pose/${file}`  // ✅ 本地
     });
 
     // Configure pose detection
