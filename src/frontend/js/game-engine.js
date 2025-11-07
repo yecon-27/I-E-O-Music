@@ -100,8 +100,9 @@ class GameEngine {
             });
             }
         
-            // 可选 UI 提示
-            window.gameApp?.showEncouragementMessage?.(`♪ ${b.note.name}`, 600);
+            // 移除音符提示，避免与成就系统冲突
+            
+            // 记录已移至 handleBubblePop 中，避免重复记录
         });
         this.collisionDetector = new CollisionDetector();
         this.collisionDetector.addCollisionCallback(this.handleBubblePop.bind(this));
@@ -109,7 +110,7 @@ class GameEngine {
         // 背景/文案/分数
         this.clearCanvas();
         this.drawBackground();
-        this.drawCenteredMessage('Game Ready!', '#95C3D8');
+        this.drawCenteredMessage('游戏准备就绪！', '#95C3D8');
         this.score = 0;
         this.handPositions = {
           leftHand:  { x: 0, y: 0, visible: false },
@@ -130,9 +131,17 @@ class GameEngine {
         this.poseDetector.setHandMoveCallback((positions) => {
           this.handPositions.leftHand  = { ...positions.leftHand  };
           this.handPositions.rightHand = { ...positions.rightHand };
+          
+          // 检测快速移动作为尝试戳泡泡的动作
+          this.detectPopAttempts(positions);
         });
         await this.poseDetector.init();
       
+        // 通知感官设置系统音频已就绪
+        if (window.autismFeatures && typeof window.autismFeatures.onAudioSystemReady === 'function') {
+            window.autismFeatures.onAudioSystemReady();
+        }
+        
         console.log('Game Engine initialized successfully');
         return true;
       }
@@ -280,7 +289,7 @@ class GameEngine {
         
         // Draw debug info if needed
         if (this.isPaused) {
-            this.drawCenteredMessage('PAUSED', '#6C757D');
+            this.drawCenteredMessage('已暂停', '#6C757D');
         }
     }
     
@@ -349,6 +358,95 @@ class GameEngine {
         return this.bubbleManager;
     }
     
+    /**
+     * 检测戳泡泡尝试
+     */
+    detectPopAttempts(positions) {
+        // 记录上一次的位置用于计算速度
+        if (!this.lastHandPositions) {
+            this.lastHandPositions = {
+                leftHand: { x: 0, y: 0, timestamp: Date.now() },
+                rightHand: { x: 0, y: 0, timestamp: Date.now() }
+            };
+        }
+        
+        const now = Date.now();
+        const speedThreshold = 150; // 像素/秒，超过这个速度认为是尝试戳泡泡
+        
+        // 检查左手
+        if (positions.leftHand.visible) {
+            const deltaTime = (now - this.lastHandPositions.leftHand.timestamp) / 1000;
+            if (deltaTime > 0) {
+                const dx = positions.leftHand.x - this.lastHandPositions.leftHand.x;
+                const dy = positions.leftHand.y - this.lastHandPositions.leftHand.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const speed = distance / deltaTime;
+                
+                if (speed > speedThreshold) {
+                    // 记录尝试（如果没有碰撞，就是失败的尝试）
+                    this.recordAttempt(positions.leftHand.x, positions.leftHand.y);
+                }
+            }
+            this.lastHandPositions.leftHand = {
+                x: positions.leftHand.x,
+                y: positions.leftHand.y,
+                timestamp: now
+            };
+        }
+        
+        // 检查右手
+        if (positions.rightHand.visible) {
+            const deltaTime = (now - this.lastHandPositions.rightHand.timestamp) / 1000;
+            if (deltaTime > 0) {
+                const dx = positions.rightHand.x - this.lastHandPositions.rightHand.x;
+                const dy = positions.rightHand.y - this.lastHandPositions.rightHand.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const speed = distance / deltaTime;
+                
+                if (speed > speedThreshold) {
+                    // 记录尝试（如果没有碰撞，就是失败的尝试）
+                    this.recordAttempt(positions.rightHand.x, positions.rightHand.y);
+                }
+            }
+            this.lastHandPositions.rightHand = {
+                x: positions.rightHand.x,
+                y: positions.rightHand.y,
+                timestamp: now
+            };
+        }
+    }
+    
+    /**
+     * 记录戳泡泡尝试
+     */
+    recordAttempt(x, y) {
+        // 防止重复记录（500ms内的多次快速移动只算一次尝试）
+        const now = Date.now();
+        if (this.lastAttemptTime && (now - this.lastAttemptTime) < 500) {
+            return;
+        }
+        this.lastAttemptTime = now;
+        
+        // 检查是否击中泡泡
+        const bubbles = this.bubbleManager ? this.bubbleManager.getBubbles() : [];
+        let hit = false;
+        
+        for (const bubble of bubbles) {
+            const distance = Math.sqrt(
+                Math.pow(x - bubble.x, 2) + Math.pow(y - bubble.y, 2)
+            );
+            if (distance <= bubble.radius + 35) { // 35是手部半径
+                hit = true;
+                break;
+            }
+        }
+        
+        // 记录到数据追踪器
+        if (this.poseDetector?.handDataTracker) {
+            this.poseDetector.handDataTracker.recordPop(hit);
+        }
+    }
+
     /**
      * Handle window resize
      */
@@ -425,6 +523,9 @@ class GameEngine {
         this.onRoundEnd = null;
         this.roundRemainingMs = null;
         this.roundPausedAt = 0;
+        
+        // 🔥 重要：清空本局音符记录，防止下一局累积
+        this.roundNotes = [];
       }
     
     // ← 建议紧跟在 stopRound() 之后加入
@@ -463,12 +564,15 @@ class GameEngine {
         // 2) 计分 & UI
         this.score += 10;
         window.gameApp?.updateScoreDisplay?.(this.score);
+        
+        // 记录到游戏结果管理器（带手部信息）
+        if (window.gameResultManager) {
+            const handType = collision.handType || 'unknown';
+            window.gameResultManager.recordBubblePop(handType);
+            console.log('📊 记录泡泡戳破 - 手部类型:', handType);
+        }
       
-        const messages = ['Great job!','Nice pop!','Awesome!','Keep going!','Fantastic!','Well done!'];
-        window.gameApp?.showEncouragementMessage?.(
-          messages[Math.floor(Math.random() * messages.length)],
-          1000
-        );
+        // 移除随机鼓励消息，让成就系统统一处理反馈
       
         // 3) （可选）在爆炸动画结束后再真正移除气泡
         //    popAnimation.duration 目前为 300ms，这里给一点余量
@@ -504,6 +608,30 @@ class GameEngine {
             window.testMousePosition = { x, y };
         });
         
+        // Handle mouse click to pop bubbles
+        this.canvas.addEventListener('click', (event) => {
+            const rect = this.canvas.getBoundingClientRect();
+            const scaleX = this.canvas.width / rect.width;
+            const scaleY = this.canvas.height / rect.height;
+            
+            const x = (event.clientX - rect.left) * scaleX;
+            const y = (event.clientY - rect.top) * scaleY;
+            
+            // Check collision with bubbles
+            if (this.bubbleManager) {
+                const poppedBubble = this.bubbleManager.checkCollision(x, y);
+                if (poppedBubble) {
+                    console.log('🖱️ 鼠标点击戳破泡泡:', poppedBubble.id);
+                    
+                    // 直接记录手部数据（鼠标模式默认为右手）
+                    if (window.gameResultManager) {
+                        window.gameResultManager.recordBubblePop('rightHand');
+                        console.log('📊 记录右手戳破数据');
+                    }
+                }
+            }
+        });
+
         // Hide hand when mouse leaves canvas
         this.canvas.addEventListener('mouseleave', () => {
             this.handPositions.rightHand.visible = false;

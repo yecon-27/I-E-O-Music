@@ -10,6 +10,11 @@
       }
       now() { return this.ctx.currentTime; }
       resume() { if (this.ctx.state !== 'running') return this.ctx.resume(); }
+      
+      setVolume(volume) {
+        // 设置主音量，volume 应该是 0-1 之间的值
+        this.master.gain.value = Math.max(0, Math.min(1, volume));
+      }
   
       play(freq, { when = this.now(), vel = 0.9, dur = 0.22 } = {}) {
         const osc1 = this.ctx.createOscillator();

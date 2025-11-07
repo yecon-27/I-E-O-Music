@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+
+
     <div class="game-container">
         <div class="game-header">
             <div class="score-display">
@@ -14,14 +16,52 @@
                 <span id="score-value">0</span>
             </div>
             <div class="controls">
-                <button id="pause-btn" class="control-btn">Pause</button>
-                <div class="speed-controls">
-                    <button id="slow-btn" class="speed-btn">Slow</button>
-                    <button id="normal-btn" class="speed-btn active">Normal</button>
-                    <button id="fast-btn" class="speed-btn">Fast</button>
+                <!-- 自闭症友好控制面板 -->
+                <div class="autism-controls">
+                    <button id="sensory-panel-toggle" class="control-btn">🎛️ 感官设置</button>
+                    <div id="sensory-panel" class="sensory-panel hidden">
+                        <div class="sensory-control">
+                            <label>🔊 音效音量:</label>
+                            <input type="range" id="sound-volume" min="0" max="100" value="70">
+                            <span id="sound-volume-value">70%</span>
+                        </div>
+
+                        <div class="sensory-control">
+                            <label>🎨 色彩模式:</label>
+                            <select id="color-mode">
+                                <option value="normal">标准</option>
+                                <option value="high-contrast">高对比度</option>
+                                <option value="soft">柔和</option>
+                            </select>
+                        </div>
+                        <div class="sensory-control">
+                            <label>🔄 规律模式:</label>
+                            <input type="checkbox" id="predictable-mode">
+                            <span>泡泡按固定位置出现</span>
+                        </div>
+                    </div>
                 </div>
-                <button id="pictogram-toggle" class="control-btn">Tokyo2020小人: 关</button>
-                <button id="camera-toggle" class="control-btn">摄像头: 关</button>
+                
+                <button id="pause-btn" class="control-btn">⏸️ 暂停</button>
+                
+                <div class="speed-controls">
+                    <button id="slow-btn" class="speed-btn">🐌 慢速</button>
+                    <button id="normal-btn" class="speed-btn active">🚶 正常</button>
+                    <button id="fast-btn" class="speed-btn">🏃 快速</button>
+                </div>
+                
+                <!-- 进度指示器 -->
+                <div class="progress-indicator">
+                    <div class="time-remaining">
+                        <span>⏱️ 剩余: </span>
+                        <span id="countdown-display">60s</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                </div>
+                
+                <button id="camera-toggle" class="control-btn">📷 摄像头: 关</button>
             </div>
         </div>
         
@@ -31,8 +71,49 @@
                 <div id="hand-cursor" class="hand-cursor"></div>
                 <div id="encouragement-message" class="encouragement-message"></div>
                 <div id="pause-overlay" class="pause-overlay hidden">
-                    <h2>PAUSED</h2>
-                    <p>Click Resume to continue playing</p>
+                    <h2>游戏已暂停</h2>
+                    <p>点击继续按钮恢复游戏</p>
+                </div>
+                
+                <!-- 游戏结果窗口 -->
+                <div id="game-result-overlay" class="game-result-overlay hidden">
+                    <div class="result-content">
+                        <h2>🎉 游戏结束！</h2>
+                        <div class="result-stats">
+                            <div class="stat-item">
+                                <span class="stat-icon">🎯</span>
+                                <span class="stat-label">成功击破</span>
+                                <span id="result-bubbles" class="stat-value">0</span>
+                                <span class="stat-unit">个泡泡</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-icon">⚡</span>
+                                <span class="stat-label">平均速度</span>
+                                <span id="result-speed" class="stat-value">0</span>
+                                <span class="stat-unit">秒/个</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-icon">🏆</span>
+                                <span class="stat-label">最高连击</span>
+                                <span id="result-combo" class="stat-value">0</span>
+                                <span class="stat-unit">连续</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-icon">🤚</span>
+                                <span class="stat-label">手部偏好</span>
+                                <span id="result-hand-preference" class="stat-value">平衡</span>
+                                <span class="stat-unit">使用</span>
+                            </div>
+                        </div>
+                        <div class="result-message">
+                            <p id="result-encouragement">太棒了！你的表现很出色！</p>
+                        </div>
+                        <div class="result-actions">
+                            <button id="play-music-btn" class="result-btn music">🎵 享受你创作的音乐</button>
+                            <button id="play-again-btn" class="result-btn primary">🎮 再玩一轮</button>
+                            <button id="finish-game-btn" class="result-btn secondary">✨ 结束游戏</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -93,6 +174,13 @@
     <script src="js/audio-notes.js"></script>
     <script src="js/audio-engine.js"></script>
     <script src="js/note-log.js"></script>
+    <script src="js/advanced-music-generator.js"></script>
+    <script src="js/autism-friendly-features.js"></script>
+    <script src="js/game-result-manager.js"></script>
+    <script src="js/game-integration.js"></script>
+    <script src="js/debug-collision.js"></script>
+    <script src="js/debug-hand-tracking.js"></script>
+    <script src="js/hand-data-tracker.js"></script>
 
     <script src="js/bubble-manager.js"></script>
     <script src="js/pose-detector.js"></script>

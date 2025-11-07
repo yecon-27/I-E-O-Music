@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音乐差异性测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .music-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .music-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #2196F3;
+        }
+        .music-card h4 {
+            margin: 0 0 10px 0;
+            color: #2196F3;
+        }
+        .music-info {
+            font-size: 0.9rem;
+            color: #666;
+            margin: 5px 0;
+        }
+        .music-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+            font-size: 0.8rem;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 3px;
+            border: none;
+            border-radius: 5px;
+            background: #2196F3;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        button:hover {
+            background: #1976D2;
+        }
+        button.play {
+            background: #4CAF50;
+        }
+        button.play:hover {
+            background: #45a049;
+        }
+        button.download {
+            background: #FF9800;
+        }
+        button.download:hover {
+            background: #F57C00;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .log {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 11px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        .game-scenario {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-panel">
+        <h1>🎵 音乐差异性测试</h1>
+        <p>这个页面用于测试不同游戏场景下生成的音乐是否具有明显差异</p>
+        
+        <div class="controls">
+            <button onclick="generateAllScenarios()">🎼 生成所有场景音乐</button>
+            <button onclick="playAllSequentially()">▶️ 依次播放所有音乐</button>
+            <button onclick="stopAllMusic()">⏹️ 停止播放</button>
+            <button onclick="clearLog()">🗑️ 清空日志</button>
+        </div>
+        
+        <div class="music-grid" id="music-grid">
+            <!-- 音乐卡片将在这里生成 -->
+        </div>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <script src="src/frontend/js/ultra-diverse-music-generator.js"></script>
+    <script>
+        let musicSequences = [];
+        let currentlyPlaying = null;
+        
+        // 模拟不同的游戏场景
+        const gameScenarios = [
+            {
+                name: '新手玩家',
+                description: '慢节奏，少量泡泡，规律操作',
+                session: {
+                    notes: generateMockNotes(8, 60000, 'regular', 60),
+                    durationSec: 60
+                }
+            },
+            {
+                name: '高手玩家',
+                description: '快节奏，大量泡泡，复杂操作',
+                session: {
+                    notes: generateMockNotes(45, 60000, 'complex', 72),
+                    durationSec: 60
+                }
+            },
+            {
+                name: '放松模式',
+                description: '缓慢节奏，中等泡泡数，平稳操作',
+                session: {
+                    notes: generateMockNotes(15, 60000, 'steady', 65),
+                    durationSec: 60
+                }
+            },
+            {
+                name: '挑战模式',
+                description: '不规律节奏，变化音高，激烈操作',
+                session: {
+                    notes: generateMockNotes(30, 60000, 'chaotic', 80),
+                    durationSec: 60
+                }
+            },
+            {
+                name: '短时爆发',
+                description: '短时间内大量操作',
+                session: {
+                    notes: generateMockNotes(25, 30000, 'burst', 75),
+                    durationSec: 30
+                }
+            },
+            {
+                name: '持续稳定',
+                description: '长时间稳定操作',
+                session: {
+                    notes: generateMockNotes(35, 90000, 'sustained', 68),
+                    durationSec: 90
+                }
+            }
+        ];
+        
+        function generateMockNotes(count, duration, pattern, basePitch) {
+            const notes = [];
+            const interval = duration / count;
+            
+            for (let i = 0; i < count; i++) {
+                let dt, midi;
+                
+                switch (pattern) {
+                    case 'regular':
+                        dt = i * interval + Math.random() * 200 - 100;
+                        midi = basePitch + Math.floor(Math.random() * 5);
+                        break;
+                    case 'complex':
+                        dt = i * interval * (0.5 + Math.random());
+                        midi = basePitch + Math.floor(Math.random() * 24) - 12;
+                        break;
+                    case 'steady':
+                        dt = i * interval + Math.random() * 100 - 50;
+                        midi = basePitch + Math.floor(Math.random() * 8) - 4;
+                        break;
+                    case 'chaotic':
+                        dt = Math.random() * duration;
+                        midi = basePitch + Math.floor(Math.random() * 36) - 18;
+                        break;
+                    case 'burst':
+                        dt = i < count/2 ? i * interval * 0.3 : (i - count/2) * interval * 0.3 + duration * 0.7;
+                        midi = basePitch + Math.floor(Math.random() * 12);
+                        break;
+                    case 'sustained':
+                        dt = i * interval + Math.sin(i * 0.5) * 500;
+                        midi = basePitch + Math.floor(Math.sin(i * 0.3) * 6);
+                        break;
+                    default:
+                        dt = i * interval;
+                        midi = basePitch;
+                }
+                
+                notes.push({
+                    dt: Math.max(0, dt),
+                    midi: Math.max(21, Math.min(108, midi)),
+                    freq: 440 * Math.pow(2, (midi - 69) / 12),
+                    name: `Note${i}`
+                });
+            }
+            
+            return notes.sort((a, b) => a.dt - b.dt);
+        }
+        
+        function log(message) {
+            const logElement = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        function generateAllScenarios() {
+            log('🎼 开始生成所有场景的音乐...');
+            musicSequences = [];
+            
+            const generator = new UltraDiverseMusicGenerator();
+            const musicGrid = document.getElementById('music-grid');
+            musicGrid.innerHTML = '';
+            
+            gameScenarios.forEach((scenario, index) => {
+                log(`生成场景 ${index + 1}: ${scenario.name}`);
+                
+                try {
+                    const musicSequence = generator.generateMusic(scenario.session);
+                    musicSequences.push({
+                        scenario: scenario,
+                        sequence: musicSequence,
+                        index: index
+                    });
+                    
+                    // 创建音乐卡片
+                    const card = createMusicCard(scenario, musicSequence, index);
+                    musicGrid.appendChild(card);
+                    
+                    log(`✅ ${scenario.name} 音乐生成完成 - 风格: ${musicSequence.metadata?.style || '未知'}`);
+                } catch (error) {
+                    log(`❌ ${scenario.name} 音乐生成失败: ${error.message}`);
+                }
+            });
+            
+            log(`🎵 所有音乐生成完成，共 ${musicSequences.length} 个场景`);
+        }
+        
+        function createMusicCard(scenario, sequence, index) {
+            const card = document.createElement('div');
+            card.className = 'music-card';
+            
+            const metadata = sequence.metadata || {};
+            const noteCount = sequence.notes?.length || 0;
+            const instrumentCount = sequence.instrumentInfos?.length || 0;
+            const duration = Math.round(sequence.totalTime || 0);
+            const tempo = sequence.tempos?.[0]?.qpm || 120;
+            
+            card.innerHTML = `
+                <h4>${scenario.name}</h4>
+                <div class="game-scenario">${scenario.description}</div>
+                <div class="music-info">
+                    <strong>风格:</strong> ${metadata.style || '未知'} | 
+                    <strong>调性:</strong> ${metadata.scale || '未知'} | 
+                    <strong>节拍:</strong> ${tempo} BPM
+                </div>
+                <div class="music-stats">
+                    <div>音符数: ${noteCount}</div>
+                    <div>乐器数: ${instrumentCount}</div>
+                    <div>时长: ${duration}秒</div>
+                    <div>泡泡数: ${scenario.session.notes.length}</div>
+                </div>
+                <div style="margin-top: 10px;">
+                    <button class="play" onclick="playMusic(${index})">▶️ 播放</button>
+                    <button onclick="stopMusic()">⏹️ 停止</button>
+                    <button class="download" onclick="downloadMusic(${index})">💾 下载</button>
+                    <button onclick="analyzeMusic(${index})">📊 分析</button>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        function playMusic(index) {
+            if (index >= musicSequences.length) {
+                log('❌ 音乐索引无效');
+                return;
+            }
+            
+            const musicData = musicSequences[index];
+            log(`▶️ 播放: ${musicData.scenario.name}`);
+            
+            // 这里应该集成实际的音乐播放器
+            // 由于这是测试页面，我们只是模拟播放
+            currentlyPlaying = index;
+            
+            // 模拟播放时间
+            setTimeout(() => {
+                if (currentlyPlaying === index) {
+                    log(`⏹️ ${musicData.scenario.name} 播放完成`);
+                    currentlyPlaying = null;
+                }
+            }, (musicData.sequence.totalTime || 10) * 1000);
+        }
+        
+        function stopMusic() {
+            if (currentlyPlaying !== null) {
+                log(`⏹️ 停止播放: ${musicSequences[currentlyPlaying].scenario.name}`);
+                currentlyPlaying = null;
+            }
+        }
+        
+        function stopAllMusic() {
+            stopMusic();
+            log('⏹️ 所有音乐已停止');
+        }
+        
+        function playAllSequentially() {
+            if (musicSequences.length === 0) {
+                log('❌ 请先生成音乐');
+                return;
+            }
+            
+            log('🎵 开始依次播放所有音乐...');
+            playSequentially(0);
+        }
+        
+        function playSequentially(index) {
+            if (index >= musicSequences.length) {
+                log('🎵 所有音乐播放完成');
+                return;
+            }
+            
+            playMusic(index);
+            
+            // 等待当前音乐播放完成后播放下一个
+            const duration = (musicSequences[index].sequence.totalTime || 10) * 1000;
+            setTimeout(() => {
+                playSequentially(index + 1);
+            }, duration + 1000); // 额外1秒间隔
+        }
+        
+        function downloadMusic(index) {
+            if (index >= musicSequences.length) {
+                log('❌ 音乐索引无效');
+                return;
+            }
+            
+            const musicData = musicSequences[index];
+            const jsonData = JSON.stringify(musicData.sequence, null, 2);
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `music_${musicData.scenario.name.replace(/\s+/g, '_')}_${Date.now()}.json`;
+            a.click();
+            
+            URL.revokeObjectURL(url);
+            log(`💾 下载: ${musicData.scenario.name} 音乐文件`);
+        }
+        
+        function analyzeMusic(index) {
+            if (index >= musicSequences.length) {
+                log('❌ 音乐索引无效');
+                return;
+            }
+            
+            const musicData = musicSequences[index];
+            const sequence = musicData.sequence;
+            
+            log(`📊 分析: ${musicData.scenario.name}`);
+            log(`   风格: ${sequence.metadata?.style || '未知'}`);
+            log(`   调性: ${sequence.metadata?.scale || '未知'}`);
+            log(`   节拍: ${sequence.tempos?.[0]?.qpm || 120} BPM`);
+            log(`   音符数: ${sequence.notes?.length || 0}`);
+            log(`   乐器数: ${sequence.instrumentInfos?.length || 0}`);
+            log(`   时长: ${Math.round(sequence.totalTime || 0)}秒`);
+            
+            // 分析音符分布
+            if (sequence.notes && sequence.notes.length > 0) {
+                const pitches = sequence.notes.map(n => n.pitch);
+                const minPitch = Math.min(...pitches);
+                const maxPitch = Math.max(...pitches);
+                const avgPitch = pitches.reduce((a, b) => a + b, 0) / pitches.length;
+                
+                log(`   音域: ${minPitch}-${maxPitch} (范围: ${maxPitch - minPitch})`);
+                log(`   平均音高: ${Math.round(avgPitch)}`);
+            }
+            
+            // 分析乐器使用
+            if (sequence.instrumentInfos && sequence.instrumentInfos.length > 0) {
+                const instruments = sequence.instrumentInfos.map(inst => inst.name || `Program ${inst.program}`);
+                log(`   乐器: ${instruments.join(', ')}`);
+            }
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        // 页面加载时的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🎵 音乐差异性测试页面已加载');
+            log('💡 点击"生成所有场景音乐"开始测试');
+            log('💡 每个场景代表不同的游戏表现，应该生成不同风格的音乐');
+        });
+    </script>
+</body>
+</html>

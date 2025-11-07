@@ -46,6 +46,42 @@ class BubbleManager {
         
         // ★ 新增：命中回调占位（外部可订阅）
         this.onPop = null;
+        
+        // 自闭症友好功能
+        this.predictableMode = false;
+        this.predictablePattern = [];
+        this.patternIndex = 0;
+        this.initPredictablePattern();
+    }
+    
+    /**
+     * 初始化可预测的泡泡出现模式
+     */
+    initPredictablePattern() {
+        // 创建一个重复的、可预测的模式
+        this.predictablePattern = [
+            { x: 0.2, y: 1.0, color: 0, size: 0.6 }, // 左下
+            { x: 0.8, y: 1.0, color: 1, size: 0.8 }, // 右下
+            { x: 0.5, y: 1.0, color: 2, size: 0.7 }, // 中下
+            { x: 0.3, y: 1.0, color: 3, size: 0.5 }, // 左中下
+            { x: 0.7, y: 1.0, color: 4, size: 0.9 }, // 右中下
+            { x: 0.1, y: 1.0, color: 5, size: 0.6 }, // 最左
+            { x: 0.9, y: 1.0, color: 6, size: 0.6 }, // 最右
+            { x: 0.5, y: 1.0, color: 7, size: 1.0 }  // 中央大泡泡
+        ];
+    }
+    
+    /**
+     * 设置可预测模式
+     */
+    setPredictableMode(enabled) {
+        this.predictableMode = enabled;
+        if (enabled) {
+            this.patternIndex = 0;
+            console.log('🔄 规律模式已启用 - 泡泡将按固定位置出现');
+        } else {
+            console.log('🎲 随机模式已启用 - 泡泡将随机出现');
+        }
     }
     
     /**
@@ -81,23 +117,37 @@ class BubbleManager {
     * Create a new bubble at the bottom of the screen
     */
     spawnBubble() {
-    // Random position along the bottom, with margins
-        const x = this.config.spawnMargin + 
+        let x, y, radius, color, speed;
+        
+        if (this.predictableMode && this.predictablePattern.length > 0) {
+            // 可预测模式：使用固定模式
+            const pattern = this.predictablePattern[this.patternIndex];
+            
+            x = pattern.x * (this.canvasWidth - 2 * this.config.spawnMargin) + this.config.spawnMargin;
+            y = this.canvasHeight + 50;
+            
+            const sizeRange = this.config.maxRadius - this.config.minRadius;
+            radius = this.config.minRadius + (sizeRange * pattern.size);
+            
+            color = this.colors[pattern.color % this.colors.length];
+            speed = this.config.baseSpeed; // 固定速度
+            
+            // 循环模式
+            this.patternIndex = (this.patternIndex + 1) % this.predictablePattern.length;
+        } else {
+            // 随机模式：原有逻辑
+            x = this.config.spawnMargin + 
                 Math.random() * (this.canvasWidth - 2 * this.config.spawnMargin);
-
-    // Start just below the screen
-        const y = this.canvasHeight + 50;
-
-    // Random size within configured range
-        const radius = this.config.minRadius + 
+            y = this.canvasHeight + 50;
+            
+            radius = this.config.minRadius + 
                 Math.random() * (this.config.maxRadius - this.config.minRadius);
-
-    // Random color from autism-friendly palette
-        const color = this.colors[Math.floor(Math.random() * this.colors.length)];
-
-    // Random speed variation (±20% of base speed)
-        const speedVariation = 0.8 + Math.random() * 0.4;
-        const speed = this.config.baseSpeed * speedVariation;
+            
+            color = this.colors[Math.floor(Math.random() * this.colors.length)];
+            
+            const speedVariation = 0.8 + Math.random() * 0.4;
+            speed = this.config.baseSpeed * speedVariation;
+        }
 
     // Create bubble object
         const bubble = {
@@ -132,12 +182,6 @@ class BubbleManager {
         }
 
         this.bubbles.push(bubble);
-
-        // Debug logging（可删）
-        console.log(
-            `Spawned bubble ${bubble.id} (${Math.round(x)},${Math.round(y)}) ` +
-            `r=${Math.round(radius)} color=${color} note=${bubble.note.name}`
-        );
 }
     
     /**
@@ -174,7 +218,14 @@ class BubbleManager {
         
         // Remove bubbles that are above the screen (with some margin)
         this.bubbles = this.bubbles.filter(bubble => {
-            return bubble.y > -bubble.radius - 50;
+            const shouldRemove = bubble.y <= -bubble.radius - 50;
+            
+            // 记录未被戳中的泡泡（失败事件）
+            if (shouldRemove && !bubble.isPopping && window.autismFeatures) {
+                window.autismFeatures.recordMiss();
+            }
+            
+            return !shouldRemove;
         });
         
         const removedCount = initialCount - this.bubbles.length;

@@ -46,6 +46,9 @@ class PoseDetector {
     this.poseCanvas = null;
     this.poseCtx = null;
 
+    // 手部数据追踪器
+    this.handDataTracker = null;
+
     this.isInitialized = false;
   }
 
@@ -55,6 +58,12 @@ class PoseDetector {
   async init() {
     try {
       console.log('Initializing MediaPipe pose detection...');
+      
+      // 初始化手部数据追踪器
+      if (window.HandDataTracker) {
+        this.handDataTracker = new window.HandDataTracker();
+      }
+      
       if (!(window.Pose && window.Camera && window.drawConnectors)) {
         throw new Error('MediaPipe scripts not loaded. Check index.html local paths.');
       }
@@ -69,6 +78,12 @@ class PoseDetector {
     } catch (err) {
       console.error('Failed to initialize MediaPipe pose detection:', err);
       console.log('Falling back to mouse control...');
+      
+      // 即使在鼠标模式下也初始化数据追踪器
+      if (window.HandDataTracker && !this.handDataTracker) {
+        this.handDataTracker = new window.HandDataTracker();
+      }
+      
       this.setupMouseFallback();
       return true;
     }
@@ -544,21 +559,27 @@ class PoseDetector {
     // Apply smoothing
     this.applySmoothingToHands();
     
+    // 更新手部数据追踪
+    if (this.handDataTracker) {
+      this.handDataTracker.updateHandPosition(
+        'leftHand', 
+        this.smoothedPositions.leftHand.x, 
+        this.smoothedPositions.leftHand.y, 
+        this.handPositions.leftHand.visible
+      );
+      this.handDataTracker.updateHandPosition(
+        'rightHand', 
+        this.smoothedPositions.rightHand.x, 
+        this.smoothedPositions.rightHand.y, 
+        this.handPositions.rightHand.visible
+      );
+    }
+    
     // Update UI status
     this.updateHandStatus();
 
     // Trigger hand move callback
     if (this.onHandMove) {
-      // 添加调试日志 - 验证镜像修复
-      if (this.handPositions.leftHand.visible || this.handPositions.rightHand.visible) {
-        console.log('Hand positions (after mirror fix):', {
-          left: this.handPositions.leftHand.visible ? 
-            `(${Math.round(this.handPositions.leftHand.x)}, ${Math.round(this.handPositions.leftHand.y)})` : 'hidden',
-          right: this.handPositions.rightHand.visible ? 
-            `(${Math.round(this.handPositions.rightHand.x)}, ${Math.round(this.handPositions.rightHand.y)})` : 'hidden',
-          canvasWidth: this.canvasWidth
-        });
-      }
       
       this.onHandMove({
         leftHand: { 
@@ -684,6 +705,12 @@ class PoseDetector {
 
       this.handPositions.leftHand.visible = false;
 
+      // 更新手部数据追踪 (鼠标模式)
+      if (this.handDataTracker) {
+        this.handDataTracker.updateHandPosition('rightHand', x, y, true);
+        this.handDataTracker.updateHandPosition('leftHand', 0, 0, false);
+      }
+
       // Trigger hand move callback for bubble interaction
       if (this.onHandMove) {
         this.onHandMove({
@@ -693,10 +720,32 @@ class PoseDetector {
       }
     });
 
+    // Track mouse clicks as attempts
+    canvas.addEventListener("click", (event) => {
+      // Record attempt in game result manager
+      if (window.gameResultManager) {
+        window.gameResultManager.recordAttempt();
+      }
+    });
+
+    // Track touch events as attempts (for mobile)
+    canvas.addEventListener("touchstart", (event) => {
+      // Record attempt in game result manager
+      if (window.gameResultManager) {
+        window.gameResultManager.recordAttempt();
+      }
+    });
+
     // Hide hand when mouse leaves canvas
     canvas.addEventListener("mouseleave", () => {
       this.handPositions.rightHand.visible = false;
       this.handPositions.leftHand.visible = false;
+      
+      // 更新数据追踪 - 鼠标离开
+      if (this.handDataTracker) {
+        this.handDataTracker.updateHandPosition('rightHand', 0, 0, false);
+        this.handDataTracker.updateHandPosition('leftHand', 0, 0, false);
+      }
       
       if (this.onHandMove) {
         this.onHandMove({

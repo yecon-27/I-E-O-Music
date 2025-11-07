@@ -63,6 +63,21 @@ class CollisionDetector {
         // Notify callbacks
         collisions.forEach(collision => {
             this.notifyCollisionCallbacks(collision);
+            
+            // 记录成功事件到自闭症友好功能模块
+            if (window.autismFeatures) {
+                window.autismFeatures.recordSuccess({
+                    bubbleId: collision.bubble.id,
+                    handType: collision.handType,
+                    position: { x: collision.bubble.x, y: collision.bubble.y },
+                    size: collision.bubble.radius
+                });
+            }
+            
+            // 记录戳泡泡事件到手部数据追踪器
+            if (window.gameApp?.poseDetector?.handDataTracker) {
+                window.gameApp.poseDetector.handDataTracker.recordPop(true);
+            }
         });
         
         return collisions;
