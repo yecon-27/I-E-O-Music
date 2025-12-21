@@ -27,7 +27,7 @@ const elements = {
     fastBtn: null,
     pauseOverlay: null,
     encouragementMessage: null,
-    pictogramToggle: null
+    // pictogramToggle: null
 };
 
 /**
@@ -62,8 +62,8 @@ function initializeUIElements() {
     elements.fastBtn = document.getElementById('fast-btn');
     elements.pauseOverlay = document.getElementById('pause-overlay');
     elements.encouragementMessage = document.getElementById('encouragement-message');
-    elements.pictogramToggle = document.getElementById('pictogram-toggle');
-    elements.cameraToggle = document.getElementById('camera-toggle');
+    // elements.pictogramToggle = document.getElementById('pictogram-toggle'); // Removed as not in HTML
+    // elements.cameraToggle = document.getElementById('camera-toggle'); // Removed as not in HTML
     elements.inputMode = document.getElementById('input-mode');
     elements.bubbleCount = document.getElementById('bubble-count');
     elements.poseModeToggle = document.getElementById('pose-mode-toggle');

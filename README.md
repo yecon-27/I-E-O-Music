@@ -54,90 +54,33 @@
 
 ## 🚀 快速开始
 
-### 环境要求
-- Python 3.7+
-- 现代浏览器（Chrome / Edge / Firefox）
-- 摄像头（可选；用于手势控制）
-
-### 克隆 & 安装
+### 1. 运行游戏
+在项目根目录下打开终端，运行以下命令：
 ```bash
-git clone <your-repo-url>
-cd bubble-popping-game
-pip install -r requirements.txt
+python -m http.server 8081
 ```
+
+### 2. 访问游戏
+打开浏览器，访问以下链接：
+👉 **[http://localhost:8081/src/frontend/](http://localhost:8081/src/frontend/)**
+
+### ⚠️ 常见问题
+- **摄像头打不开？**
+  - 请确保 **关闭了其他使用摄像头的软件**（如 Zoom、Teams、腾讯会议等）。
+  - 刷新页面后，点击浏览器弹出的“允许”按钮。
 
 ---
 
-## 📦 本地化第三方依赖
+## 📦 进阶运行（可选）
 
-### 1) MediaPipe Pose（必须完整拷贝）
-```bash
-npm i @mediapipe/pose@0.5.1675469404 --no-audit --no-fund
-
-# 把 Pose 产物拷到页面可访问目录（相对 src/frontend/index.html）
-mkdir -p src/frontend/vendor/mediapipe/pose
-cp -R node_modules/@mediapipe/pose/* src/frontend/vendor/mediapipe/pose/
-
-# 可选：utils 也本地化，保持版本一致
-mkdir -p src/frontend/vendor/mediapipe/{camera_utils,control_utils,drawing_utils}
-cp -R node_modules/@mediapipe/camera_utils/*  src/frontend/vendor/mediapipe/camera_utils/
-cp -R node_modules/@mediapipe/control_utils/* src/frontend/vendor/mediapipe/control_utils/
-cp -R node_modules/@mediapipe/drawing_utils/* src/frontend/vendor/mediapipe/drawing_utils/
-
-# 快速核对关键文件是否在位（出现这些名称说明资源齐全）
-ls -1 src/frontend/vendor/mediapipe/pose | \
-grep 'pose_landmark_full\|pose_solution_packed_assets\|pose_web\.binarypb\|simd\|wasm'
-```
-
-### 2) TFJS（与 Magenta 兼容的 UMD）
-推荐 **2.8.6**（若仍不兼容可回退 **2.7.0**）。
-```bash
-mkdir -p vendor/tf
-curl -L "https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.8.6/dist/tf.min.js" -o vendor/tf/tf.min.js
-```
-
-### 3) Magenta UMD
-```bash
-npm i @magenta/music@1.23.1 --no-audit --no-fund
-mkdir -p vendor/magenta
-cp node_modules/@magenta/music/dist/magenta.min.js vendor/magenta/music.js
-```
-
-### 4) MusicRNN 检查点（本地）
-把 `melody_rnn` 目录放到：
-```
-vendor/magenta/checkpoints/music_rnn/melody_rnn/
-```
-> 代码中引用：`'../../vendor/magenta/checkpoints/music_rnn/melody_rnn'`（以 `src/frontend/index.html` 为基准）。
-
----
-
-## ▶️ 运行
-
-### 本地（HTTP）
-```bash
-# 终端 A：WebSocket（如需）
-python src/backend/pose_websocket_server.py
-
-# 终端 B：静态站点
-python -m http.server 8080
-# 访问：
-# http://localhost:8080/src/frontend/index.html
-```
-
-### HTTPS（推荐，用于摄像头权限）
+### HTTPS 模式（如需远程访问）
 ```bash
 python scripts/start_https_server.py
-# 打印出的 HTTPS 地址打开即可（浏览器可能要求信任自签证书）
 ```
 
-### Docker
+### Docker 部署
 ```bash
-# 开发
 docker-compose -f docker/docker-compose.yml up --build
-
-# 生产（带 Nginx）
-docker-compose -f docker/docker-compose.yml --profile production up --build
 ```
 
 ---

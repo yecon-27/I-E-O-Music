@@ -118,13 +118,13 @@ class GameEngine {
         };
       
         // 2) HandTracker（先 new 再绑回调）
-        this.handTracker = new HandTracker();
-        this.handTracker.onPositionUpdate = (pos) => {
-          this.handPositions.rightHand = { x: pos.x, y: pos.y, visible: true };
-        };
-        this.handTracker.onHandDetected = () => { this.handPositions.rightHand.visible = true; };
-        this.handTracker.onHandLost     = () => { this.handPositions.rightHand.visible = false; };
-        this.handTracker.initialize();
+        // this.handTracker = new HandTracker();
+        // this.handTracker.onPositionUpdate = (pos) => {
+        //   this.handPositions.rightHand = { x: pos.x, y: pos.y, visible: true };
+        // };
+        // this.handTracker.onHandDetected = () => { this.handPositions.rightHand.visible = true; };
+        // this.handTracker.onHandLost     = () => { this.handPositions.rightHand.visible = false; };
+        // this.handTracker.initialize();
       
         // 3) PoseDetector
         this.poseDetector = new PoseDetector(this.canvas.width, this.canvas.height);

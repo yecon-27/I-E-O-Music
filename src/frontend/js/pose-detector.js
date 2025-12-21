@@ -90,9 +90,35 @@ class PoseDetector {
   }
 
   /**
+   * Stop camera and release resources
+   */
+  stop() {
+    if (this.videoElement && this.videoElement.srcObject) {
+      const stream = this.videoElement.srcObject;
+      const tracks = stream.getTracks();
+      
+      tracks.forEach(track => {
+        track.stop();
+        console.log(`Stopped camera track: ${track.kind}`);
+      });
+      
+      this.videoElement.srcObject = null;
+    }
+    
+    if (this.camera) {
+      // MediaPipe Camera util doesn't have a public stop method, 
+      // but stopping the source stream is usually enough
+      this.camera = null;
+    }
+  }
+
+  /**
    * Set up camera for pose detection - 使用右侧面板
    */
   async setupCamera() {
+    // 确保先清理旧的流
+    this.stop();
+
     // 使用右侧面板中的video元素
     this.videoElement = document.getElementById("pose-video");
     if (!this.videoElement) {
@@ -112,6 +138,11 @@ class PoseDetector {
       this.videoElement.srcObject = stream;
       console.log("Camera access granted");
 
+      // 页面卸载时清理
+      window.addEventListener('beforeunload', () => {
+        this.stop();
+      });
+
       return new Promise((resolve) => {
         this.videoElement.onloadedmetadata = () => {
           resolve();
@@ -119,7 +150,18 @@ class PoseDetector {
       });
     } catch (error) {
       console.error("Camera access denied:", error);
-      throw new Error("Camera access required for pose detection");
+      
+      let errorMessage = "Camera access required for pose detection";
+      
+      if (error.name === 'NotReadableError' || error.message.includes('Device in use')) {
+        errorMessage = "摄像头被其他程序占用 (NotReadableError)。请关闭其他使用摄像头的程序（如 Zoom, Teams, 或其他浏览器标签页）后刷新页面重试。";
+        alert(errorMessage); // 强提示
+      } else if (error.name === 'NotAllowedError') {
+        errorMessage = "摄像头访问被拒绝。请在浏览器设置中允许此网站访问摄像头。";
+        alert(errorMessage);
+      }
+      
+      throw new Error(errorMessage);
     }
   }
 
