@@ -3,7 +3,7 @@
 一个结合 **MediaPipe Pose 姿势检测**、**Tokyo2020 风格小人** 与 **Magenta MusicRNN（AI 续写旋律）** 的互动泡泡小游戏。
 
 > 说明：AI 生成的音乐会把你在一局游戏里“戳泡泡”产生的 **音符事件（音高/时间）** 当作 *primer*，由 **Magenta MusicRNN** 自动续写旋律并播放 / 导出 MIDI。
-
+  
 ---
 
 ## ✨ 特性
