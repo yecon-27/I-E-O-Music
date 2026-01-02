@@ -5,6 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bubble Popping Game</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+      .lane-labels {
+        position: absolute;
+        left: 0;
+        bottom: 8px;
+        width: 100%;
+        pointer-events: none;
+        z-index: 5;
+      }
+      .lane-labels .lane-label {
+        position: absolute;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 14px;
+        color: #ffffff;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      }
+      .click-trail {
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        pointer-events: none;
+        font-size: 12px;
+        font-weight: 700;
+        background: rgba(0,0,0,0.12);
+        border-radius: 14px;
+        z-index: 6;
+      }
+      .click-trail .trail-dot {
+        min-width: 18px;
+        min-height: 18px;
+        padding: 2px 6px;
+        border-radius: 10px;
+        color: #fff;
+        text-align: center;
+        line-height: 1;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+      }
+      .click-trail .trail-title {
+        color: #fff;
+        opacity: 0.8;
+      }
+      .game-main { position: relative; }
+    </style>
 </head>
 <body>
 
@@ -15,10 +65,10 @@
                 <span class="score-label">Score:</span>
                 <span id="score-value">0</span>
             </div>
-            <div class="controls">
-                <!-- 自闭症友好控制面板 -->
-                <div class="autism-controls">
-                    <button id="sensory-panel-toggle" class="control-btn">🎛️ 感官设置</button>
+                <div class="controls">
+                    <!-- 自闭症友好控制面板 -->
+                    <div class="autism-controls">
+                        <button id="sensory-panel-toggle" class="control-btn">🎛️ 感官设置</button>
                     <div id="sensory-panel" class="sensory-panel hidden">
                         <div class="sensory-control">
                             <label>🔊 音效音量:</label>
@@ -42,13 +92,14 @@
                     </div>
                 </div>
                 
-                <button id="pause-btn" class="control-btn">⏸️ 暂停</button>
-                
-                <div class="speed-controls">
-                    <button id="slow-btn" class="speed-btn">🐌 慢速</button>
-                    <button id="normal-btn" class="speed-btn active">🚶 正常</button>
-                    <button id="fast-btn" class="speed-btn">🏃 快速</button>
-                </div>
+                    <button id="pause-btn" class="control-btn">⏸️ 暂停</button>
+                    <button id="session-settings-btn" class="control-btn">⚙️ 参数</button>
+                    
+                    <div class="speed-controls">
+                        <button id="slow-btn" class="speed-btn">🐌 慢速</button>
+                        <button id="normal-btn" class="speed-btn active">🚶 正常</button>
+                        <button id="fast-btn" class="speed-btn">🏃 快速</button>
+                    </div>
                 
                 <!-- 进度指示器 -->
                 <div class="progress-indicator">
@@ -62,12 +113,15 @@
                 </div>
                 
                 <button id="camera-toggle" class="control-btn">📷 摄像头: 关</button>
+                <div id="session-preset" class="session-preset">Preset: medium / normal / soft</div>
             </div>
         </div>
         
         <div class="game-area">
             <div class="game-main">
                 <canvas id="game-canvas" width="1024" height="768"></canvas>
+                <div id="click-trail" class="click-trail"></div>
+                <div id="lane-labels" class="lane-labels"></div>
                 <div id="hand-cursor" class="hand-cursor"></div>
                 <div id="encouragement-message" class="encouragement-message"></div>
                 <div id="pause-overlay" class="pause-overlay hidden">
@@ -107,6 +161,26 @@
                         </div>
                         <div class="result-message">
                             <p id="result-encouragement">太棒了！你的表现很出色！</p>
+                        </div>
+                        <div id="debug-panel" class="debug-panel">
+                            <div class="debug-header">
+                                <h3>Debug Panel：Pattern → Reward</h3>
+                                <button id="open-reward-controls-btn" class="result-btn secondary small">Open Reward Controls</button>
+                            </div>
+                            <div class="debug-grid">
+                                <div class="debug-block">
+                                    <h4>检测到的 Pattern</h4>
+                                    <ul id="debug-pattern-list" class="debug-list"></ul>
+                                </div>
+                                <div class="debug-block">
+                                    <h4>触发的规则</h4>
+                                    <ul id="debug-rule-list" class="debug-list"></ul>
+                                </div>
+                                <div class="debug-block">
+                                    <h4>生成结构摘要</h4>
+                                    <ul id="debug-structure-list" class="debug-list"></ul>
+                                </div>
+                            </div>
                         </div>
                         <div class="result-actions">
                             <button id="play-music-btn" class="result-btn music">🎵 享受你创作的音乐</button>
@@ -159,6 +233,64 @@
                     </div>
                 </div>
                 <div id="debug-info" class="debug-info" style="font-size: 0.9rem; color: #6C757D; margin-top: 10px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Settings Modal -->
+    <div id="session-settings-modal" class="settings-modal hidden">
+        <div class="settings-panel">
+            <h2>Session Settings</h2>
+            <p class="settings-subtitle">当前设置会用于本轮 / 下一轮</p>
+            <div class="settings-grid">
+                <div class="settings-field">
+                    <label for="session-volume">音量</label>
+                    <select id="session-volume">
+                        <option value="low">low</option>
+                        <option value="medium" selected>medium</option>
+                        <option value="high">high</option>
+                    </select>
+                </div>
+                <div class="settings-field">
+                    <label for="session-density">节奏密度</label>
+                    <select id="session-density">
+                        <option value="sparse">sparse</option>
+                        <option value="normal" selected>normal</option>
+                    </select>
+                </div>
+                <div class="settings-field">
+                    <label for="session-timbre">音色</label>
+                    <select id="session-timbre">
+                        <option value="soft" selected>soft</option>
+                        <option value="bright">bright</option>
+                    </select>
+                </div>
+                <div class="settings-field">
+                    <label for="session-latency">反馈延迟</label>
+                    <select id="session-latency">
+                        <option value="0" selected>Immediate</option>
+                        <option value="500">0.5s Delay</option>
+                    </select>
+                </div>
+                <div class="settings-field">
+                    <label for="session-immediate">即时音模式</label>
+                    <select id="session-immediate">
+                        <option value="full" selected>Full</option>
+                        <option value="visual">Visual-only</option>
+                        <option value="off">Off</option>
+                    </select>
+                </div>
+                <div class="settings-field">
+                    <label for="session-reward">Reward 音乐</label>
+                    <select id="session-reward">
+                        <option value="on" selected>On</option>
+                        <option value="off">Off</option>
+                    </select>
+                </div>
+            </div>
+            <div class="settings-actions">
+                <button id="session-start-btn" class="result-btn primary">开始本轮</button>
+                <button id="session-close-btn" class="result-btn secondary">关闭</button>
             </div>
         </div>
     </div>

@@ -1,7 +1,20 @@
 /**
  * Bubble Manager - Handles bubble creation, movement, and lifecycle management
- * Implements autism-friendly design with calming colors and smooth animations
+ * 现改为“7 条垂直 lane 固定映射”的模式，便于记录稳定的 lane→note。
  */
+
+// 为泡泡管理器单独定义 lane，避免与其他脚本的全局命名冲突
+const BUBBLE_LANES = [
+    { id: 1, color: '#e34f4f', note: { name: 'C4', midi: 60, freq: 261.6256 } }, // 红
+    { id: 2, color: '#f28c28', note: { name: 'D4', midi: 62, freq: 293.6648 } }, // 橙
+    { id: 3, color: '#f2c14f', note: { name: 'E4', midi: 64, freq: 329.6276 } }, // 黄
+    { id: 4, color: '#3e7ab8', note: { name: 'G4', midi: 67, freq: 391.9954 } }, // 蓝
+    { id: 5, color: '#4b4ba8', note: { name: 'A4', midi: 69, freq: 440.0 } }, // 靛
+];
+// 从左到右的高度比例（归一化 0-1），依次由高到低
+// 从左到右统一从底部生成，使用相同的起始高度（避免梯度）
+const LANE_HEIGHT_RATIO = [1.05, 1.05, 1.05, 1.05, 1.05];
+
 class BubbleManager {
     constructor(canvasWidth, canvasHeight) {
         this.canvasWidth = canvasWidth;
@@ -10,41 +23,27 @@ class BubbleManager {
         // Bubble collection
         this.bubbles = [];
         this.nextBubbleId = 0;
+        this.spawnTimers = [];
         
-        // Timing for spawning
+        // 同屏泡泡控制：放慢速度、减少同屏数量，便于规律点击
+        this.minOnScreen = 3;
+        this.maxOnScreen = 4;
+        this.targetBubbleCount = 4;
+        this.spawnSequenceIndex = 0; // 顺序生成用
+        
+        // 时间控制（保持少量泡泡即可，无需频繁 spawn 定时器）
         this.lastSpawnTime = 0;
-        this.baseSpawnInterval = 1500; // 1.5 seconds between spawns (matches requirement)
+        this.baseSpawnInterval = 2000; // 加大生成间隔，拉开先后高度
         
-        // Bubble configuration (matches design document specifications)
+        // Bubble configuration：减速，拉开上下间距
         this.config = {
             minRadius: 30,
-            maxRadius: 60,
-            baseSpeed: 2, // pixels per frame at 60fps (consistent upward movement)
-            spawnMargin: 50 // margin from screen edges for spawning
+            maxRadius: 30,
+            baseSpeed: 1.2, // px per frame @60fps，约 7-8s 飞完屏幕
+            spawnMargin: 40
         };
         
-        // Autism-friendly color palette (soft, calming colors)
-        this.colors = [
-            '#FFE5E5', // Soft pink
-            '#E5F3FF', // Soft blue
-            '#E5FFE5', // Soft green
-            '#FFF5E5', // Soft yellow
-            '#F0E5FF', // Soft purple
-            '#B8E6B8', // Calming green
-            '#B8D4E6', // Calming blue
-            '#E6D4B8', // Warm beige
-            '#E6B8D4', // Soft rose
-            '#D4E6B8'  // Light lime
-        ];
-
-        this.noteOptions = {
-            rootMidi: 60,               // C 调
-            scale: 'pentatonic_major',  // 想更柔和可换 'pentatonic_minor'
-            octaves: [0, 1, 2],
-            preferRange: [60, 84]       // C4..C6
-          };
-        
-        // ★ 新增：命中回调占位（外部可订阅）
+        // ★ 命中回调占位（外部可订阅）
         this.onPop = null;
         
         // 自闭症友好功能
@@ -58,17 +57,13 @@ class BubbleManager {
      * 初始化可预测的泡泡出现模式
      */
     initPredictablePattern() {
-        // 创建一个重复的、可预测的模式
-        this.predictablePattern = [
-            { x: 0.2, y: 1.0, color: 0, size: 0.6 }, // 左下
-            { x: 0.8, y: 1.0, color: 1, size: 0.8 }, // 右下
-            { x: 0.5, y: 1.0, color: 2, size: 0.7 }, // 中下
-            { x: 0.3, y: 1.0, color: 3, size: 0.5 }, // 左中下
-            { x: 0.7, y: 1.0, color: 4, size: 0.9 }, // 右中下
-            { x: 0.1, y: 1.0, color: 5, size: 0.6 }, // 最左
-            { x: 0.9, y: 1.0, color: 6, size: 0.6 }, // 最右
-            { x: 0.5, y: 1.0, color: 7, size: 1.0 }  // 中央大泡泡
-        ];
+        // 7 条等距 lane，从左到右
+        this.predictablePattern = BUBBLE_LANES.map((lane, idx) => ({
+            x: (idx + 1) / (BUBBLE_LANES.length + 1),
+            y: 1.0,
+            color: lane.id - 1,
+            size: 1.0
+        }));
     }
     
     /**
@@ -81,6 +76,16 @@ class BubbleManager {
             console.log('🔄 规律模式已启用 - 泡泡将按固定位置出现');
         } else {
             console.log('🎲 随机模式已启用 - 泡泡将随机出现');
+        }
+    }
+
+    /**
+     * 初始化同屏泡泡（在一局开始时调用）
+     */
+    seedBubbles(count = 1) {
+        const n = Math.max(1, Math.min(count, this.maxOnScreen));
+        for (let i = 0; i < n; i++) {
+            this.spawnBubble();
         }
     }
     
@@ -104,85 +109,91 @@ class BubbleManager {
      * Handle spawning of new bubbles
      */
     handleBubbleSpawning(currentTime, gameSpeed) {
-        // Adjust spawn rate based on game speed
+        // 控制同屏数量：不超过 maxOnScreen
+        if (this.bubbles.length >= this.maxOnScreen) return;
+
         const adjustedSpawnInterval = this.baseSpawnInterval / gameSpeed;
-        
-        if (currentTime - this.lastSpawnTime >= adjustedSpawnInterval) {
-            this.spawnBubble();
+
+        // 初始或不足 minOnScreen 时，按间隔逐个补齐
+        if (this.bubbles.length < this.targetBubbleCount &&
+            currentTime - this.lastSpawnTime >= adjustedSpawnInterval) {
+            this.scheduleSpawn(null, 0);
             this.lastSpawnTime = currentTime;
+            return;
         }
     }
     
     /**
     * Create a new bubble at the bottom of the screen
     */
-    spawnBubble() {
-        let x, y, radius, color, speed;
-        
-        if (this.predictableMode && this.predictablePattern.length > 0) {
-            // 可预测模式：使用固定模式
-            const pattern = this.predictablePattern[this.patternIndex];
-            
-            x = pattern.x * (this.canvasWidth - 2 * this.config.spawnMargin) + this.config.spawnMargin;
-            y = this.canvasHeight + 50;
-            
-            const sizeRange = this.config.maxRadius - this.config.minRadius;
-            radius = this.config.minRadius + (sizeRange * pattern.size);
-            
-            color = this.colors[pattern.color % this.colors.length];
-            speed = this.config.baseSpeed; // 固定速度
-            
-            // 循环模式
-            this.patternIndex = (this.patternIndex + 1) % this.predictablePattern.length;
+    spawnBubble(laneId = null) {
+        let lane;
+        if (laneId) {
+            lane = BUBBLE_LANES.find((l) => l.id === laneId);
         } else {
-            // 随机模式：原有逻辑
-            x = this.config.spawnMargin + 
-                Math.random() * (this.canvasWidth - 2 * this.config.spawnMargin);
-            y = this.canvasHeight + 50;
-            
-            radius = this.config.minRadius + 
-                Math.random() * (this.config.maxRadius - this.config.minRadius);
-            
-            color = this.colors[Math.floor(Math.random() * this.colors.length)];
-            
-            const speedVariation = 0.8 + Math.random() * 0.4;
-            speed = this.config.baseSpeed * speedVariation;
+            // 按顺序从左到右生成（C-D-E-G-A），循环
+            lane = BUBBLE_LANES[this.spawnSequenceIndex % BUBBLE_LANES.length];
+            this.spawnSequenceIndex++;
+        }
+        if (!lane) return;
+
+        // 若该 lane 已有未爆的泡泡，延迟再试，避免同 lane 重叠
+        const occupied = this.bubbles.some(
+            (b) => b.laneId === lane.id && !b.isPopping
+        );
+        if (occupied) {
+            // 再延迟一小段时间重试
+            this.scheduleSpawn(lane.id, 200);
+            return;
         }
 
-    // Create bubble object
+        const laneIndex = lane.id - 1;
+        const laneWidth = this.canvasWidth / (BUBBLE_LANES.length + 1);
+        const x = laneWidth * (laneIndex + 1);
+        // 固定起始高度：从左到右依次由高到低，队列再向下错开
+        const laneQueueSize = this.bubbles.filter(b => b.laneId === lane.id && !b.isPopping).length;
+        const y = this.getLaneY(lane.id, laneQueueSize);
+        const radius = this.config.minRadius;
+        const speed = this.config.baseSpeed;
+
         const bubble = {
             id: this.nextBubbleId++,
-            x, y,
+            x,
+            y,
             radius,
-            color,
+            color: lane.color,
             speed,
+            laneId: lane.id,
             isPopping: false,
             popAnimation: null,
-            floatOffset: Math.random() * Math.PI * 2, // Random phase for floating
-            floatAmplitude: 1 + Math.random() * 2,    // Small horizontal drift
-
-            // ★ 音符：命中前就决定 —— A 步骤的关键
-            note: null,
-
-            // ★ 命中冷却的时间戳（B 步骤会用）
-            lastHitAt: 0
-    };
-
-        // 绑定“悦耳”的随机音调（五声音阶，可复现随机用 __LEVEL_SEED）
-        const pick = window.AudioNotes && window.AudioNotes.pickNoteForBubble;
-        if (pick) {
-            bubble.note = pick(bubble.id, {
-                ...this.noteOptions,
-                rngSeedBase: window.__LEVEL_SEED || 0
-            });
-        } else {
-            // 兜底：AudioNotes 未加载时用 C4（避免运行时报错）
-            bubble.note = { midi: 60, freq: 261.6256, name: 'C4', rootMidi: 60, scale: 'fallback' };
-            console.warn('[BubbleManager] AudioNotes not found, using fallback note.');
-        }
+            floatOffset: 0,
+            floatAmplitude: 0,
+            note: lane.note,
+            lastHitAt: 0,
+        };
 
         this.bubbles.push(bubble);
-}
+    }
+
+    /**
+     * 带延时的生成，避免同一时间多只泡泡在同一水平线
+     */
+    scheduleSpawn(laneId = null, delayMs = 0) {
+        const timer = setTimeout(() => {
+            this.spawnBubble(laneId);
+        }, delayMs);
+        this.spawnTimers.push(timer);
+    }
+
+    /**
+     * 计算某个 lane 的基础高度（归一化到画布），队列内再向下偏移
+     */
+    getLaneY(laneId, queueIndex = 0) {
+        const ratio = LANE_HEIGHT_RATIO[(laneId - 1) % LANE_HEIGHT_RATIO.length] || 1.05;
+        const baseY = this.canvasHeight * ratio; // 统一位于画布下方
+        const step = this.config.minRadius * 3; // 队列向下轻微偏移，避免贴合
+        return baseY + queueIndex * step;
+    }
     
     /**
      * Update positions of all bubbles
@@ -192,20 +203,7 @@ class BubbleManager {
         
         this.bubbles.forEach(bubble => {
             if (!bubble.isPopping) {
-                // Move bubble upward at consistent speed
-                // gameSpeed: 0.5 = slow (50%), 1.0 = normal (100%), 1.5 = fast (150%)
                 bubble.y -= bubble.speed * gameSpeed;
-                
-                // Add subtle horizontal floating motion for natural appearance
-                const floatX = Math.sin(time * 0.5 + bubble.floatOffset) * bubble.floatAmplitude;
-                bubble.x += floatX * 0.1; // Very subtle horizontal drift
-                
-                // Keep bubbles within horizontal bounds
-                if (bubble.x < bubble.radius) {
-                    bubble.x = bubble.radius;
-                } else if (bubble.x > this.canvasWidth - bubble.radius) {
-                    bubble.x = this.canvasWidth - bubble.radius;
-                }
             }
         });
     }
@@ -217,21 +215,16 @@ class BubbleManager {
         const initialCount = this.bubbles.length;
         
         // Remove bubbles that are above the screen (with some margin)
-        this.bubbles = this.bubbles.filter(bubble => {
-            const shouldRemove = bubble.y <= -bubble.radius - 50;
-            
-            // 记录未被戳中的泡泡（失败事件）
-            if (shouldRemove && !bubble.isPopping && window.autismFeatures) {
-                window.autismFeatures.recordMiss();
+        const remaining = [];
+        this.bubbles.forEach(bubble => {
+            const shouldRemove = bubble.y <= -bubble.radius - 10;
+            if (shouldRemove) {
+                this.respawnSameLane(bubble);
+            } else {
+                remaining.push(bubble);
             }
-            
-            return !shouldRemove;
         });
-        
-        const removedCount = initialCount - this.bubbles.length;
-        if (removedCount > 0) {
-            console.log(`Removed ${removedCount} offscreen bubbles`);
-        }
+        this.bubbles = remaining;
     }
     
     /**
@@ -323,10 +316,19 @@ class BubbleManager {
      * Remove a specific bubble by ID
      */
     removeBubble(bubbleId) {
-        const initialLength = this.bubbles.length;
-        this.bubbles = this.bubbles.filter(bubble => bubble.id !== bubbleId);
+        const remaining = [];
+        let removedBubble = null;
+        this.bubbles.forEach(bubble => {
+            if (bubble.id === bubbleId) {
+                removedBubble = bubble;
+            } else {
+                remaining.push(bubble);
+            }
+        });
+        this.bubbles = remaining;
         
-        if (this.bubbles.length < initialLength) {
+        if (removedBubble) {
+            this.respawnSameLane(removedBubble);
             console.log(`Removed bubble ${bubbleId}`);
             return true;
         }
@@ -363,6 +365,22 @@ class BubbleManager {
         }
         return false;
     }
+
+    /**
+     * 鼠标点击检测：找到第一个距离<=半径的泡泡并触发 pop
+     */
+    checkCollision(x, y) {
+        for (const bubble of this.bubbles) {
+            const dx = bubble.x - x;
+            const dy = bubble.y - y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist <= bubble.radius) {
+                const ok = this.popBubble(bubble.id);
+                return ok ? bubble : null;
+            }
+        }
+        return null;
+    }
     
     /**
      * Set spawn rate (bubbles per second)
@@ -378,6 +396,9 @@ class BubbleManager {
     clearAllBubbles() {
         const count = this.bubbles.length;
         this.bubbles = [];
+        // 取消未执行的定时生成
+        this.spawnTimers.forEach(t => clearTimeout(t));
+        this.spawnTimers = [];
         console.log(`Cleared ${count} bubbles`);
     }
     
@@ -428,7 +449,18 @@ class BubbleManager {
         
         console.log(`BubbleManager resized to ${newWidth}x${newHeight}`);
     }
+
+    /**
+     * 同 lane 立即重生，保持颜色/音符稳定映射
+     */
+    respawnSameLane(bubble) {
+        if (!bubble || typeof bubble.laneId !== 'number') return;
+        // 随机延时 150-350ms，避免多只泡泡同一水平线同时出现
+        const delay = 150 + Math.random() * 200;
+        this.scheduleSpawn(bubble.laneId, delay);
+    }
 }
 
 // Export for use in other modules
 window.BubbleManager = BubbleManager;
+window.BUBBLE_LANES = BUBBLE_LANES;

@@ -28,7 +28,44 @@ const elements = {
     pauseOverlay: null,
     encouragementMessage: null,
     // pictogramToggle: null
+    sessionSettingsBtn: null,
+    sessionModal: null,
+    sessionStartBtn: null,
+    sessionCloseBtn: null,
+    sessionVolume: null,
+    sessionDensity: null,
+    sessionTimbre: null,
+    sessionLatency: null,
+    sessionImmediate: null,
+    sessionReward: null,
+    sessionPreset: null,
+    };
+
+const SESSION_DEFAULTS = {
+    volumeLevel: 'medium',
+    rhythmDensity: 'normal',
+    timbre: 'soft',
+    feedbackLatencyMs: 0,
+    immediateToneMode: 'full',
+    rewardEnabled: true,
 };
+
+let statusUpdatesStarted = false;
+let pausedBySettings = false;
+
+function syncSessionElements() {
+    elements.sessionSettingsBtn = document.getElementById('session-settings-btn');
+    elements.sessionModal = document.getElementById('session-settings-modal');
+    elements.sessionStartBtn = document.getElementById('session-start-btn');
+    elements.sessionCloseBtn = document.getElementById('session-close-btn');
+    elements.sessionVolume = document.getElementById('session-volume');
+    elements.sessionDensity = document.getElementById('session-density');
+    elements.sessionTimbre = document.getElementById('session-timbre');
+    elements.sessionLatency = document.getElementById('session-latency');
+    elements.sessionImmediate = document.getElementById('session-immediate');
+    elements.sessionReward = document.getElementById('session-reward');
+    elements.sessionPreset = document.getElementById('session-preset');
+}
 
 /**
  * Initialize the application when DOM is loaded
@@ -67,6 +104,11 @@ function initializeUIElements() {
     elements.inputMode = document.getElementById('input-mode');
     elements.bubbleCount = document.getElementById('bubble-count');
     elements.poseModeToggle = document.getElementById('pose-mode-toggle');
+    syncSessionElements();
+
+    // 如果缺少设置 UI，尝试注入
+    ensureSessionSettingsUI();
+    syncSessionElements();
     
     // Verify all elements were found
     const missingElements = Object.entries(elements)
@@ -82,10 +124,103 @@ function initializeUIElements() {
     return true;
 }
 
+function ensureSessionSettingsUI() {
+    let controls = document.querySelector('.controls');
+    if (!controls) {
+        const header = document.querySelector('.game-header');
+        if (header) {
+            controls = document.createElement('div');
+            controls.className = 'controls';
+            header.appendChild(controls);
+            console.warn('[SettingsUI] .controls 不存在，已创建回退容器');
+        }
+    }
+    if (!controls) {
+        console.warn('[SettingsUI] 未找到控件容器，跳过 UI 注入');
+        return;
+    }
+    if (controls && !document.getElementById('session-settings-btn')) {
+        const btn = document.createElement('button');
+        btn.id = 'session-settings-btn';
+        btn.className = 'control-btn';
+        btn.textContent = '⚙️ 参数';
+        controls.insertBefore(btn, controls.querySelector('.speed-controls') || null);
+    }
+    if (controls && !document.getElementById('session-preset')) {
+        const preset = document.createElement('div');
+        preset.id = 'session-preset';
+        preset.className = 'session-preset';
+        preset.textContent = 'Preset: medium / normal / soft';
+        controls.appendChild(preset);
+    }
+    if (!document.getElementById('session-settings-modal')) {
+        const modal = document.createElement('div');
+        modal.id = 'session-settings-modal';
+        modal.className = 'settings-modal hidden';
+        modal.innerHTML = `
+          <div class="settings-panel">
+            <h2>Session Settings</h2>
+            <p class="settings-subtitle">当前设置会用于本轮 / 下一轮</p>
+            <div class="settings-grid">
+              <div class="settings-field">
+                <label for="session-volume">音量</label>
+                <select id="session-volume">
+                  <option value="low">low</option>
+                  <option value="medium" selected>medium</option>
+                  <option value="high">high</option>
+                </select>
+              </div>
+              <div class="settings-field">
+                <label for="session-density">节奏密度</label>
+                <select id="session-density">
+                  <option value="sparse">sparse</option>
+                  <option value="normal" selected>normal</option>
+                </select>
+              </div>
+              <div class="settings-field">
+                <label for="session-timbre">音色</label>
+                <select id="session-timbre">
+                  <option value="soft" selected>soft</option>
+                  <option value="bright">bright</option>
+                </select>
+              </div>
+              <div class="settings-field">
+                <label for="session-latency">反馈延迟</label>
+                <select id="session-latency">
+                  <option value="0" selected>Immediate</option>
+                  <option value="500">0.5s Delay</option>
+                </select>
+              </div>
+              <div class="settings-field">
+                <label for="session-immediate">即时音模式</label>
+                <select id="session-immediate">
+                  <option value="full" selected>Full</option>
+                  <option value="visual">Visual-only</option>
+                  <option value="off">Off</option>
+                </select>
+              </div>
+              <div class="settings-field">
+                <label for="session-reward">Reward 音乐</label>
+                <select id="session-reward">
+                  <option value="on" selected>On</option>
+                  <option value="off">Off</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-actions">
+              <button id="session-start-btn" class="result-btn primary">开始本轮</button>
+              <button id="session-close-btn" class="result-btn secondary">关闭</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+    }
+}
+
 /**
  * Initialize the game engine
  */
-async function initializeGame() {
+  async function initializeGame() {
     try {
       // ① 固定随机种子
       if (!window.__LEVEL_SEED) {
@@ -118,65 +253,9 @@ async function initializeGame() {
   
       // （可选）额外加一个 keydown 解锁兜底；pointerdown 已在 GameEngine 里加过
       window.addEventListener('keydown', () => window.popSynth?.resume?.(), { once: true });
-  
-      // ③ 启动游戏 & 开一局 60s
-      setTimeout(() => {
-        // 重置自闭症友好功能的成就系统
-        if (window.autismFeatures) {
-          window.autismFeatures.resetAchievements();
-        }
-        
-        // 启动游戏结果追踪
-        if (window.gameResultManager) {
-          window.gameResultManager.startGame();
-          console.log('Game result tracking started');
-        }
-        
-        game.start();
-        game.startRound(60, {
-          clearHistory: true,
-          onEnd: async (session) => {
-            try {
-              console.log('Round ended:', session);
-              game.stop();
-              
-              // 触发游戏结果管理器结束游戏并显示结果
-              if (window.gameResultManager) {
-                window.gameResultManager.endGame();
-                console.log('📊 游戏结果已显示');
-              }
-          
-              // 可选的音乐生成（默认禁用以避免卡顿）
-              // 可以通过 window.enableAIMusic = true 来动态启用AI音乐生成
-              const enableMusicGeneration = window.enableAIMusic || false;
-              
-              if (enableMusicGeneration) {
-                setTimeout(async () => {
-                  try {
-                    await generateMelodyFromSession(session, {
-                      primerBars: 2,
-                      continueSteps: 64, // 减少步数，加快生成
-                      temperature: 1.0,
-                      downloadMidi: false, // 禁用自动下载
-                    });
-                  } catch (musicError) {
-                    console.warn('🎵 音乐生成失败，但不影响游戏结果:', musicError);
-                  }
-                }, 100);
-              } else {
-                // 创建更丰富的测试音乐供结果窗口使用
-                window.lastGeneratedSequence = createRichTestMusic(session);
-                console.log('🎵 音乐生成已禁用，使用丰富测试序列');
-              }
-            } catch (err) {
-              console.error('[AI] submit failed:', err);
-              showEncouragementMessage('AI 生成失败：查看控制台错误', 1500);
-            }
-          }
-        });
-        showEncouragementMessage('欢迎！移动鼠标/伸出食指戳泡泡！');
-        startStatusUpdates();
-      }, 1000);
+
+      // 默认弹出设置窗口，等待专家点击“开始本轮”
+      openSessionSettingsModal();
   
     } catch (e) {
       console.error('Failed to initialize game:', e);
@@ -195,6 +274,15 @@ function setupEventListeners() {
     elements.slowBtn.addEventListener('click', () => handleSpeedChange(0.5, 'slow'));
     elements.normalBtn.addEventListener('click', () => handleSpeedChange(1.0, 'normal'));
     elements.fastBtn.addEventListener('click', () => handleSpeedChange(1.5, 'fast'));
+
+    // Session settings
+    if (elements.sessionSettingsBtn && elements.sessionStartBtn && elements.sessionCloseBtn) {
+        elements.sessionSettingsBtn.addEventListener('click', () => openSessionSettingsModal());
+        elements.sessionStartBtn.addEventListener('click', () => handleStartRound());
+        elements.sessionCloseBtn.addEventListener('click', () => closeSessionSettingsModal());
+    } else {
+        console.warn('[SettingsUI] 设置控件未就绪，跳过绑定');
+    }
     
     // Keyboard shortcuts
     document.addEventListener('keydown', handleKeyboardInput);
@@ -465,6 +553,137 @@ function startStatusUpdates() {
     }, 500);
   }
 
+function getCurrentSessionConfig() {
+    return window.sessionConfig || game?.sessionConfig || { ...SESSION_DEFAULTS };
+}
+
+function updateSessionPresetLabel(config) {
+    if (!elements.sessionPreset) return;
+    elements.sessionPreset.textContent = `Preset: ${config.volumeLevel} / ${config.rhythmDensity} / ${config.timbre}`;
+}
+
+function loadSessionSettingsForm(config) {
+    if (!elements.sessionModal) return;
+    elements.sessionVolume.value = config.volumeLevel || 'medium';
+    elements.sessionDensity.value = config.rhythmDensity || 'normal';
+    elements.sessionTimbre.value = config.timbre || 'soft';
+    elements.sessionLatency.value = String(config.feedbackLatencyMs ?? 0);
+    elements.sessionImmediate.value = config.immediateToneMode || 'full';
+    elements.sessionReward.value = config.rewardEnabled ? 'on' : 'off';
+    updateSessionPresetLabel(config);
+}
+
+function readSessionSettingsForm() {
+    return {
+        volumeLevel: elements.sessionVolume.value,
+        rhythmDensity: elements.sessionDensity.value,
+        timbre: elements.sessionTimbre.value,
+        feedbackLatencyMs: parseInt(elements.sessionLatency.value, 10) || 0,
+        immediateToneMode: elements.sessionImmediate.value,
+        rewardEnabled: elements.sessionReward.value === 'on',
+    };
+}
+
+function openSessionSettingsModal() {
+    if (!elements.sessionModal) {
+        ensureSessionSettingsUI();
+        syncSessionElements();
+    }
+    if (!elements.sessionModal) {
+        console.warn('[SettingsUI] session-settings-modal 缺失，请确认加载了最新 index.html');
+        return;
+    }
+    const config = getCurrentSessionConfig();
+    loadSessionSettingsForm(config);
+    if (elements.sessionStartBtn) {
+        elements.sessionStartBtn.textContent = game?.roundActive ? '保存设置' : '开始本轮';
+    }
+    if (game?.roundActive && !game.isPaused) {
+        game.togglePause();
+        pausedBySettings = true;
+    }
+    elements.sessionModal.classList.remove('hidden');
+}
+
+function closeSessionSettingsModal() {
+    elements.sessionModal.classList.add('hidden');
+    if (pausedBySettings && game?.isPaused) {
+        game.togglePause();
+    }
+    pausedBySettings = false;
+}
+
+function handleStartRound() {
+    const config = readSessionSettingsForm();
+    window.sessionConfig = { ...config };
+    game?.setSessionConfig?.(config);
+    updateSessionPresetLabel(config);
+
+    if (game?.roundActive) {
+        showEncouragementMessage('设置已保存，将在下一轮生效', 1200);
+        closeSessionSettingsModal();
+        return;
+    }
+
+    if (!game?.isRunning) {
+        game.start();
+    }
+
+    if (!statusUpdatesStarted) {
+        startStatusUpdates();
+        statusUpdatesStarted = true;
+    }
+
+    // 重置成就与结果统计
+    if (window.autismFeatures) {
+        window.autismFeatures.resetAchievements();
+    }
+    if (window.gameResultManager) {
+        window.gameResultManager.startGame();
+    }
+
+    game.startRound(60, {
+        clearHistory: true,
+        onEnd: async (session) => {
+            try {
+                console.log('Round ended:', session);
+                game.stop();
+
+                if (window.gameResultManager) {
+                    window.gameResultManager.endGame();
+                    console.log('📊 游戏结果已显示');
+                }
+
+                const enableMusicGeneration = window.enableAIMusic || false;
+                if (enableMusicGeneration) {
+                    setTimeout(async () => {
+                        try {
+                            await generateMelodyFromSession(session, {
+                                primerBars: 2,
+                                continueSteps: 64,
+                                temperature: 1.0,
+                                downloadMidi: false,
+                            });
+                        } catch (musicError) {
+                            console.warn('🎵 音乐生成失败，但不影响游戏结果:', musicError);
+                        }
+                    }, 100);
+                } else {
+                    window.lastGeneratedSequence = createRichTestMusic(session);
+                    console.log('🎵 音乐生成已禁用，使用丰富测试序列');
+                    window.gameResultManager?.updateDebugPanel?.();
+                }
+            } catch (err) {
+                console.error('[AI] submit failed:', err);
+                showEncouragementMessage('AI 生成失败：查看控制台错误', 1500);
+            }
+        },
+    });
+
+    showEncouragementMessage('欢迎！移动鼠标/伸出食指戳泡泡！');
+    closeSessionSettingsModal();
+}
+
 // Export functions for global access
 window.gameApp = {
     updateScoreDisplay,
@@ -473,6 +692,11 @@ window.gameApp = {
     getBubbleManager,
     getHandTracker,
     startStatusUpdates
+};
+
+window.sessionUI = {
+    open: openSessionSettingsModal,
+    close: closeSessionSettingsModal
 };
 
 // ===== Magenta MusicRNN（固定 CPU 后端）=====
@@ -614,6 +838,7 @@ const MAGENTA = {
     
     // 保存生成的音乐序列供后续播放
     window.lastGeneratedSequence = full;
+    window.gameResultManager?.updateDebugPanel?.();
     
     window.gameApp?.showEncouragementMessage?.('已生成并播放 AI 旋律 🎵', 1500);
   
@@ -756,90 +981,25 @@ const MAGENTA = {
   
   /**
    * 创建丰富的测试音乐序列
-   * 基于游戏数据生成更有趣的多乐器音乐
+   * 改为调用安全的儿歌风格生成器（AdvancedMusicGenerator）
    */
   function createRichTestMusic(session) {
-    const bubbleCount = session?.notes?.length || 0;
-    const duration = Math.max(12, Math.min(30, bubbleCount * 0.4)); // 12-30秒
-    
-    // 基于泡泡数量选择音乐风格和乐器
-    let musicStyle, instruments;
-    if (bubbleCount < 10) {
-      musicStyle = 'gentle'; // 温和风格
-      instruments = [
-        { channel: 0, program: 0, name: 'Acoustic Grand Piano' },
-        { channel: 1, program: 73, name: 'Flute' }
-      ];
-    } else if (bubbleCount < 25) {
-      musicStyle = 'cheerful'; // 欢快风格
-      instruments = [
-        { channel: 0, program: 0, name: 'Acoustic Grand Piano' },
-        { channel: 1, program: 40, name: 'Violin' },
-        { channel: 2, program: 32, name: 'Acoustic Bass' }
-      ];
-    } else {
-      musicStyle = 'orchestral'; // 管弦乐风格
-      instruments = [
-        { channel: 0, program: 0, name: 'Acoustic Grand Piano' },
-        { channel: 1, program: 40, name: 'Violin' },
-        { channel: 2, program: 41, name: 'Viola' },
-        { channel: 3, program: 32, name: 'Acoustic Bass' },
-        { channel: 4, program: 73, name: 'Flute' }
-      ];
+    try {
+      if (typeof AdvancedMusicGenerator !== 'function') {
+        console.warn('AdvancedMusicGenerator not ready, returning empty sequence');
+        return { notes: [], tempos: [{ time: 0, qpm: 72 }], totalTime: 0 };
+      }
+      const generator = new AdvancedMusicGenerator();
+      if (window.sessionConfig) {
+        generator.setSessionConfig(window.sessionConfig);
+      }
+      const actions = generator.buildActionTraceFromSession(session);
+      const { sequence } = generator.generateReward(actions, generator.getSessionConfig());
+      return sequence;
+    } catch (e) {
+      console.warn('Fallback createRichTestMusic failed:', e);
+      return { notes: [], tempos: [{ time: 0, qpm: 72 }], totalTime: 0 };
     }
-    
-    // 音阶选择
-    const scales = {
-      gentle: [60, 62, 64, 67, 69], // 五声音阶，温和
-      cheerful: [60, 62, 64, 65, 67, 69, 71, 72], // 大调音阶，欢快
-      orchestral: [60, 62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79] // 扩展音阶
-    };
-    
-    const scale = scales[musicStyle];
-    const notes = [];
-    
-    // 1. 生成主旋律（钢琴 - 通道0）
-    generateMelody(notes, scale, duration, 0, 0);
-    
-    // 2. 生成和声层（根据乐器数量）
-    if (instruments.length > 1) {
-      generateHarmony(notes, scale, duration, 1, instruments[1].program);
-    }
-    
-    if (instruments.length > 2) {
-      generateBassLine(notes, scale, duration, 2, instruments[2].program);
-    }
-    
-    if (instruments.length > 3) {
-      generateCounterMelody(notes, scale, duration, 3, instruments[3].program);
-    }
-    
-    if (instruments.length > 4) {
-      generateOrnaments(notes, scale, duration, 4, instruments[4].program);
-    }
-    
-    // 3. 添加打击乐（如果是管弦乐风格）
-    if (musicStyle === 'orchestral') {
-      generatePercussion(notes, duration);
-    }
-    
-    // 4. 创建动态变化
-    addDynamicChanges(notes, duration);
-    
-    return {
-      ticksPerQuarter: 220,
-      totalTime: duration,
-      tempos: [{ time: 0, qpm: 120 }],
-      notes: notes,
-      instrumentInfos: instruments.map(inst => ({
-        instrument: inst.channel,
-        program: inst.program,
-        isDrum: inst.channel === 9, // 通道9是打击乐
-        name: inst.name
-      })),
-      keySignatures: [{ time: 0, key: 0, scale: 0 }],
-      timeSignatures: [{ time: 0, numerator: 4, denominator: 4 }]
-    };
   }
   
   // 生成主旋律

@@ -36,6 +36,7 @@ class GameResultManager {
     const playAgainBtn = document.getElementById("play-again-btn");
     const finishGameBtn = document.getElementById("finish-game-btn");
     const playMusicBtn = document.getElementById("play-music-btn");
+    const openRewardControlsBtn = document.getElementById("open-reward-controls-btn");
 
     if (playAgainBtn) {
       playAgainBtn.addEventListener("click", () => {
@@ -52,6 +53,17 @@ class GameResultManager {
     if (playMusicBtn) {
       playMusicBtn.addEventListener("click", () => {
         this.playGeneratedMusic();
+      });
+    }
+
+    if (openRewardControlsBtn) {
+      openRewardControlsBtn.addEventListener("click", () => {
+        if (window.sessionUI?.open) {
+          window.sessionUI.open();
+          return;
+        }
+        const modal = document.getElementById("session-settings-modal");
+        if (modal) modal.classList.remove("hidden");
       });
     }
   }
@@ -364,6 +376,156 @@ class GameResultManager {
 
     // 添加数字动画效果
     this.animateNumbers();
+
+    // 更新 Debug Panel
+    this.updateDebugPanel();
+  }
+
+  formatPatternType(type) {
+    switch (type) {
+      case "sequential_pentatonic":
+        return "顺序型（CDEGA 上行）";
+      case "repetitive":
+        return "重复型（高重复）";
+      case "exploratory":
+        return "探索型（高多样）";
+      case "sparse":
+        return "稀疏型（低密度）";
+      case "dense":
+        return "密集型（高密度）";
+      case "mixed":
+        return "混合型";
+      default:
+        return "未知";
+    }
+  }
+
+  formatStyleType(type) {
+    switch (type) {
+      case "sequential":
+        return "顺序型";
+      case "repetitive":
+        return "重复型";
+      case "exploratory":
+        return "探索型";
+      case "disabled":
+        return "Reward 已关闭";
+      default:
+        return "混合/默认";
+    }
+  }
+
+  fillDebugList(listEl, items) {
+    if (!listEl) return;
+    listEl.innerHTML = "";
+    items.forEach((item) => {
+      const li = document.createElement("li");
+      li.textContent = item;
+      listEl.appendChild(li);
+    });
+  }
+
+  updateDebugPanel() {
+    const patternList = document.getElementById("debug-pattern-list");
+    const ruleList = document.getElementById("debug-rule-list");
+    const structureList = document.getElementById("debug-structure-list");
+
+    if (!patternList || !ruleList || !structureList) return;
+
+    const sequence = window.lastGeneratedSequence;
+    const payload = sequence?.debugPayload;
+
+    if (!payload) {
+      this.fillDebugList(patternList, ["暂无 reward 或 debugPayload"]);
+      this.fillDebugList(ruleList, ["请先完成一局以生成分析"]);
+      this.fillDebugList(structureList, ["等待生成结构摘要"]);
+      return;
+    }
+
+    const patternSummary = payload.patternSummary || {};
+    const melodySpec = payload.melodySpec || {};
+    const sessionConfig = payload.sessionConfig || {};
+
+    const motifs = Array.isArray(patternSummary.detectedMotifs)
+      ? patternSummary.detectedMotifs.map((m) => m.join("-"))
+      : [];
+
+    const patternItems = [
+      `Pattern type: ${this.formatPatternType(patternSummary.patternType)}`,
+      `N clicks: ${patternSummary.totalClicks || 0}`,
+      `Dominant note: ${patternSummary.dominantNote || "-"}`,
+      `Dominant lane ratio: ${Number(patternSummary.dominantLaneRatio || 0).toFixed(2)} (Lane ${patternSummary.dominantLaneId || "-"})`,
+      `Run-length: avg ${Number(patternSummary.avgRunLen || 0).toFixed(2)}, max ${patternSummary.maxRunLen || 0}`,
+      `Lane diversity: ${patternSummary.laneDiversity || 0} / 5`,
+      `Transition entropy H: ${Number(patternSummary.transitionEntropy || 0).toFixed(2)}`,
+      `Strict-hit(CDEGA): ${patternSummary.hitStrict || 0}, coverage ${(Number(patternSummary.coverage || 0) * 100).toFixed(0)}%`,
+      `Hits/sec: ${Number(patternSummary.hitsPerSec || 0).toFixed(2)}`,
+      `Detected motifs: ${motifs.length ? motifs.join(", ") : "无"}`,
+    ];
+    this.fillDebugList(patternList, patternItems);
+
+    const ruleItems = [];
+    const seqPass =
+      (patternSummary.hitStrict || 0) >= 2 &&
+      (patternSummary.coverage || 0) >= 0.25 &&
+      (patternSummary.laneDiversity || 0) >= 4;
+    const repPass =
+      (patternSummary.dominantLaneRatio || 0) >= 0.6 &&
+      ((patternSummary.maxRunLen || 0) >= 4 || (patternSummary.avgRunLen || 0) >= 2.2) &&
+      (patternSummary.transitionEntropy || 0) <= 0.4;
+    const expPass =
+      (patternSummary.laneDiversity || 0) >= 5 &&
+      (patternSummary.transitionEntropy || 0) >= 0.6 &&
+      (patternSummary.dominantLaneRatio || 0) <= 0.45;
+
+    if (patternSummary.patternType === "sequential_pentatonic") {
+      ruleItems.push("Sequential 条件：hit_strict ≥ 2 且 coverage ≥ 0.25 且 div ≥ 4");
+      ruleItems.push("CDEGA strict-hit：窗口 ≤ 7，且相邻点击间隔 ≤ 1.2s");
+    } else if (patternSummary.patternType === "repetitive") {
+      ruleItems.push("Repetitive 条件：r_dom ≥ 0.60 且 run-length 明显 且 H ≤ 0.40");
+    } else if (patternSummary.patternType === "exploratory") {
+      ruleItems.push("Exploratory 条件：div = 5 且 H ≥ 0.60 且 r_dom ≤ 0.45");
+      ruleItems.push("且不满足 Sequential / Repetitive");
+    } else {
+      ruleItems.push("Mixed：最大分数 < 0.6 或第一/第二差距 < 0.15");
+    }
+
+    const seqScore = Number(patternSummary.seqScore || 0).toFixed(2);
+    const repScore = Number(patternSummary.repScore || 0).toFixed(2);
+    const expScore = Number(patternSummary.expScore || 0).toFixed(2);
+    const scores = [
+      { label: "S_seq", score: Number(patternSummary.seqScore || 0) },
+      { label: "S_rep", score: Number(patternSummary.repScore || 0) },
+      { label: "S_exp", score: Number(patternSummary.expScore || 0) },
+    ].sort((a, b) => b.score - a.score);
+    const gap = (scores[0].score - scores[1].score).toFixed(2);
+    ruleItems.push(`Scores: S_seq=${seqScore}, S_rep=${repScore}, S_exp=${expScore}, gap=${gap}`);
+
+    const density = melodySpec.rhythmDensity || sessionConfig.rhythmDensity || "normal";
+    const densityDesc = density === "sparse" ? "每 2 拍 1 音" : "每拍 1 音 / 少量八分";
+    ruleItems.push(`节奏密度: ${density}（${densityDesc}）`);
+
+    const timbre = melodySpec.timbre || sessionConfig.timbre || "soft";
+    ruleItems.push(`音色: ${timbre}（soft 更柔和 / bright 更明亮）`);
+
+    ruleItems.push(
+      `安全约束: ${melodySpec.scale || "C pentatonic"} / BPM ${Math.round(melodySpec.bpm || 72)} / 和声 I-V`
+    );
+    this.fillDebugList(ruleList, ruleItems);
+
+    const phrase = melodySpec.phrases?.[0] || {};
+    const phraseNotes = Array.isArray(phrase.notes) ? phrase.notes.length : 0;
+    const chordBars = Array.isArray(melodySpec.chordTrack) ? melodySpec.chordTrack.length : 0;
+    const totalTime = typeof sequence?.totalTime === "number" ? sequence.totalTime.toFixed(1) : "0";
+
+    const structureItems = [
+      `结构风格: ${this.formatStyleType(melodySpec.styleType)}`,
+      `主旋律: ${phrase.label || "-"}，音符数 ${phraseNotes}`,
+      `时长: ${totalTime}s，BPM ${Math.round(melodySpec.bpm || 72)}`,
+      `左手和弦: I/V 长音（${chordBars} 小节）`,
+      `Reward 开关: ${sessionConfig.rewardEnabled === false ? "Off" : "On"}`,
+    ];
+    this.fillDebugList(structureList, structureItems);
   }
 
   /**
@@ -489,6 +651,7 @@ class GameResultManager {
                 // 为新一轮创建新的丰富测试音乐
                 window.lastGeneratedSequence = createRichTestMusic(session);
                 console.log("🎵 新一轮音乐已生成");
+                window.gameResultManager?.updateDebugPanel?.();
               }
             } catch (err) {
               console.error("[AI] submit failed:", err);
