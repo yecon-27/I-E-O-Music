@@ -112,7 +112,6 @@
                     </div>
                 </div>
                 
-                <button id="camera-toggle" class="control-btn">📷 摄像头: 关</button>
                 <div id="session-preset" class="session-preset">Preset: medium / normal / soft</div>
             </div>
         </div>
@@ -122,7 +121,6 @@
                 <canvas id="game-canvas" width="1024" height="768"></canvas>
                 <div id="click-trail" class="click-trail"></div>
                 <div id="lane-labels" class="lane-labels"></div>
-                <div id="hand-cursor" class="hand-cursor"></div>
                 <div id="encouragement-message" class="encouragement-message"></div>
                 <div id="pause-overlay" class="pause-overlay hidden">
                     <h2>游戏已暂停</h2>
@@ -164,21 +162,89 @@
                         </div>
                         <div id="debug-panel" class="debug-panel">
                             <div class="debug-header">
-                                <h3>Debug Panel：Pattern → Reward</h3>
-                                <button id="open-reward-controls-btn" class="result-btn secondary small">Open Reward Controls</button>
+                                <h3>Post-Session Review</h3>
+                                <div class="debug-header-actions">
+                                    <button id="debug-help-toggle" class="result-btn secondary small">How to read</button>
+                                    <button id="open-reward-controls-btn" class="result-btn secondary small">Open Reward Controls</button>
+                                </div>
                             </div>
-                            <div class="debug-grid">
-                                <div class="debug-block">
-                                    <h4>检测到的 Pattern</h4>
-                                    <ul id="debug-pattern-list" class="debug-list"></ul>
+                            <div id="debug-help" class="debug-help hidden">
+                                <strong>How to read this panel</strong>
+                                <ol>
+                                    <li>Q1：判定结果 + 安全状态</li>
+                                    <li>Q2：证据可视化 + Top-3 规则</li>
+                                    <li>Q3：反事实解释 + 审计</li>
+                                </ol>
+                            </div>
+                            <div class="debug-section">
+                                <h4 class="debug-section-title">Q1：系统判定了什么？是否安全？</h4>
+                                <div class="debug-overview">
+                                    <div class="overview-item">
+                                        <span class="overview-label">判定结果（主/次）</span>
+                                        <span id="debug-summary-decision" class="overview-value">-</span>
+                                    </div>
+                                    <div class="overview-item">
+                                        <span class="overview-label">置信度</span>
+                                        <span id="debug-summary-confidence" class="overview-value">-</span>
+                                    </div>
+                                    <div class="overview-item">
+                                        <span class="overview-label">安全状态</span>
+                                        <span id="debug-summary-safety" class="overview-value">-</span>
+                                    </div>
+                                    <div class="overview-item">
+                                        <span class="overview-label">Reward 概览</span>
+                                        <span id="debug-summary-reward" class="overview-value">-</span>
+                                    </div>
                                 </div>
-                                <div class="debug-block">
-                                    <h4>触发的规则</h4>
-                                    <ul id="debug-rule-list" class="debug-list"></ul>
+                                <div id="debug-summary-reason" class="debug-reason">-</div>
+                                <div class="debug-grid">
+                                    <div class="debug-block">
+                                        <h4>生成结构摘要</h4>
+                                        <ul id="debug-structure-list" class="debug-list"></ul>
+                                    </div>
                                 </div>
-                                <div class="debug-block">
-                                    <h4>生成结构摘要</h4>
-                                    <ul id="debug-structure-list" class="debug-list"></ul>
+                            </div>
+
+                            <div class="debug-section">
+                                <h4 class="debug-section-title">Q2：为什么这么判？证据长什么样？</h4>
+                                <div class="debug-grid">
+                                    <div class="debug-block debug-block-wide">
+                                        <h4>点击轨迹与 Lane 分布</h4>
+                                        <canvas id="debug-timeline" class="debug-timeline" width="640" height="90"></canvas>
+                                        <div id="debug-lane-bars" class="debug-lane-bars"></div>
+                                    </div>
+                                    <div class="debug-block">
+                                        <h4>检测到的 Pattern（数字证据）</h4>
+                                        <ul id="debug-what-list" class="debug-list"></ul>
+                                    </div>
+                                    <div class="debug-block">
+                                        <h4>Top-3 规则证据</h4>
+                                        <ul id="debug-why-list" class="debug-list"></ul>
+                                        <details class="debug-details">
+                                            <summary>查看更多规则</summary>
+                                            <ul id="debug-why-details-list" class="debug-list"></ul>
+                                        </details>
+                                    </div>
+                                    <div class="debug-block">
+                                        <h4>三类证据得分（用于决策）</h4>
+                                        <ul id="debug-signal-list" class="debug-list"></ul>
+                                        <div class="debug-note">最终标签=得分最高者；差距越大→置信度越高。</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="debug-section">
+                                <h4 class="debug-section-title">Q3：如果专家不同意，怎么调？</h4>
+                                <div class="debug-grid">
+                                    <div class="debug-block">
+                                        <h4>What would change the decision?</h4>
+                                        <ul id="debug-counterfactual-list" class="debug-list"></ul>
+                                    </div>
+                                    <div class="debug-block">
+                                        <h4>约束审计（Audit）</h4>
+                                        <ul id="debug-constraint-list" class="debug-list"></ul>
+                                        <div class="debug-note">Safety by design: reward 生成器=约束集合，而不是事后过滤。</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -191,37 +257,11 @@
                 </div>
             </div>
             
-            <div class="pose-panel">
-                <div class="pose-panel-header">
-                    <h3>Tokyo2020 姿势检测</h3>
-                    <div class="pose-controls">
-                        <button id="pose-mode-toggle" class="pose-btn">小人模式</button>
-                    </div>
-                </div>
-                <div class="pose-display">
-                    <video id="pose-video" class="pose-video" autoplay muted playsinline></video>
-                    <canvas id="pose-canvas" class="pose-canvas"></canvas>
-                </div>
-                <div class="pose-status">
-                    <div class="status-item">
-                        <span>手势状态: </span>
-                        <span id="gesture-status">未检测</span>
-                    </div>
-                    <div class="status-item">
-                        <span>左手: </span>
-                        <span id="left-hand-status">❌</span>
-                    </div>
-                    <div class="status-item">
-                        <span>右手: </span>
-                        <span id="right-hand-status">❌</span>
-                    </div>
-                </div>
-            </div>
         </div>
         
         <div class="game-footer">
             <div class="instructions">
-                <p>🎯 移动光标戳泡泡！点击"摄像头"按钮启用手势控制</p>
+                <p>🎯 移动光标戳泡泡！</p>
                 <div class="status-display" style="display: flex; gap: 20px; justify-content: center; margin: 10px 0;">
                     <div class="status-item">
                         <span>输入方式: </span>
@@ -295,14 +335,6 @@
         </div>
     </div>
 
-    <!-- MediaPipe Pose (Tokyo2020 Style) -->
-    <!-- MediaPipe Pose (local, no CDN) -->
-  <!-- MediaPipe 本地脚本（相对 src/frontend/index.html） -->
-    <script src="./vendor/mediapipe/camera_utils/camera_utils.js"></script>
-    <script src="./vendor/mediapipe/control_utils/control_utils.js"></script>
-    <script src="./vendor/mediapipe/drawing_utils/drawing_utils.js"></script>
-    <script src="./vendor/mediapipe/pose/pose.js"></script>
-
     <script src="js/audio-notes.js"></script>
     <script src="js/audio-engine.js"></script>
     <script src="js/note-log.js"></script>
@@ -311,13 +343,9 @@
     <script src="js/game-result-manager.js"></script>
     <script src="js/game-integration.js"></script>
     <script src="js/debug-collision.js"></script>
-    <script src="js/debug-hand-tracking.js"></script>
-    <script src="js/hand-data-tracker.js"></script>
 
     <script src="js/bubble-manager.js"></script>
-    <script src="js/pose-detector.js"></script>
     <script src="js/collision-detector.js"></script>
-    <script src="js/hand-tracker.js"></script>
     <script src="js/game-engine.js"></script>
 
   

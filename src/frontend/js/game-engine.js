@@ -159,16 +159,9 @@ class GameEngine {
         // this.handTracker.onHandLost     = () => { this.handPositions.rightHand.visible = false; };
         // this.handTracker.initialize();
       
-        // 3) PoseDetector
-        this.poseDetector = new PoseDetector(this.canvas.width, this.canvas.height);
-        this.poseDetector.setHandMoveCallback((positions) => {
-          this.handPositions.leftHand  = { ...positions.leftHand  };
-          this.handPositions.rightHand = { ...positions.rightHand };
-          
-          // 检测快速移动作为尝试戳泡泡的动作
-          this.detectPopAttempts(positions);
-        });
-        await this.poseDetector.init();
+        // 3) 仅保留鼠标控制（移除摄像头/姿态检测）
+        this.poseDetector = null;
+        this.setupMouseFallback();
       
         // 通知感官设置系统音频已就绪
         if (window.autismFeatures && typeof window.autismFeatures.onAudioSystemReady === 'function') {
@@ -682,7 +675,7 @@ class GameEngine {
      * Setup mouse fallback for testing without camera
      */
     setupMouseFallback() {
-        console.log('Setting up mouse fallback for pose detection');
+        console.log('Setting up mouse control');
         
         // Track mouse position as right hand
         this.canvas.addEventListener('mousemove', (event) => {

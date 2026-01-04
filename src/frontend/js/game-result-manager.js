@@ -37,6 +37,8 @@ class GameResultManager {
     const finishGameBtn = document.getElementById("finish-game-btn");
     const playMusicBtn = document.getElementById("play-music-btn");
     const openRewardControlsBtn = document.getElementById("open-reward-controls-btn");
+    const debugHelpToggleBtn = document.getElementById("debug-help-toggle");
+    const debugHelp = document.getElementById("debug-help");
 
     if (playAgainBtn) {
       playAgainBtn.addEventListener("click", () => {
@@ -64,6 +66,13 @@ class GameResultManager {
         }
         const modal = document.getElementById("session-settings-modal");
         if (modal) modal.classList.remove("hidden");
+      });
+    }
+
+    if (debugHelpToggleBtn && debugHelp) {
+      debugHelpToggleBtn.addEventListener("click", () => {
+        const isHidden = debugHelp.classList.toggle("hidden");
+        debugHelpToggleBtn.textContent = isHidden ? "How to read" : "Hide help";
       });
     }
   }
@@ -403,15 +412,15 @@ class GameResultManager {
   formatStyleType(type) {
     switch (type) {
       case "sequential":
-        return "顺序型";
+        return "顺序型（CDEGA 上下行）";
       case "repetitive":
-        return "重复型";
+        return "重复型（loop）";
       case "exploratory":
-        return "探索型";
+        return "探索型（走动）";
       case "disabled":
         return "Reward 已关闭";
       default:
-        return "混合/默认";
+        return "混合型";
     }
   }
 
@@ -426,45 +435,180 @@ class GameResultManager {
   }
 
   updateDebugPanel() {
-    const patternList = document.getElementById("debug-pattern-list");
-    const ruleList = document.getElementById("debug-rule-list");
+    const decisionEl = document.getElementById("debug-summary-decision");
+    const confidenceEl = document.getElementById("debug-summary-confidence");
+    const safetyEl = document.getElementById("debug-summary-safety");
+    const rewardEl = document.getElementById("debug-summary-reward");
+    const reasonEl = document.getElementById("debug-summary-reason");
+    const whatList = document.getElementById("debug-what-list");
+    const whyList = document.getElementById("debug-why-list");
+    const whyDetailsList = document.getElementById("debug-why-details-list");
     const structureList = document.getElementById("debug-structure-list");
+    const signalList = document.getElementById("debug-signal-list");
+    const counterfactualList = document.getElementById("debug-counterfactual-list");
+    const constraintList = document.getElementById("debug-constraint-list");
+    const timelineCanvas = document.getElementById("debug-timeline");
+    const laneBars = document.getElementById("debug-lane-bars");
 
-    if (!patternList || !ruleList || !structureList) return;
+    if (!decisionEl || !confidenceEl || !safetyEl || !rewardEl || !whatList || !whyList || !signalList) {
+      return;
+    }
 
     const sequence = window.lastGeneratedSequence;
     const payload = sequence?.debugPayload;
 
     if (!payload) {
-      this.fillDebugList(patternList, ["暂无 reward 或 debugPayload"]);
-      this.fillDebugList(ruleList, ["请先完成一局以生成分析"]);
-      this.fillDebugList(structureList, ["等待生成结构摘要"]);
+      decisionEl.textContent = "-";
+      confidenceEl.textContent = "-";
+      safetyEl.textContent = "-";
+      rewardEl.textContent = "-";
+      if (reasonEl) reasonEl.textContent = "-";
+      this.fillDebugList(whatList, ["请先完成一局以生成分析"]);
+      this.fillDebugList(whyList, ["暂无判定规则"]);
+      if (whyDetailsList) {
+        this.fillDebugList(whyDetailsList, []);
+      }
+      if (structureList) {
+        this.fillDebugList(structureList, ["等待 reward 生成"]);
+      }
+      this.fillDebugList(signalList, ["暂无信号强度"]);
+      if (counterfactualList) {
+        this.fillDebugList(counterfactualList, ["暂无反事实解释"]);
+      }
+      if (constraintList) {
+        this.fillDebugList(constraintList, ["等待 reward 生成后进行审计"]);
+      }
+      if (timelineCanvas) {
+        this.drawEmptyTimeline(timelineCanvas);
+      }
+      if (laneBars) {
+        laneBars.innerHTML = "";
+      }
       return;
     }
 
     const patternSummary = payload.patternSummary || {};
     const melodySpec = payload.melodySpec || {};
     const sessionConfig = payload.sessionConfig || {};
+    const actionTrace = Array.isArray(payload.actionTrace) ? payload.actionTrace : [];
+
+    const seqScore = Number(patternSummary.seqScore || 0);
+    const repScore = Number(patternSummary.repScore || 0);
+    const expScore = Number(patternSummary.expScore || 0);
+    const scorePairs = [
+      { label: "sequential_pentatonic", score: seqScore },
+      { label: "repetitive", score: repScore },
+      { label: "exploratory", score: expScore },
+    ].sort((a, b) => b.score - a.score);
+    const maxScore = scorePairs[0]?.score || 0;
+    const gap = (scorePairs[0]?.score || 0) - (scorePairs[1]?.score || 0);
+
+    const decisionMap = {
+      sequential_pentatonic: "Sequential / 顺序型",
+      repetitive: "Repetitive / 重复型",
+      exploratory: "Exploratory / 探索型",
+      mixed: "Mixed / 混合型",
+      sparse: "Sparse / 稀疏",
+      dense: "Dense / 密集",
+    };
+    const primaryLabel =
+      decisionMap[patternSummary.patternType] ||
+      decisionMap[scorePairs[0]?.label] ||
+      "Mixed / 混合型";
+    const secondaryLabel =
+      scorePairs[1] && scorePairs[1].score >= 0.4
+        ? decisionMap[scorePairs[1].label] || null
+        : null;
+    decisionEl.textContent = secondaryLabel
+      ? `${primaryLabel}（次：${secondaryLabel}）`
+      : primaryLabel;
+
+    let confidence = "低";
+    if (maxScore >= 0.75 && gap >= 0.2) confidence = "高";
+    else if (maxScore >= 0.6 && gap >= 0.15) confidence = "中";
+    confidenceEl.textContent = confidence;
+
+    const bpm = melodySpec.bpm || sequence?.tempos?.[0]?.qpm || 0;
+    const bpmOk = bpm >= 65 && bpm <= 75;
+    const bpmBorderline = bpmOk && (bpm - 65 < 1.5 || 75 - bpm < 1.5);
+
+    const pitchClassSet = new Set([0, 2, 4, 7, 9]); // C D E G A
+    const notes = Array.isArray(sequence?.notes) ? sequence.notes : [];
+    let inScaleCount = 0;
+    notes.forEach((n) => {
+      if (pitchClassSet.has((n.pitch || 0) % 12)) {
+        inScaleCount += 1;
+      }
+    });
+    const notesInScale = notes.length > 0 && inScaleCount === notes.length;
+    const outOfScaleCount = Math.max(0, notes.length - inScaleCount);
+
+    const beatSec = bpm ? 60 / bpm : 0.8;
+    const melodyNotes = notes
+      .filter((n) => n && typeof n.startTime === "number" && typeof n.endTime === "number")
+      .filter((n) => n.endTime - n.startTime <= beatSec * 1.2)
+      .sort((a, b) => a.startTime - b.startTime);
+    let maxJump = 0;
+    for (let i = 1; i < melodyNotes.length; i++) {
+      const prev = melodyNotes[i - 1].velocity || 0;
+      const curr = melodyNotes[i].velocity || 0;
+      const denom = Math.max(prev, curr, 1);
+      const jump = Math.abs(curr - prev) / denom;
+      if (jump > maxJump) maxJump = jump;
+    }
+    const dynamicOk = melodyNotes.length < 2 ? true : maxJump <= 0.15;
+    const dynamicBorderline = dynamicOk && maxJump >= 0.12;
+
+    const chordTrack = Array.isArray(melodySpec.chordTrack)
+      ? melodySpec.chordTrack
+      : [];
+    const badChordCount = chordTrack.filter((c) => c.chordType !== "I" && c.chordType !== "V").length;
+    const harmonyOk = chordTrack.length === 0 ? true : badChordCount === 0;
+
+    const safe = notesInScale && bpmOk && dynamicOk && harmonyOk;
+    const violationCount = [notesInScale, bpmOk, dynamicOk, harmonyOk].filter((v) => !v).length;
+    safetyEl.textContent = safe
+      ? `Safe（0 违规）${bpmBorderline || dynamicBorderline ? " ⚠️" : ""}`
+      : `Needs attention（${violationCount} 违规）`;
+
+    const density = melodySpec.rhythmDensity || sessionConfig.rhythmDensity || "normal";
+    const densityLabel = density === "sparse" ? "稀疏" : "正常";
+    const totalTime = typeof sequence?.totalTime === "number" ? sequence.totalTime.toFixed(1) : "0";
+    rewardEl.textContent = `BPM ${Math.round(bpm)} | ${melodySpec.scale || "C pentatonic"} | 和声 I/V | 时长 ${totalTime}s | 密度 ${densityLabel}`;
+
+    if (reasonEl) {
+      const coverage = Number(patternSummary.coverage || 0).toFixed(2);
+      const rDom = Number(patternSummary.dominantLaneRatio || 0).toFixed(2);
+      const entropy = Number(patternSummary.transitionEntropy || 0).toFixed(2);
+      const reasonMap = {
+        sequential_pentatonic: `CDEGA 严格命中 ${patternSummary.hitStrict || 0} 次，覆盖率 ${coverage} → 顺序型`,
+        repetitive: `单 lane 占比 ${rDom}，连续重复明显 → 重复型`,
+        exploratory: `lane 覆盖 ${patternSummary.laneDiversity || 0}，跳转不确定性 ${entropy} → 探索型`,
+        mixed: `得分接近（gap ${gap.toFixed(2)}）→ 混合型`,
+        sparse: "点击稀疏 → 稀疏型",
+        dense: "点击密集 → 密集型",
+      };
+      reasonEl.textContent = reasonMap[patternSummary.patternType] || "判定依据不足，默认混合型";
+    }
 
     const motifs = Array.isArray(patternSummary.detectedMotifs)
       ? patternSummary.detectedMotifs.map((m) => m.join("-"))
       : [];
+    const rate = Number(patternSummary.hitsPerSec || 0);
+    const rateLabel = rate < 0.8 ? "慢" : rate < 1.6 ? "中" : "快";
 
-    const patternItems = [
+    const whatItems = [
       `Pattern type: ${this.formatPatternType(patternSummary.patternType)}`,
-      `N clicks: ${patternSummary.totalClicks || 0}`,
+      `点击数: ${patternSummary.totalClicks || 0}`,
       `Dominant note: ${patternSummary.dominantNote || "-"}`,
-      `Dominant lane ratio: ${Number(patternSummary.dominantLaneRatio || 0).toFixed(2)} (Lane ${patternSummary.dominantLaneId || "-"})`,
-      `Run-length: avg ${Number(patternSummary.avgRunLen || 0).toFixed(2)}, max ${patternSummary.maxRunLen || 0}`,
-      `Lane diversity: ${patternSummary.laneDiversity || 0} / 5`,
-      `Transition entropy H: ${Number(patternSummary.transitionEntropy || 0).toFixed(2)}`,
-      `Strict-hit(CDEGA): ${patternSummary.hitStrict || 0}, coverage ${(Number(patternSummary.coverage || 0) * 100).toFixed(0)}%`,
-      `Hits/sec: ${Number(patternSummary.hitsPerSec || 0).toFixed(2)}`,
-      `Detected motifs: ${motifs.length ? motifs.join(", ") : "无"}`,
+      `点击速度: ${rateLabel}（${rate.toFixed(2)} /s）`,
+      `Lane 覆盖: ${patternSummary.laneDiversity || 0} / 5`,
+      `主导 lane: Lane ${patternSummary.dominantLaneId || "-"}（${(Number(patternSummary.dominantLaneRatio || 0) * 100).toFixed(0)}%）`,
+      `CDEGA 严格命中: ${patternSummary.hitStrict || 0}（覆盖 ${(Number(patternSummary.coverage || 0) * 100).toFixed(0)}%）`,
+      `常见 motifs: ${motifs.length ? motifs.join(", ") : "无"}`,
     ];
-    this.fillDebugList(patternList, patternItems);
+    this.fillDebugList(whatList, whatItems);
 
-    const ruleItems = [];
     const seqPass =
       (patternSummary.hitStrict || 0) >= 2 &&
       (patternSummary.coverage || 0) >= 0.25 &&
@@ -476,56 +620,373 @@ class GameResultManager {
     const expPass =
       (patternSummary.laneDiversity || 0) >= 5 &&
       (patternSummary.transitionEntropy || 0) >= 0.6 &&
-      (patternSummary.dominantLaneRatio || 0) <= 0.45;
+      (patternSummary.dominantLaneRatio || 0) <= 0.45 &&
+      !seqPass &&
+      !repPass;
 
+    const ruleLine = (label, value, threshold, comparator = ">=") => {
+      const useInt = Number.isInteger(threshold) && Number.isInteger(value);
+      const valueText = useInt ? value.toFixed(0) : value.toFixed(2);
+      const thresholdText = useInt ? threshold.toFixed(0) : threshold.toFixed(2);
+      const delta = value - threshold;
+      const deltaText = `${delta >= 0 ? "+" : ""}${useInt ? delta.toFixed(0) : delta.toFixed(2)}`;
+      const pass = comparator === "<=" ? value <= threshold : value >= threshold;
+      return `${pass ? "✅" : "❌"} ${label}: ${valueText} ${comparator} ${thresholdText} (${deltaText})`;
+    };
+
+    const topRules = [];
     if (patternSummary.patternType === "sequential_pentatonic") {
-      ruleItems.push("Sequential 条件：hit_strict ≥ 2 且 coverage ≥ 0.25 且 div ≥ 4");
-      ruleItems.push("CDEGA strict-hit：窗口 ≤ 7，且相邻点击间隔 ≤ 1.2s");
+      topRules.push(
+        ruleLine("CDEGA 严格命中", Number(patternSummary.hitStrict || 0), 2, ">="),
+        ruleLine("顺序覆盖率", Number(patternSummary.coverage || 0), 0.25, ">="),
+        ruleLine("lane 多样性", Number(patternSummary.laneDiversity || 0), 4, ">=")
+      );
     } else if (patternSummary.patternType === "repetitive") {
-      ruleItems.push("Repetitive 条件：r_dom ≥ 0.60 且 run-length 明显 且 H ≤ 0.40");
+      const maxRun = Number(patternSummary.maxRunLen || 0);
+      const avgRun = Number(patternSummary.avgRunLen || 0);
+      const runValue = Math.max(maxRun, avgRun);
+      const runLabel = maxRun >= 4 ? "最大连续长度" : "平均连续长度";
+      const runThreshold = maxRun >= 4 ? 4 : 2.2;
+      topRules.push(
+        ruleLine("单 lane 占比", Number(patternSummary.dominantLaneRatio || 0), 0.6, ">="),
+        ruleLine(runLabel, runValue, runThreshold, ">="),
+        ruleLine("跳转不确定性 H", Number(patternSummary.transitionEntropy || 0), 0.4, "<=")
+      );
     } else if (patternSummary.patternType === "exploratory") {
-      ruleItems.push("Exploratory 条件：div = 5 且 H ≥ 0.60 且 r_dom ≤ 0.45");
-      ruleItems.push("且不满足 Sequential / Repetitive");
+      topRules.push(
+        ruleLine("lane 覆盖", Number(patternSummary.laneDiversity || 0), 5, ">="),
+        ruleLine("跳转不确定性 H", Number(patternSummary.transitionEntropy || 0), 0.6, ">="),
+        ruleLine("单 lane 占比", Number(patternSummary.dominantLaneRatio || 0), 0.45, "<=")
+      );
     } else {
-      ruleItems.push("Mixed：最大分数 < 0.6 或第一/第二差距 < 0.15");
+      topRules.push(
+        `得分差距不足（gap ${gap.toFixed(2)} < 0.15）`,
+        `顺序性 ${seqScore.toFixed(2)} / 重复性 ${repScore.toFixed(2)} / 探索性 ${expScore.toFixed(2)}`,
+        "建议：提高某一类的关键阈值命中，再观察判定变化"
+      );
+    }
+    this.fillDebugList(whyList, topRules);
+
+    const check = (label, pass, detail) =>
+      `${pass ? "✅" : "❌"} ${label}${detail ? `（${detail}）` : ""}`;
+
+    const fullRules = [
+      check(
+        "Sequential: 严格序列 ≥2",
+        (patternSummary.hitStrict || 0) >= 2,
+        `hit_strict ${patternSummary.hitStrict || 0}`
+      ),
+      check(
+        "Sequential: 覆盖率 ≥25%",
+        (patternSummary.coverage || 0) >= 0.25,
+        `cov ${(Number(patternSummary.coverage || 0) * 100).toFixed(0)}%`
+      ),
+      check(
+        "Sequential: lane 多样性 ≥4",
+        (patternSummary.laneDiversity || 0) >= 4,
+        `div ${patternSummary.laneDiversity || 0}`
+      ),
+      check(
+        "Sequential: 相邻点击间隔 ≤1.2s",
+        (patternSummary.hitStrict || 0) >= 1,
+        "strict-hit 内置"
+      ),
+      check(
+        "Repetitive: 单 lane 占比 ≥60%",
+        (patternSummary.dominantLaneRatio || 0) >= 0.6,
+        `r_dom ${(Number(patternSummary.dominantLaneRatio || 0) * 100).toFixed(0)}%`
+      ),
+      check(
+        "Repetitive: run-length 明显",
+        (patternSummary.maxRunLen || 0) >= 4 || (patternSummary.avgRunLen || 0) >= 2.2,
+        `max ${patternSummary.maxRunLen || 0}, avg ${Number(patternSummary.avgRunLen || 0).toFixed(2)}`
+      ),
+      check(
+        "Repetitive: 跳转不确定性 ≤0.40",
+        (patternSummary.transitionEntropy || 0) <= 0.4,
+        `H ${Number(patternSummary.transitionEntropy || 0).toFixed(2)}`
+      ),
+      check(
+        "Exploratory: lane 覆盖 =5",
+        (patternSummary.laneDiversity || 0) >= 5,
+        `div ${patternSummary.laneDiversity || 0}`
+      ),
+      check(
+        "Exploratory: 跳转不确定性 ≥0.60",
+        (patternSummary.transitionEntropy || 0) >= 0.6,
+        `H ${Number(patternSummary.transitionEntropy || 0).toFixed(2)}`
+      ),
+      check(
+        "Exploratory: 单 lane 占比 ≤45%",
+        (patternSummary.dominantLaneRatio || 0) <= 0.45,
+        `r_dom ${(Number(patternSummary.dominantLaneRatio || 0) * 100).toFixed(0)}%`
+      ),
+      `最终选择：${decisionMap[patternSummary.patternType] || "Mixed / 混合型"}（最高分 ${maxScore.toFixed(2)}，差距 ${gap.toFixed(2)}）`,
+    ];
+    if (whyDetailsList) {
+      this.fillDebugList(whyDetailsList, fullRules);
     }
 
-    const seqScore = Number(patternSummary.seqScore || 0).toFixed(2);
-    const repScore = Number(patternSummary.repScore || 0).toFixed(2);
-    const expScore = Number(patternSummary.expScore || 0).toFixed(2);
-    const scores = [
-      { label: "S_seq", score: Number(patternSummary.seqScore || 0) },
-      { label: "S_rep", score: Number(patternSummary.repScore || 0) },
-      { label: "S_exp", score: Number(patternSummary.expScore || 0) },
-    ].sort((a, b) => b.score - a.score);
-    const gap = (scores[0].score - scores[1].score).toFixed(2);
-    ruleItems.push(`Scores: S_seq=${seqScore}, S_rep=${repScore}, S_exp=${expScore}, gap=${gap}`);
+    if (structureList) {
+      const phraseNotes = Array.isArray(melodySpec.phrases?.[0]?.notes)
+        ? melodySpec.phrases[0].notes
+        : [];
+      const noteCount = phraseNotes.length;
+      const previewNotes = noteCount
+        ? phraseNotes.slice(0, 8).join("-")
+        : "-";
+      const motifPreview = noteCount > 8 ? `${previewNotes}…` : previewNotes;
+      const timbreLabel = (sessionConfig.timbre || melodySpec.timbre || "soft") === "bright"
+        ? "bright（明亮）"
+        : "soft（柔和）";
+      const volumeLabel = sessionConfig.volumeLevel || "medium";
+      const latencyLabel = Number(sessionConfig.feedbackLatencyMs || 0) > 0 ? "0.5s Delay" : "Immediate";
+      const rewardEnabled = sessionConfig.rewardEnabled !== false;
 
-    const density = melodySpec.rhythmDensity || sessionConfig.rhythmDensity || "normal";
-    const densityDesc = density === "sparse" ? "每 2 拍 1 音" : "每拍 1 音 / 少量八分";
-    ruleItems.push(`节奏密度: ${density}（${densityDesc}）`);
+      const structureItems = [
+        `结构风格: ${this.formatStyleType(melodySpec.styleType)}`,
+        `主旋律: ${motifPreview}（${noteCount} 音）`,
+        `时长: ${totalTime}s | BPM ${Math.round(bpm)}`,
+        `左手和弦: ${chordTrack.length ? "I/V 长音" : "无"}`,
+        `音色/密度: ${timbreLabel} / ${densityLabel}`,
+        `配置: 音量 ${volumeLabel} | 延迟 ${latencyLabel} | Reward ${rewardEnabled ? "On" : "Off"}`,
+      ];
+      this.fillDebugList(structureList, structureItems);
+    }
 
-    const timbre = melodySpec.timbre || sessionConfig.timbre || "soft";
-    ruleItems.push(`音色: ${timbre}（soft 更柔和 / bright 更明亮）`);
-
-    ruleItems.push(
-      `安全约束: ${melodySpec.scale || "C pentatonic"} / BPM ${Math.round(melodySpec.bpm || 72)} / 和声 I-V`
-    );
-    this.fillDebugList(ruleList, ruleItems);
-
-    const phrase = melodySpec.phrases?.[0] || {};
-    const phraseNotes = Array.isArray(phrase.notes) ? phrase.notes.length : 0;
-    const chordBars = Array.isArray(melodySpec.chordTrack) ? melodySpec.chordTrack.length : 0;
-    const totalTime = typeof sequence?.totalTime === "number" ? sequence.totalTime.toFixed(1) : "0";
-
-    const structureItems = [
-      `结构风格: ${this.formatStyleType(melodySpec.styleType)}`,
-      `主旋律: ${phrase.label || "-"}，音符数 ${phraseNotes}`,
-      `时长: ${totalTime}s，BPM ${Math.round(melodySpec.bpm || 72)}`,
-      `左手和弦: I/V 长音（${chordBars} 小节）`,
-      `Reward 开关: ${sessionConfig.rewardEnabled === false ? "Off" : "On"}`,
+    const signalItems = [
+      `顺序证据: ${this.renderSignalBar(seqScore)} ${this.scoreLabel(seqScore)} (${Math.round(seqScore * 100)}%)`,
+      `重复证据: ${this.renderSignalBar(repScore)} ${this.scoreLabel(repScore)} (${Math.round(repScore * 100)}%)`,
+      `探索证据: ${this.renderSignalBar(expScore)} ${this.scoreLabel(expScore)} (${Math.round(expScore * 100)}%)`,
     ];
-    this.fillDebugList(structureList, structureItems);
+    this.fillDebugList(signalList, signalItems);
+
+    if (counterfactualList) {
+      const cfItems = [];
+      if (patternSummary.patternType === "sequential_pentatonic") {
+        cfItems.push(
+          `若 strict-hit < 2（当前 ${patternSummary.hitStrict || 0}）或 coverage < 0.25（当前 ${(Number(patternSummary.coverage || 0)).toFixed(2)}），则不判顺序型`,
+          `若 r_dom ≥ 0.60（当前 ${(Number(patternSummary.dominantLaneRatio || 0)).toFixed(2)}），更可能转为重复型`,
+          `若 H ≥ 0.60 且 lane 覆盖=5（当前 ${patternSummary.laneDiversity || 0}），更可能转为探索型`
+        );
+      } else if (patternSummary.patternType === "repetitive") {
+        cfItems.push(
+          `若 r_dom < 0.60（当前 ${(Number(patternSummary.dominantLaneRatio || 0)).toFixed(2)}），则不判重复型`,
+          `若连续重复减弱（max<4 且 avg<2.2），则重复证据不足`,
+          `若 H ≥ 0.60 且 lane 覆盖高，可能转为探索型`
+        );
+      } else if (patternSummary.patternType === "exploratory") {
+        cfItems.push(
+          `若 lane 覆盖 < 5（当前 ${patternSummary.laneDiversity || 0}），则不判探索型`,
+          `若 H < 0.60（当前 ${(Number(patternSummary.transitionEntropy || 0)).toFixed(2)}），探索证据不足`,
+          `若 r_dom ≥ 0.60，则更可能判为重复型`
+        );
+      } else {
+        const primary = scorePairs[0];
+        const secondary = scorePairs[1];
+        cfItems.push(
+          `若 ${decisionMap[primary?.label] || "某类"} 得分 > 0.60 且领先 > 0.15，则不再混合`,
+          `当前差距 ${gap.toFixed(2)}，提高主类证据或降低次类证据可改变判定`
+        );
+        if (secondary) {
+          cfItems.push(
+            `次高分为 ${decisionMap[secondary.label] || "其他"}（${secondary.score.toFixed(2)}）`
+          );
+        }
+      }
+      this.fillDebugList(counterfactualList, cfItems);
+    }
+
+    if (timelineCanvas) {
+      const { indices } = this.detectStrictSequenceIndices(actionTrace, {
+        maxWindow: 7,
+        maxGapSec: 1.2,
+      });
+      this.drawActionTimeline(timelineCanvas, actionTrace, indices);
+    }
+    if (laneBars) {
+      this.renderLaneBars(laneBars, actionTrace);
+    }
+
+    if (constraintList) {
+      const checks = [
+        `${notesInScale ? "✅" : "❌"} 音阶限制：${inScaleCount}/${notes.length} 在 C-D-E-G-A${outOfScaleCount ? `（超出 ${outOfScaleCount}）` : ""}`,
+        `${bpmOk ? "✅" : "❌"} 速度限制：65–75 BPM（当前 ${Math.round(bpm)})`,
+        `${dynamicOk ? "✅" : "❌"} 动态跳变：最大 ${(maxJump * 100).toFixed(0)}%（阈值 15%）`,
+        `${harmonyOk ? "✅" : "❌"} 和声限制：${badChordCount ? `超出 ${badChordCount}` : "仅 I-V"}`,
+      ];
+      this.fillDebugList(constraintList, checks);
+    }
+  }
+
+  renderSignalBar(score) {
+    const filled = Math.max(0, Math.min(5, Math.round(score * 5)));
+    const empty = 5 - filled;
+    return `[${"■".repeat(filled)}${"□".repeat(empty)}]`;
+  }
+
+  scoreLabel(score) {
+    if (score >= 0.75) return "高";
+    if (score >= 0.55) return "中";
+    return "低";
+  }
+
+  detectStrictSequenceIndices(actions, { maxWindow = 7, maxGapSec = 1.2 } = {}) {
+    const indices = new Set();
+    if (!Array.isArray(actions) || actions.length < 5) {
+      return { indices };
+    }
+    const ordered = [...actions].sort(
+      (a, b) => (a.timeOffset || 0) - (b.timeOffset || 0)
+    );
+    const target = ["C", "D", "E", "G", "A"];
+    const letters = ordered.map((a) => (a.note || "C")[0]);
+    for (let i = 0; i < ordered.length; i++) {
+      if (letters[i] !== "C") continue;
+      const windowEnd = i + maxWindow - 1;
+      let lastIdx = i;
+      let lastTime = ordered[i].timeOffset || 0;
+      const local = [i];
+      let ok = true;
+      for (let t = 1; t < target.length; t++) {
+        let foundIdx = -1;
+        for (let j = lastIdx + 1; j < ordered.length && j <= windowEnd; j++) {
+          if (letters[j] !== target[t]) continue;
+          const dt = (ordered[j].timeOffset || 0) - lastTime;
+          if (dt <= maxGapSec) {
+            foundIdx = j;
+            break;
+          }
+          break;
+        }
+        if (foundIdx < 0) {
+          ok = false;
+          break;
+        }
+        local.push(foundIdx);
+        lastIdx = foundIdx;
+        lastTime = ordered[foundIdx].timeOffset || lastTime;
+      }
+      if (ok) {
+        local.forEach((idx) => indices.add(idx));
+      }
+    }
+    return { indices, ordered };
+  }
+
+  getLanePalette() {
+    if (Array.isArray(window.BUBBLE_LANES) && window.BUBBLE_LANES.length) {
+      return {
+        colors: window.BUBBLE_LANES.map((lane) => lane.color),
+        labels: window.BUBBLE_LANES.map((lane) => lane.note?.name?.[0] || "C"),
+      };
+    }
+    return {
+      colors: ["#e34f4f", "#f28c28", "#f2c14f", "#3e7ab8", "#4b4ba8"],
+      labels: ["C", "D", "E", "G", "A"],
+    };
+  }
+
+  drawEmptyTimeline(canvas) {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const width = canvas.clientWidth || canvas.width;
+    const height = canvas.clientHeight || canvas.height;
+    canvas.width = width;
+    canvas.height = height;
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = "#f5f3f0";
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  drawActionTimeline(canvas, actions, highlightIndices = new Set()) {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const width = canvas.clientWidth || canvas.width;
+    const height = canvas.clientHeight || canvas.height;
+    canvas.width = width;
+    canvas.height = height;
+    ctx.clearRect(0, 0, width, height);
+
+    const padding = 10;
+    const laneCount = 5;
+    const laneHeight = (height - padding * 2) / (laneCount - 1 || 1);
+    const duration = 60;
+    const palette = this.getLanePalette();
+
+    ctx.strokeStyle = "#e8dcc6";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < laneCount; i++) {
+      const y = padding + i * laneHeight;
+      ctx.beginPath();
+      ctx.moveTo(padding, y);
+      ctx.lineTo(width - padding, y);
+      ctx.stroke();
+    }
+    ctx.fillStyle = "#8b7355";
+    ctx.font = "10px sans-serif";
+    palette.labels.forEach((label, idx) => {
+      const y = padding + idx * laneHeight + 3;
+      ctx.fillText(label, 2, y);
+    });
+
+    if (!Array.isArray(actions) || actions.length === 0) {
+      return;
+    }
+
+    const ordered = [...actions].sort(
+      (a, b) => (a.timeOffset || 0) - (b.timeOffset || 0)
+    );
+    ordered.forEach((action, idx) => {
+      const x = padding + ((action.timeOffset || 0) / duration) * (width - padding * 2);
+      const laneIndex = Math.max(0, Math.min(laneCount - 1, (action.laneId || 1) - 1));
+      const y = padding + laneIndex * laneHeight;
+      ctx.beginPath();
+      ctx.fillStyle = palette.colors[laneIndex] || "#888";
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
+      ctx.fill();
+      if (highlightIndices.has(idx)) {
+        ctx.strokeStyle = "#5d4e37";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    });
+  }
+
+  renderLaneBars(container, actions) {
+    const palette = this.getLanePalette();
+    const counts = Array(5).fill(0);
+    actions.forEach((action) => {
+      const idx = (action.laneId || 1) - 1;
+      if (idx >= 0 && idx < counts.length) {
+        counts[idx] += 1;
+      }
+    });
+    const maxCount = Math.max(...counts, 1);
+    container.innerHTML = "";
+    counts.forEach((count, idx) => {
+      const row = document.createElement("div");
+      row.className = "lane-bar-row";
+      const label = document.createElement("div");
+      label.className = "lane-bar-label";
+      label.textContent = palette.labels[idx] || `L${idx + 1}`;
+      const track = document.createElement("div");
+      track.className = "lane-bar-track";
+      const fill = document.createElement("div");
+      fill.className = "lane-bar-fill";
+      fill.style.width = `${(count / maxCount) * 100}%`;
+      fill.style.background = palette.colors[idx] || "#bbb";
+      track.appendChild(fill);
+      const value = document.createElement("div");
+      value.className = "lane-bar-value";
+      value.textContent = count;
+      row.appendChild(label);
+      row.appendChild(track);
+      row.appendChild(value);
+      container.appendChild(row);
+    });
   }
 
   /**

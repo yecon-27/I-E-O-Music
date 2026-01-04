@@ -106,6 +106,7 @@ body {
     gap: 20px;
     flex: 1;
     min-height: 0;
+    justify-content: center;
 }
 
 .game-main {
@@ -129,93 +130,6 @@ body {
     height: 600px;
     max-width: none;
     max-height: none;
-}
-
-/* Pose panel styles */
-.pose-panel {
-    width: 320px;
-    background: var(--bg-secondary);
-    border-radius: 12px;
-    padding: 15px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.pose-panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 10px;
-    border-bottom: 2px solid var(--border-light);
-}
-
-.pose-panel-header h3 {
-    margin: 0;
-    color: var(--text-primary);
-    font-size: 1.1rem;
-}
-
-.pose-display {
-    position: relative;
-    width: 100%;
-    height: 240px;
-    background: #000;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.pose-video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transform: scaleX(-1); /* 视频镜像 - 让用户看到镜像效果 */
-}
-
-.pose-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    /* 不对canvas进行CSS镜像，在代码中处理 */
-}
-
-.pose-status {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.pose-btn {
-    padding: 6px 12px;
-    background: var(--button-primary);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-}
-
-.pose-btn:hover {
-    background: var(--button-hover);
-    transform: translateY(-1px);
-}
-
-.pose-btn.active {
-    background: #FF9800;
-}
-
-/* Hand status indicators */
-#left-hand-status, #right-hand-status {
-    font-weight: bold;
-}
-
-#left-hand-status.active, #right-hand-status.active {
-    color: #4CAF50;
 }
 
 /* Encouragement messages - 移到页面顶部 */
@@ -307,38 +221,6 @@ body {
     color: var(--text-primary);
 }
 
-/* Hand cursor visualization */
-.hand-cursor {
-    position: fixed;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background-color: #FF6B6B;
-    border: 3px solid #FFFFFF;
-    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
-    pointer-events: none;
-    z-index: 15;
-    opacity: 0;
-    transition: opacity 0.1s ease;
-    transform: translate(-50%, -50%);
-}
-
-.hand-cursor.visible {
-    opacity: 1;
-    animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0%, 100% {
-        transform: translate(-50%, -50%) scale(1);
-        box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
-    }
-    50% {
-        transform: translate(-50%, -50%) scale(1.1);
-        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.6);
-    }
-}
-
 /* Enhanced button styles for new features */
 .control-btn {
     transition: all 0.3s ease;
@@ -355,37 +237,10 @@ body {
     transform: translateY(0);
 }
 
-/* Camera and pictogram specific styles */
-#camera-toggle {
-    background: linear-gradient(135deg, #4CAF50, #45a049);
-}
-
-#camera-toggle:hover {
-    background: linear-gradient(135deg, #45a049, #3d8b40);
-}
-
-#pictogram-toggle {
-    background: linear-gradient(135deg, #FF9800, #F57C00);
-}
-
-#pictogram-toggle:hover {
-    background: linear-gradient(135deg, #F57C00, #E65100);
-}
-
 /* Responsive design */
 @media (max-width: 1200px) {
     .game-area {
         flex-direction: column;
-    }
-    
-    .pose-panel {
-        width: 100%;
-        max-width: 600px;
-        margin: 0 auto;
-    }
-    
-    .pose-display {
-        height: 200px;
     }
 }
 
@@ -835,6 +690,21 @@ body.high-animation * {
     text-align: left;
 }
 
+.debug-section {
+    margin-top: 16px;
+}
+
+.debug-section:first-of-type {
+    margin-top: 0;
+}
+
+.debug-section-title {
+    margin: 0 0 10px;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    text-transform: none;
+}
+
 .debug-header {
     display: flex;
     justify-content: space-between;
@@ -843,10 +713,69 @@ body.high-animation * {
     margin-bottom: 12px;
 }
 
+.debug-header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
 .debug-header h3 {
     margin: 0;
     font-size: 1.1rem;
     color: var(--text-primary);
+}
+
+.debug-help {
+    background: #fff;
+    border-radius: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-light);
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.debug-help ol {
+    margin: 6px 0 0 18px;
+    padding: 0;
+}
+
+.debug-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.debug-reason {
+    margin-bottom: 10px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: #fff;
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.overview-item {
+    background: #fff;
+    border-radius: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-light);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.overview-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.overview-value {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    font-weight: 600;
 }
 
 .debug-grid {
@@ -862,6 +791,10 @@ body.high-animation * {
     border: 1px solid var(--border-light);
 }
 
+.debug-block-wide {
+    grid-column: 1 / -1;
+}
+
 .debug-block h4 {
     margin: 0 0 8px;
     font-size: 0.95rem;
@@ -874,6 +807,78 @@ body.high-animation * {
     font-size: 0.9rem;
     color: var(--text-primary);
     line-height: 1.4;
+}
+
+.debug-details {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.debug-details summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.debug-timeline {
+    width: 100%;
+    height: 90px;
+    border-radius: 10px;
+    border: 1px solid var(--border-light);
+    background: linear-gradient(180deg, #fff 0%, #faf7f2 100%);
+    display: block;
+    margin-bottom: 10px;
+}
+
+.debug-lane-bars {
+    display: grid;
+    gap: 6px;
+}
+
+.lane-bar-row {
+    display: grid;
+    grid-template-columns: 36px 1fr 44px;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
+.lane-bar-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+}
+
+.lane-bar-track {
+    position: relative;
+    height: 8px;
+    background: #f0ebe4;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.lane-bar-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    border-radius: 999px;
+}
+
+.lane-bar-value {
+    text-align: right;
+    color: var(--text-secondary);
+}
+
+.debug-note {
+    margin-top: 10px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    border-top: 1px dashed var(--border-light);
+    padding-top: 8px;
 }
 
 @keyframes fadeIn {
@@ -1072,7 +1077,6 @@ body.high-contrast .sensory-panel .sensory-control select option {
 }
 
 /* 如果面板里还有按钮（例如“开/关”），也强制黑字白底 */
-body.high-contrast .sensory-panel .pose-btn,
 body.high-contrast .sensory-panel .control-btn {
     background: #FFFFFF;
     color: #000000;

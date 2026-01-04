@@ -27,7 +27,6 @@ const elements = {
     fastBtn: null,
     pauseOverlay: null,
     encouragementMessage: null,
-    // pictogramToggle: null
     sessionSettingsBtn: null,
     sessionModal: null,
     sessionStartBtn: null,
@@ -99,11 +98,8 @@ function initializeUIElements() {
     elements.fastBtn = document.getElementById('fast-btn');
     elements.pauseOverlay = document.getElementById('pause-overlay');
     elements.encouragementMessage = document.getElementById('encouragement-message');
-    // elements.pictogramToggle = document.getElementById('pictogram-toggle'); // Removed as not in HTML
-    // elements.cameraToggle = document.getElementById('camera-toggle'); // Removed as not in HTML
     elements.inputMode = document.getElementById('input-mode');
     elements.bubbleCount = document.getElementById('bubble-count');
-    elements.poseModeToggle = document.getElementById('pose-mode-toggle');
     syncSessionElements();
 
     // 如果缺少设置 UI，尝试注入
@@ -289,37 +285,6 @@ function setupEventListeners() {
     
     // Window resize handling
     window.addEventListener('resize', handleWindowResize);
-    
-    // 移除重复的pictogramToggle功能，只保留pose-mode-toggle
-    
-    // Camera toggle
-    if (elements.cameraToggle) {
-        elements.cameraToggle.addEventListener('click', async () => {
-            if (!game || !game.poseDetector) return;
-            
-            try {
-                await game.poseDetector.init();
-                elements.cameraToggle.textContent = '摄像头: 开';
-                if (elements.inputMode) {
-                    elements.inputMode.textContent = '手势';
-                }
-                showEncouragementMessage('摄像头已启动！伸出食指戳泡泡！');
-            } catch (error) {
-                console.log('摄像头启动失败，继续使用鼠标模式');
-                showEncouragementMessage('摄像头启动失败，使用鼠标模式');
-            }
-        });
-    }
-    
-    // Pose mode toggle (Tokyo2020 pictogram)
-    if (elements.poseModeToggle) {
-        elements.poseModeToggle.addEventListener('click', () => {
-            if (!game || !game.poseDetector) return;
-            const enabled = game.poseDetector.togglePictogramMode();
-            elements.poseModeToggle.textContent = enabled ? '标准模式' : '小人模式';
-            elements.poseModeToggle.className = enabled ? 'pose-btn active' : 'pose-btn';
-        });
-    }
     
     console.log('Event listeners set up successfully');
 }
@@ -544,10 +509,8 @@ function startStatusUpdates() {
           elements.bubbleCount.textContent = state.bubbleCount || 0;
         }
   
-        // Update input mode based on pose detector status
-        if (elements.inputMode && game.poseDetector) {
-          const isCamera = game.poseDetector.isInitialized;
-          elements.inputMode.textContent = isCamera ? '手势' : '鼠标';
+        if (elements.inputMode) {
+          elements.inputMode.textContent = '鼠标';
         }
       }
     }, 500);
@@ -680,7 +643,7 @@ function handleStartRound() {
         },
     });
 
-    showEncouragementMessage('欢迎！移动鼠标/伸出食指戳泡泡！');
+    showEncouragementMessage('欢迎！移动鼠标戳泡泡！');
     closeSessionSettingsModal();
 }
 
