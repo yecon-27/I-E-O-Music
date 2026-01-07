@@ -47,7 +47,12 @@ body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
     line-height: 1.6;
-    overflow: hidden;
+    overflow: hidden; /* 防止滚动 */
+    width: 100vw;
+    height: 100vh;
+    position: fixed; /* 强制固定 */
+    top: 0;
+    left: 0;
 }
 
 /* 统一表单控件的基础样式 */
@@ -73,73 +78,150 @@ button, input, select, textarea {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
+    padding: 12px 20px;
     background-color: var(--bg-secondary);
     border-radius: 12px;
     margin-bottom: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    gap: 20px;
 }
 
-.score-display {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.score-label {
-    margin-right: 10px;
-}
-
-#score-value {
-    color: var(--accent-calm);
-    font-weight: 700;
-}
-
-.controls {
+.header-section {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 10px;
+}
+
+.header-left {
+    flex: 1;
+    justify-content: flex-start;
+}
+
+.header-center {
+    flex: 1;
+    justify-content: center;
+}
+
+.header-right {
+    flex: 1;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+.play-controls {
+    display: flex;
+    gap: 8px;
 }
 
 /* Button styles with autism-friendly design */
 .control-btn, .speed-btn {
-    padding: 12px 20px;
+    padding: 10px 16px;
     border: none;
     border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 500;
+    font-size: 0.95rem;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
     background-color: var(--button-primary);
     color: var(--text-primary);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    height: 40px; /* 统一高度 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+/* Primary Action Button (Pause) */
+.primary-btn {
+    background-color: #2196F3;
+    color: white;
+}
+.primary-btn:hover {
+    background-color: #1976D2;
+}
+
+/* Secondary Action Buttons (Settings, Lang) */
+.secondary-btn {
+    background-color: #E3F2FD;
+    color: #0277BD;
+    border: 1px solid #B3E5FC;
+}
+.secondary-btn:hover {
+    background-color: #B3E5FC;
 }
 
 .control-btn.panic-btn {
-    background: #f3d8d8;
-    color: #7b3b3b;
-    border: 1px solid #e3bcbc;
+    background: #FFEBEE;
+    color: #C62828;
+    border: 1px solid #FFCDD2;
 }
 
 .control-btn.panic-btn.is-muted {
-    background: #e98d8d;
+    background: #E53935;
     color: #fff;
+    border-color: #E53935;
 }
 
 .control-btn:hover, .speed-btn:hover {
-    background-color: var(--button-hover);
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .speed-controls {
     display: flex;
-    gap: 8px;
+    gap: 4px;
+    background: #E0E0E0;
+    padding: 4px;
+    border-radius: 10px;
+}
+
+.speed-btn {
+    background: transparent;
+    box-shadow: none;
+    padding: 0 12px;
+    height: 32px;
+    font-size: 1.2rem;
+    color: #757575;
+}
+
+.speed-btn:hover {
+    background: rgba(255,255,255,0.5);
+    transform: none;
 }
 
 .speed-btn.active {
-    background-color: var(--accent-soft);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    background-color: #fff;
+    color: #2196F3;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Progress Indicator Optimized */
+.progress-indicator {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 200px;
+    background: #fff;
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border-light);
+}
+
+.time-remaining {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-width: 40px;
+    text-align: right;
+}
+
+.progress-bar {
+    width: 120px;
+    height: 8px;
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
+    overflow: hidden;
 }
 
 /* Game area layout - Tokyo2020 Integration */
@@ -270,13 +352,91 @@ button, input, select, textarea {
     overflow: hidden;
 }
 
-.control-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+/* 成就提示样式 - 使用 transform: translate3d 优化性能并尝试避免布局影响 */
+.achievement-popup {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translate3d(-50%, 0, 0);
+    background: var(--success-soft);
+    color: var(--text-primary);
+    padding: 20px 30px;
+    border-radius: 16px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border: 2px solid var(--accent-soft);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    animation: achievementPop 0.5s ease-out;
+    max-width: 90vw;
+    text-align: center;
 }
 
-.control-btn:active {
-    transform: translateY(0);
+/* Encouragement messages - 移到页面顶部 */
+.encouragement-message {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translate3d(-50%, 0, 0);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    background: var(--success-soft);
+    padding: 12px 24px;
+    border-radius: 12px;
+    border: 2px solid var(--accent-soft);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-shadow: none;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1000;
+    max-width: 90vw;
+    text-align: center;
+}
+/* Lane guides and click trails - Absolute positioning to prevent layout shifts */
+.lane-labels, .click-trail {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.lane-label {
+    position: absolute;
+    top: -25px;
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.click-trail {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: 20px;
+    opacity: 0.8;
+}
+
+.trail-dot {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    border-radius: 50%;
+    text-align: center;
+    font-size: 12px;
+    color: white;
+    margin: 0 2px;
+    animation: fadeOut 2s forwards;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+@keyframes fadeOut {
+    to { opacity: 0; transform: translateY(-20px); }
 }
 
 /* Responsive design */
@@ -337,6 +497,15 @@ button, input, select, textarea {
 .control-btn:focus {
     outline: 3px solid var(--accent-calm);
     outline-offset: 2px;
+}
+
+.control-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.control-btn:active {
+    transform: translateY(0);
 }
 
 /* High contrast mode support */

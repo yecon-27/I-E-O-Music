@@ -54,15 +54,207 @@ const SESSION_DEFAULTS = {
 
 const SESSION_ENVELOPE = {
     rewardBpm: { min: 65, max: 75 },
-    rewardDurationSec: { min: 10, max: 20 },
+    rewardDurationSec: { min: 15, max: 15 },
 };
 
 let statusUpdatesStarted = false;
 let pausedBySettings = false;
 let panicMuted = false;
+let currentLang = 'zh';
 
-function clampValue(value, min, max) {
-    return Math.max(min, Math.min(max, value));
+const TRANSLATIONS = {
+    zh: {
+        'pause-btn-paused': '▶️ 继续',
+        'pause-btn-running': '⏸️ 暂停',
+        'panic-btn-muted': '🔊 恢复声音',
+        'panic-btn-unmuted': '🔇 停止/静音',
+        'settings-btn': '⚙️ 参数',
+        'sensory-btn': '🎛️ 感官设置',
+        'slow-btn': '🐌 慢速',
+        'normal-btn': '🚶 正常',
+        'fast-btn': '🏃 快速',
+        'start-round-btn': '开始本轮',
+        'save-settings-btn': '保存设置',
+        'instructions': '🎯 移动光标戳泡泡！',
+        'input-mode': '输入方式: ',
+        'bubble-count': '泡泡数: ',
+        'time-remaining': '⏱️ 剩余: ',
+        'game-paused': '游戏已暂停',
+        'click-continue': '点击继续按钮恢复游戏',
+        // Settings Modal
+        'settings-title': '游戏设置',
+        'settings-subtitle': '调整感官体验，让游戏更适合你',
+        'label-volume': '音量大小',
+        'label-density': '泡泡数量',
+        'label-timbre': '乐器音色',
+        'label-latency': '声音延迟',
+        'label-feedback': '点击反馈',
+        'label-reward': '结束音乐',
+        'btn-reset': '恢复默认',
+        'btn-start': '开始游戏',
+        'btn-close': '关闭',
+        // Options
+        'opt-low': '柔和 (Low)',
+        'opt-medium': '标准 (Medium)',
+        'opt-high': '响亮 (High)',
+        'opt-sparse': '少一点 (Sparse)',
+        'opt-normal': '正常 (Normal)',
+        'opt-soft': '柔和钢琴 (Soft)',
+        'opt-bright': '明亮小提琴 (Bright)',
+        'opt-immediate': '即时 (Immediate)',
+        'opt-delay': '稍慢 (0.5s Delay)',
+        'opt-full': '声音+视觉 (Full)',
+        'opt-visual': '仅视觉 (Visual-only)',
+        'opt-off': '关闭 (Off)',
+        'opt-on': '开启 (On)',
+        'msg-paused': '休息一下！⏸️',
+        'msg-resume': '继续加油！▶️',
+        'msg-slow': '慢慢来，很好！🐌',
+        'msg-normal': '节奏刚好！👍',
+        'msg-fast': '快速挑战！⚡',
+        'msg-welcome': '欢迎！移动鼠标戳泡泡！',
+        'msg-saved': '设置已保存，将在下一轮生效',
+        'msg-reward': 'Reward 已生成，点击“享受你创作的音乐”播放 🎵',
+        'msg-error': 'AI 生成失败：查看控制台错误',
+        'input-mouse': '鼠标'
+    },
+    en: {
+        'pause-btn-paused': '▶️ Resume',
+        'pause-btn-running': '⏸️ Pause',
+        'panic-btn-muted': '🔊 Unmute',
+        'panic-btn-unmuted': '🔇 Stop/Mute',
+        'settings-btn': '⚙️ Settings',
+        'sensory-btn': '🎛️ Sensory',
+        'slow-btn': '🐌 Slow',
+        'normal-btn': '🚶 Normal',
+        'fast-btn': '🏃 Fast',
+        'start-round-btn': 'Start Round',
+        'save-settings-btn': 'Save Settings',
+        'instructions': '🎯 Move cursor to pop bubbles!',
+        'input-mode': 'Input: ',
+        'bubble-count': 'Bubbles: ',
+        'time-remaining': '⏱️ Time: ',
+        'game-paused': 'Game Paused',
+        'click-continue': 'Click resume button to continue',
+        // Settings Modal
+        'settings-title': 'Game Settings',
+        'settings-subtitle': 'Adjust sensory experience',
+        'label-volume': 'Volume',
+        'label-density': 'Density',
+        'label-timbre': 'Timbre',
+        'label-latency': 'Latency',
+        'label-feedback': 'Feedback',
+        'label-reward': 'End Music',
+        'btn-reset': 'Reset',
+        'btn-start': 'Start Game',
+        'btn-close': 'Close',
+        // Options
+        'opt-low': 'Low',
+        'opt-medium': 'Medium',
+        'opt-high': 'High',
+        'opt-sparse': 'Sparse',
+        'opt-normal': 'Normal',
+        'opt-soft': 'Soft Piano',
+        'opt-bright': 'Bright Violin',
+        'opt-immediate': 'Immediate',
+        'opt-delay': '0.5s Delay',
+        'opt-full': 'Audio+Visual',
+        'opt-visual': 'Visual Only',
+        'opt-off': 'Off',
+        'opt-on': 'On',
+        'msg-paused': 'Take a break! ⏸️',
+        'msg-resume': 'Keep going! ▶️',
+        'msg-slow': 'Take your time! 🐌',
+        'msg-normal': 'Good pace! 👍',
+        'msg-fast': 'Fast challenge! ⚡',
+        'msg-welcome': 'Welcome! Move cursor to pop bubbles!',
+        'msg-saved': 'Settings saved, will apply next round',
+        'msg-reward': 'Reward generated, click "Enjoy Music" to play 🎵',
+        'msg-error': 'AI Generation Failed: Check Console',
+        'input-mouse': 'Mouse'
+    }
+};
+
+function t(key) {
+    return TRANSLATIONS[currentLang][key] || key;
+}
+
+function updateUIText() {
+    // Buttons
+    if(elements.pauseBtn) elements.pauseBtn.textContent = game?.isPaused ? t('pause-btn-paused') : t('pause-btn-running');
+    if(elements.panicMuteBtn) elements.panicMuteBtn.textContent = panicMuted ? t('panic-btn-muted') : t('panic-btn-unmuted');
+    if(elements.resultMuteBtn) elements.resultMuteBtn.textContent = panicMuted ? t('panic-btn-muted') : t('panic-btn-unmuted');
+    if(elements.sessionSettingsBtn) elements.sessionSettingsBtn.textContent = t('settings-btn');
+    if(elements.slowBtn) elements.slowBtn.textContent = t('slow-btn');
+    if(elements.normalBtn) elements.normalBtn.textContent = t('normal-btn');
+    if(elements.fastBtn) elements.fastBtn.textContent = t('fast-btn');
+    
+    // Sensory button
+    const sensoryBtn = document.getElementById('sensory-panel-toggle');
+    if(sensoryBtn) sensoryBtn.textContent = t('sensory-btn');
+
+    // Instructions & Status
+    const instructionsP = document.querySelector('.instructions p');
+    if(instructionsP) instructionsP.textContent = t('instructions');
+    
+    const inputModeLabel = document.querySelector('.status-item:nth-child(1) span:first-child');
+    if(inputModeLabel) inputModeLabel.textContent = t('input-mode');
+    if(elements.inputMode) elements.inputMode.textContent = t('input-mouse');
+
+    const bubbleCountLabel = document.querySelector('.status-item:nth-child(2) span:first-child');
+    if(bubbleCountLabel) bubbleCountLabel.textContent = t('bubble-count');
+
+    const timeLabel = document.querySelector('.time-remaining span:first-child');
+    if(timeLabel) timeLabel.textContent = t('time-remaining');
+
+    // Pause Overlay
+    const pauseTitle = document.querySelector('#pause-overlay h2');
+    const pauseDesc = document.querySelector('#pause-overlay p');
+    if(pauseTitle) pauseTitle.textContent = t('game-paused');
+    if(pauseDesc) pauseDesc.textContent = t('click-continue');
+
+    // Settings Modal
+    const settingsTitle = document.querySelector('.settings-header h2');
+    const settingsSub = document.querySelector('.settings-subtitle');
+    if(settingsTitle) settingsTitle.textContent = t('settings-title');
+    if(settingsSub) settingsSub.textContent = t('settings-subtitle');
+    
+    // Labels
+    const labels = document.querySelectorAll('.settings-field label');
+    if(labels.length >= 6) {
+        labels[0].textContent = t('label-volume');
+        labels[1].textContent = t('label-density');
+        labels[2].textContent = t('label-timbre');
+        labels[3].textContent = t('label-latency');
+        labels[4].textContent = t('label-feedback');
+        labels[5].textContent = t('label-reward');
+    }
+    
+    // Settings Buttons
+    if(elements.sessionResetBtn) elements.sessionResetBtn.textContent = t('btn-reset');
+    if(elements.sessionStartBtn) elements.sessionStartBtn.textContent = game?.roundActive ? t('save-settings-btn') : t('start-round-btn');
+    if(elements.sessionCloseBtn) elements.sessionCloseBtn.textContent = t('btn-close');
+
+    // Options (Update select options text)
+    updateSelectOptions('session-volume', ['opt-low', 'opt-medium', 'opt-high']);
+    updateSelectOptions('session-density', ['opt-sparse', 'opt-normal']);
+    updateSelectOptions('session-timbre', ['opt-soft', 'opt-bright']);
+    updateSelectOptions('session-latency', ['opt-immediate', 'opt-delay']);
+    updateSelectOptions('session-immediate', ['opt-full', 'opt-visual', 'opt-off']);
+    updateSelectOptions('session-reward', ['opt-on', 'opt-off']);
+}
+
+function updateSelectOptions(id, keys) {
+    const select = document.getElementById(id);
+    if(!select) return;
+    for(let i=0; i<select.options.length && i<keys.length; i++) {
+        select.options[i].text = t(keys[i]);
+    }
+}
+
+function toggleLanguage() {
+    currentLang = currentLang === 'zh' ? 'en' : 'zh';
+    updateUIText();
 }
 
 window.SESSION_DEFAULTS = SESSION_DEFAULTS;
@@ -339,6 +531,12 @@ function setupEventListeners() {
         elements.resultMuteBtn.addEventListener('click', () => setPanicMuted(!panicMuted));
     }
     
+    // Language Toggle
+    const langBtn = document.getElementById('lang-toggle-btn');
+    if (langBtn) {
+        langBtn.addEventListener('click', toggleLanguage);
+    }
+    
     // Keyboard shortcuts
     document.addEventListener('keydown', handleKeyboardInput);
     
@@ -357,14 +555,14 @@ function handlePauseToggle() {
     const isPaused = game.togglePause();
     
     // Update UI
-    elements.pauseBtn.textContent = isPaused ? '▶️ 继续' : '⏸️ 暂停';
+    elements.pauseBtn.textContent = isPaused ? t('pause-btn-paused') : t('pause-btn-running');
     
     if (isPaused) {
         elements.pauseOverlay.classList.remove('hidden');
-        showEncouragementMessage('休息一下！⏸️');
+        showEncouragementMessage(t('msg-paused'));
     } else {
         elements.pauseOverlay.classList.add('hidden');
-        showEncouragementMessage('继续加油！▶️');
+        showEncouragementMessage(t('msg-resume'));
     }
 }
 
@@ -393,9 +591,9 @@ function handleSpeedChange(speed, speedName) {
     
     // Show feedback message
     const speedMessages = {
-        'slow': '慢慢来，很好！🐌',
-        'normal': '节奏刚好！👍',
-        'fast': '快速挑战！⚡'
+        'slow': t('msg-slow'),
+        'normal': t('msg-normal'),
+        'fast': t('msg-fast')
     };
     
     showEncouragementMessage(speedMessages[speedName]);
@@ -458,28 +656,8 @@ function setupResponsiveHandling() {
  * Show encouragement message with fade animation
  */
 function showEncouragementMessage(message, duration = 2000) {
-    if (!elements.encouragementMessage) return;
-    
-    // Set message text
-    elements.encouragementMessage.textContent = message;
-    
-    // Animate in - 使用新的CSS样式 (顶部居中)
-    elements.encouragementMessage.style.opacity = '0';
-    elements.encouragementMessage.style.transform = 'translateX(-50%) translateY(-20px) scale(0.8)';
-    
-    // Trigger animation
-    requestAnimationFrame(() => {
-        elements.encouragementMessage.style.transition = 'all 0.3s ease-out';
-        elements.encouragementMessage.style.opacity = '1';
-        elements.encouragementMessage.style.transform = 'translateX(-50%) translateY(0) scale(1)';
-    });
-    
-    // Fade out after duration
-    setTimeout(() => {
-        elements.encouragementMessage.style.transition = 'all 0.5s ease-in';
-        elements.encouragementMessage.style.opacity = '0';
-        elements.encouragementMessage.style.transform = 'translateX(-50%) translateY(-10px) scale(0.9)';
-    }, duration);
+    // 用户已禁用反馈，不显示
+    return;
 }
 
 /**
@@ -621,7 +799,7 @@ function resetSessionForm() {
 function syncPanicButton(btn, isMuted) {
     if (!btn) return;
     btn.classList.toggle('is-muted', isMuted);
-    btn.textContent = isMuted ? '🔊 恢复声音' : '🔇 停止/静音';
+    btn.textContent = isMuted ? t('panic-btn-muted') : t('panic-btn-unmuted');
 }
 
 function refreshPanicButtons() {
@@ -662,12 +840,13 @@ function openSessionSettingsModal() {
     const config = getCurrentSessionConfig();
     loadSessionSettingsForm(config);
     if (elements.sessionStartBtn) {
-        elements.sessionStartBtn.textContent = game?.roundActive ? '保存设置' : '开始本轮';
+        elements.sessionStartBtn.textContent = game?.roundActive ? t('save-settings-btn') : t('start-round-btn');
     }
     if (game?.roundActive && !game.isPaused) {
         game.togglePause();
         pausedBySettings = true;
     }
+    updateUIText(); // Ensure modal text is updated
     elements.sessionModal.classList.remove('hidden');
 }
 
@@ -686,7 +865,7 @@ function handleStartRound() {
     updateSessionPresetLabel(config);
 
     if (game?.roundActive) {
-        showEncouragementMessage('设置已保存，将在下一轮生效', 1200);
+        showEncouragementMessage(t('msg-saved'), 1200);
         closeSessionSettingsModal();
         return;
     }
@@ -741,12 +920,12 @@ function handleStartRound() {
                 }
             } catch (err) {
                 console.error('[AI] submit failed:', err);
-                showEncouragementMessage('AI 生成失败：查看控制台错误', 1500);
+                showEncouragementMessage(t('msg-error'), 1500);
             }
         },
     });
 
-    showEncouragementMessage('欢迎！移动鼠标戳泡泡！');
+    showEncouragementMessage(t('msg-welcome'));
     closeSessionSettingsModal();
 }
 
@@ -905,7 +1084,7 @@ const MAGENTA = {
     window.lastGeneratedSequence = full;
     window.gameResultManager?.updateDebugPanel?.();
     
-    window.gameApp?.showEncouragementMessage?.('Reward 已生成，点击“享受你创作的音乐”播放 🎵', 1800);
+    window.gameApp?.showEncouragementMessage?.(t('msg-reward'), 1800);
   
     if (downloadMidi) {
       try {

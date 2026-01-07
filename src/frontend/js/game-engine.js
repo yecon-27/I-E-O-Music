@@ -48,7 +48,7 @@ class GameEngine {
             immediateToneMode: 'full', // full | visual | off
             rewardEnabled: true,
             rewardBpm: 72,
-            rewardDurationSec: 20,
+            rewardDurationSec: 15,
             expertMode: false,
         };
         if (window.sessionConfig) {
@@ -123,6 +123,15 @@ class GameEngine {
                 setTimeout(() => {
                     window.popSynth?.play?.(b.note.freq, { dur: 0.15 });
                 }, delay);
+            }
+
+            // 记录成功事件到自闭症友好系统
+            if (window.autismFeatures) {
+                window.autismFeatures.recordSuccess({
+                    id: b.id,
+                    midi: b.note.midi,
+                    laneId: b.laneId
+                });
             }
 
             // 记录点击轨迹
@@ -558,7 +567,8 @@ class GameEngine {
         this.roundRemainingMs = this.roundDurationMs; // 初始剩余=总时长
         this.roundPausedAt = 0;
 
-        window.gameApp?.showEncouragementMessage?.(`开始采样：${seconds}s`, 1000);
+        // 移除开始提示，避免干扰
+        // window.gameApp?.showEncouragementMessage?.(`开始采样：${seconds}s`, 1000);
 
         // 用“剩余毫秒数”启动计时器
         this.roundTimer = setTimeout(() => this.stopRound({ save: true }),
@@ -589,7 +599,9 @@ class GameEngine {
       
         try { this.onRoundEnd?.(session); } catch(e) { console.warn(e); }
         window.dispatchEvent(new CustomEvent('round:ended', { detail: session }));
-        window.gameApp?.showEncouragementMessage?.(`采样完成，共 ${session.notes.length} 个音符`, 1200);
+        
+        // 移除结束提示
+        // window.gameApp?.showEncouragementMessage?.(`采样完成，共 ${session.notes.length} 个音符`, 1200);
       
         // 清理
         this.onRoundEnd = null;
@@ -617,19 +629,8 @@ class GameEngine {
      * 点击轨迹追加一个标记
      */
     appendTrailDot(noteName = '', color = '#666') {
-        if (!this.clickTrailEl) return;
-        if (this.clickTrailEl.querySelector('.trail-title')) {
-            this.clickTrailEl.innerHTML = '';
-        }
-        const dot = document.createElement('span');
-        dot.className = 'trail-dot';
-        dot.textContent = (noteName || '').charAt(0) || '';
-        dot.style.background = color;
-        this.clickTrailEl.appendChild(dot);
-        // 保持最多 30 个点，避免过长
-        if (this.clickTrailEl.children.length > 30) {
-            this.clickTrailEl.removeChild(this.clickTrailEl.firstChild);
-        }
+        // 用户请求移除即时反馈，防止overwhelming
+        return;
     }
 
     /** 导出最近一局为 JSON（可选） */

@@ -272,29 +272,8 @@ class AutismFriendlyFeatures {
      * 显示成就提示
      */
     showAchievement(message, type = 'success') {
-        const popup = document.createElement('div');
-        popup.className = 'achievement-popup';
-        popup.innerHTML = `
-            <div style="font-size: 2rem; margin-bottom: 10px;">
-                ${type === 'success' ? '🎉' : '⭐'}
-            </div>
-            <div>${message}</div>
-        `;
-        
-        document.body.appendChild(popup);
-        
-        // 3秒后移除
-        setTimeout(() => {
-            popup.style.animation = 'achievementPop 0.5s ease-out reverse';
-            setTimeout(() => popup.remove(), 500);
-        }, 3000);
-        
-        // 记录成就
-        this.achievements.push({
-            message,
-            type,
-            timestamp: Date.now()
-        });
+        // 用户已禁用成就弹窗，直接返回
+        return;
     }
     
     /**
@@ -357,24 +336,8 @@ class AutismFriendlyFeatures {
      * 显示简单的即时反馈
      */
     showSimpleFeedback() {
-        const count = this.sessionData.consecutiveCount;
-        
-        // 调试信息
-        console.log(`💫 检查微反馈: 连续=${count}`);
-        
-        // 修复：让微反馈在整个游戏过程中持续工作
-        // 避免与成就冲突的连续数：5, 10, 15 (这些有专门的成就提示)
-        if (count === 2 || (count > 7 && count % 3 === 2 && ![5, 10, 15].includes(count))) {
-            console.log('显示微反馈: 👍');
-            window.gameApp?.showEncouragementMessage?.('👍', 800);
-        } else if (count === 4 || (count > 7 && count % 3 === 1 && ![5, 10, 15].includes(count))) {
-            console.log('显示微反馈: 🎯');
-            window.gameApp?.showEncouragementMessage?.('🎯', 800);
-        } else if (count === 7 || (count > 15 && count % 3 === 0 && ![5, 10, 15].includes(count))) {
-            console.log('显示微反馈: ⚡');
-            window.gameApp?.showEncouragementMessage?.('⚡', 800);
-        }
-        // 成就数字 (5, 10, 15) 由成就系统处理，不显示微反馈
+        // 用户已禁用即时反馈，直接返回
+        return;
     }
     
     /**

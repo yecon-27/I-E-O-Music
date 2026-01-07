@@ -61,21 +61,16 @@
 
     <div class="game-container">
         <div class="game-header">
-            <div class="score-display">
-                <span class="score-label">Score:</span>
-                <span id="score-value">0</span>
-            </div>
-                <div class="controls">
-                    <!-- 自闭症友好控制面板 -->
-                    <div class="autism-controls">
-                        <button id="sensory-panel-toggle" class="control-btn">🎛️ 感官设置</button>
+            <!-- Left: Settings & Language -->
+            <div class="header-section header-left">
+                <div class="autism-controls">
+                    <button id="sensory-panel-toggle" class="control-btn secondary-btn">🎛️ 感官</button>
                     <div id="sensory-panel" class="sensory-panel hidden">
                         <div class="sensory-control">
                             <label>🔊 音效音量:</label>
                             <input type="range" id="sound-volume" min="0" max="100" value="70">
                             <span id="sound-volume-value">70%</span>
                         </div>
-
                         <div class="sensory-control">
                             <label>🎨 色彩模式:</label>
                             <select id="color-mode">
@@ -91,30 +86,38 @@
                         </div>
                     </div>
                 </div>
-                
-                    <button id="pause-btn" class="control-btn">⏸️ 暂停</button>
-                    <button id="session-settings-btn" class="control-btn">⚙️ 参数</button>
-                    <button id="panic-mute-btn" class="control-btn panic-btn">🔇 停止/静音</button>
-                    
-                    <div class="speed-controls">
-                        <button id="slow-btn" class="speed-btn">🐌 慢速</button>
-                        <button id="normal-btn" class="speed-btn active">🚶 正常</button>
-                        <button id="fast-btn" class="speed-btn">🏃 快速</button>
-                    </div>
-                
-                <!-- 进度指示器 -->
+                <button id="session-settings-btn" class="control-btn secondary-btn">⚙️ 参数</button>
+                <button id="lang-toggle-btn" class="control-btn secondary-btn">🌐 中/EN</button>
+            </div>
+
+            <!-- Center: Progress -->
+            <div class="header-section header-center">
                 <div class="progress-indicator">
                     <div class="time-remaining">
-                        <span>⏱️ 剩余: </span>
                         <span id="countdown-display">60s</span>
                     </div>
                     <div class="progress-bar">
                         <div id="progress-fill" class="progress-fill"></div>
                     </div>
                 </div>
-                
-                <div id="session-preset" class="session-preset">Preset: medium / normal / soft</div>
             </div>
+
+            <!-- Right: Controls -->
+            <div class="header-section header-right">
+                <div class="play-controls">
+                    <button id="pause-btn" class="control-btn primary-btn">⏸️ 暂停</button>
+                    <button id="panic-mute-btn" class="control-btn panic-btn">🔇 静音</button>
+                </div>
+                <div class="speed-controls">
+                    <button id="slow-btn" class="speed-btn">🐌</button>
+                    <button id="normal-btn" class="speed-btn active">🚶</button>
+                    <button id="fast-btn" class="speed-btn">🏃</button>
+                </div>
+            </div>
+            
+            <!-- Hidden/Legacy containers to keep JS happy if needed, though most use IDs -->
+            <div class="controls" style="display:none;"></div>
+            <div id="session-preset" class="session-preset" style="display:none;"></div>
         </div>
         
         <div class="game-area">
