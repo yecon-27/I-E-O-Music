@@ -5,6 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bubble Popping Game</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+      .lane-labels {
+        position: absolute;
+        left: 0;
+        bottom: 8px;
+        width: 100%;
+        pointer-events: none;
+        z-index: 5;
+      }
+      .lane-labels .lane-label {
+        position: absolute;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 14px;
+        color: #ffffff;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      }
+      .click-trail {
+        position: absolute;
+        top: 8px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        pointer-events: none;
+        font-size: 12px;
+        font-weight: 700;
+        background: rgba(0,0,0,0.12);
+        border-radius: 14px;
+        z-index: 6;
+      }
+      .click-trail .trail-dot {
+        min-width: 18px;
+        min-height: 18px;
+        padding: 2px 6px;
+        border-radius: 10px;
+        color: #fff;
+        text-align: center;
+        line-height: 1;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+      }
+      .click-trail .trail-title {
+        color: #fff;
+        opacity: 0.8;
+      }
+      .game-main { position: relative; }
+    </style>
 </head>
 <body>
 
@@ -15,10 +65,10 @@
                 <span class="score-label">Score:</span>
                 <span id="score-value">0</span>
             </div>
-            <div class="controls">
-                <!-- 自闭症友好控制面板 -->
-                <div class="autism-controls">
-                    <button id="sensory-panel-toggle" class="control-btn">🎛️ 感官设置</button>
+                <div class="controls">
+                    <!-- 自闭症友好控制面板 -->
+                    <div class="autism-controls">
+                        <button id="sensory-panel-toggle" class="control-btn">🎛️ 感官设置</button>
                     <div id="sensory-panel" class="sensory-panel hidden">
                         <div class="sensory-control">
                             <label>🔊 音效音量:</label>
@@ -42,13 +92,15 @@
                     </div>
                 </div>
                 
-                <button id="pause-btn" class="control-btn">⏸️ 暂停</button>
-                
-                <div class="speed-controls">
-                    <button id="slow-btn" class="speed-btn">🐌 慢速</button>
-                    <button id="normal-btn" class="speed-btn active">🚶 正常</button>
-                    <button id="fast-btn" class="speed-btn">🏃 快速</button>
-                </div>
+                    <button id="pause-btn" class="control-btn">⏸️ 暂停</button>
+                    <button id="session-settings-btn" class="control-btn">⚙️ 参数</button>
+                    <button id="panic-mute-btn" class="control-btn panic-btn">🔇 停止/静音</button>
+                    
+                    <div class="speed-controls">
+                        <button id="slow-btn" class="speed-btn">🐌 慢速</button>
+                        <button id="normal-btn" class="speed-btn active">🚶 正常</button>
+                        <button id="fast-btn" class="speed-btn">🏃 快速</button>
+                    </div>
                 
                 <!-- 进度指示器 -->
                 <div class="progress-indicator">
@@ -61,14 +113,15 @@
                     </div>
                 </div>
                 
-                <button id="camera-toggle" class="control-btn">📷 摄像头: 关</button>
+                <div id="session-preset" class="session-preset">Preset: medium / normal / soft</div>
             </div>
         </div>
         
         <div class="game-area">
             <div class="game-main">
                 <canvas id="game-canvas" width="1024" height="768"></canvas>
-                <div id="hand-cursor" class="hand-cursor"></div>
+                <div id="click-trail" class="click-trail"></div>
+                <div id="lane-labels" class="lane-labels"></div>
                 <div id="encouragement-message" class="encouragement-message"></div>
                 <div id="pause-overlay" class="pause-overlay hidden">
                     <h2>游戏已暂停</h2>
@@ -108,8 +161,102 @@
                         <div class="result-message">
                             <p id="result-encouragement">太棒了！你的表现很出色！</p>
                         </div>
+                        <div id="debug-panel" class="debug-panel">
+                            <div class="debug-header">
+                                <h3>Post-Session Review</h3>
+                                <div class="debug-header-actions">
+                                    <button id="debug-help-toggle" class="result-btn secondary small">How to read</button>
+                                    <button id="open-reward-controls-btn" class="result-btn secondary small">Open Reward Controls</button>
+                                </div>
+                            </div>
+                            <div id="debug-help" class="debug-help hidden">
+                                <strong>How to read this panel</strong>
+                                <ol>
+                                    <li>Q1：判定结果 + 安全状态</li>
+                                    <li>Q2：证据可视化 + Top-3 规则</li>
+                                    <li>Q3：反事实解释 + 审计</li>
+                                </ol>
+                            </div>
+                            <div class="debug-section">
+                                <h4 class="debug-section-title">Q1：系统判定了什么？是否安全？</h4>
+                                <div class="debug-overview">
+                                    <div class="overview-item">
+                                        <span class="overview-label">判定结果（主/次）</span>
+                                        <span id="debug-summary-decision" class="overview-value">-</span>
+                                    </div>
+                                    <div class="overview-item">
+                                        <span class="overview-label">置信度</span>
+                                        <span id="debug-summary-confidence" class="overview-value">-</span>
+                                    </div>
+                                    <div class="overview-item">
+                                        <span class="overview-label">安全状态</span>
+                                        <span id="debug-summary-safety" class="overview-value">-</span>
+                                    </div>
+                                    <div class="overview-item">
+                                        <span class="overview-label">Reward 概览</span>
+                                        <span id="debug-summary-reward" class="overview-value">-</span>
+                                    </div>
+                                </div>
+                                <div id="debug-summary-reason" class="debug-reason">-</div>
+                                <div class="debug-grid">
+                                    <div class="debug-block">
+                                        <h4>生成结构摘要</h4>
+                                        <ul id="debug-structure-list" class="debug-list"></ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="debug-section">
+                                <h4 class="debug-section-title">Q2：为什么这么判？证据长什么样？</h4>
+                                <div class="debug-grid">
+                                    <div class="debug-block debug-block-wide">
+                                        <h4>点击轨迹与 Lane 分布</h4>
+                                        <canvas id="debug-timeline" class="debug-timeline" width="640" height="90"></canvas>
+                                        <div id="debug-lane-bars" class="debug-lane-bars"></div>
+                                    </div>
+                                    <div class="debug-block">
+                                        <h4>检测到的 Pattern（数字证据）</h4>
+                                        <ul id="debug-what-list" class="debug-list"></ul>
+                                    </div>
+                                    <div class="debug-block">
+                                        <h4>Top-3 规则证据</h4>
+                                        <ul id="debug-why-list" class="debug-list"></ul>
+                                        <details class="debug-details">
+                                            <summary>查看更多规则</summary>
+                                            <ul id="debug-why-details-list" class="debug-list"></ul>
+                                        </details>
+                                    </div>
+                                    <div class="debug-block">
+                                        <h4>三类证据得分（用于决策）</h4>
+                                        <ul id="debug-signal-list" class="debug-list"></ul>
+                                        <div class="debug-note">最终标签=得分最高者；差距越大→置信度越高。</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="debug-section">
+                                <h4 class="debug-section-title">Q3：如果专家不同意，怎么调？</h4>
+                                <div class="debug-grid">
+                                    <div class="debug-block">
+                                        <h4>What would change the decision?</h4>
+                                        <ul id="debug-counterfactual-list" class="debug-list"></ul>
+                                    </div>
+                                    <div class="debug-block">
+                                        <h4>约束审计（Audit）</h4>
+                                        <ul id="debug-constraint-list" class="debug-list"></ul>
+                                        <div class="debug-note">Safety by design: reward 生成器=约束集合，而不是事后过滤。</div>
+                                    </div>
+                                    <div class="debug-block">
+                                        <h4>本轮配置 / 变更记录</h4>
+                                        <ul id="debug-config-list" class="debug-list"></ul>
+                                        <div class="debug-note">展示与保守默认值的差异，便于审计与复现。</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="result-actions">
                             <button id="play-music-btn" class="result-btn music">🎵 享受你创作的音乐</button>
+                            <button id="result-mute-btn" class="result-btn secondary panic-btn">🔇 停止/静音</button>
                             <button id="play-again-btn" class="result-btn primary">🎮 再玩一轮</button>
                             <button id="finish-game-btn" class="result-btn secondary">✨ 结束游戏</button>
                         </div>
@@ -117,37 +264,11 @@
                 </div>
             </div>
             
-            <div class="pose-panel">
-                <div class="pose-panel-header">
-                    <h3>Tokyo2020 姿势检测</h3>
-                    <div class="pose-controls">
-                        <button id="pose-mode-toggle" class="pose-btn">小人模式</button>
-                    </div>
-                </div>
-                <div class="pose-display">
-                    <video id="pose-video" class="pose-video" autoplay muted playsinline></video>
-                    <canvas id="pose-canvas" class="pose-canvas"></canvas>
-                </div>
-                <div class="pose-status">
-                    <div class="status-item">
-                        <span>手势状态: </span>
-                        <span id="gesture-status">未检测</span>
-                    </div>
-                    <div class="status-item">
-                        <span>左手: </span>
-                        <span id="left-hand-status">❌</span>
-                    </div>
-                    <div class="status-item">
-                        <span>右手: </span>
-                        <span id="right-hand-status">❌</span>
-                    </div>
-                </div>
-            </div>
         </div>
         
         <div class="game-footer">
             <div class="instructions">
-                <p>🎯 移动光标戳泡泡！点击"摄像头"按钮启用手势控制</p>
+                <p>🎯 移动光标戳泡泡！</p>
                 <div class="status-display" style="display: flex; gap: 20px; justify-content: center; margin: 10px 0;">
                     <div class="status-item">
                         <span>输入方式: </span>
@@ -163,13 +284,120 @@
         </div>
     </div>
 
-    <!-- MediaPipe Pose (Tokyo2020 Style) -->
-    <!-- MediaPipe Pose (local, no CDN) -->
-  <!-- MediaPipe 本地脚本（相对 src/frontend/index.html） -->
-    <script src="./vendor/mediapipe/camera_utils/camera_utils.js"></script>
-    <script src="./vendor/mediapipe/control_utils/control_utils.js"></script>
-    <script src="./vendor/mediapipe/drawing_utils/drawing_utils.js"></script>
-    <script src="./vendor/mediapipe/pose/pose.js"></script>
+    <!-- Session Settings Modal -->
+    <div id="session-settings-modal" class="settings-modal hidden">
+        <div class="settings-panel">
+            <h2>Session Settings</h2>
+            <p class="settings-subtitle">当前设置会用于本轮 / 下一轮</p>
+            <div class="settings-mode">
+                <div class="settings-mode-toggle" role="group" aria-label="Session mode">
+                    <button type="button" id="session-mode-safe" class="mode-btn active">默认/安全</button>
+                    <button type="button" id="session-mode-expert" class="mode-btn">专家/调参</button>
+                </div>
+                <div id="session-mode-note" class="settings-mode-note">默认/安全模式：使用保守默认值（只读）。</div>
+            </div>
+            <div class="settings-disclaimer">
+                保守默认值 + 可调包络（用于专家校准，不是临床验证阈值）。
+            </div>
+            <div class="settings-grid">
+                <div class="settings-field">
+                    <label for="session-volume">音量</label>
+                    <select id="session-volume">
+                        <option value="low">low</option>
+                        <option value="medium" selected>medium</option>
+                        <option value="high">high</option>
+                    </select>
+                    <div class="settings-field-meta">
+                        <span>默认: medium | 可调: low/medium/high | 风险: 过高可能刺激</span>
+                        <button class="settings-reset" type="button" data-reset-field="volumeLevel">恢复默认</button>
+                    </div>
+                </div>
+                <div class="settings-field">
+                    <label for="session-density">节奏密度</label>
+                    <select id="session-density">
+                        <option value="sparse">sparse</option>
+                        <option value="normal" selected>normal</option>
+                    </select>
+                    <div class="settings-field-meta">
+                        <span>默认: normal | 可调: sparse/normal | 风险: 过密增加负荷</span>
+                        <button class="settings-reset" type="button" data-reset-field="rhythmDensity">恢复默认</button>
+                    </div>
+                </div>
+                <div class="settings-field">
+                    <label for="session-timbre">音色</label>
+                    <select id="session-timbre">
+                        <option value="soft" selected>soft</option>
+                        <option value="bright">bright</option>
+                    </select>
+                    <div class="settings-field-meta">
+                        <span>默认: soft | 可调: soft/bright | 风险: bright 更刺激</span>
+                        <button class="settings-reset" type="button" data-reset-field="timbre">恢复默认</button>
+                    </div>
+                </div>
+                <div class="settings-field">
+                    <label for="session-latency">反馈延迟</label>
+                    <select id="session-latency">
+                        <option value="0" selected>Immediate</option>
+                        <option value="500">0.5s Delay</option>
+                    </select>
+                    <div class="settings-field-meta">
+                        <span>默认: Immediate | 可调: 0/0.5s | 风险: 延迟影响因果感</span>
+                        <button class="settings-reset" type="button" data-reset-field="feedbackLatencyMs">恢复默认</button>
+                    </div>
+                </div>
+                <div class="settings-field">
+                    <label for="session-immediate">即时音模式</label>
+                    <select id="session-immediate">
+                        <option value="full" selected>Full</option>
+                        <option value="visual">Visual-only</option>
+                        <option value="off">Off</option>
+                    </select>
+                    <div class="settings-field-meta">
+                        <span>默认: Full | 可调: full/visual/off | 风险: 反馈过强</span>
+                        <button class="settings-reset" type="button" data-reset-field="immediateToneMode">恢复默认</button>
+                    </div>
+                </div>
+                <div class="settings-field">
+                    <label for="session-reward">Reward 音乐</label>
+                    <select id="session-reward">
+                        <option value="on" selected>On</option>
+                        <option value="off">Off</option>
+                    </select>
+                    <div class="settings-field-meta">
+                        <span>默认: On | 可调: On/Off | 风险: Off 仅保留即时反馈</span>
+                        <button class="settings-reset" type="button" data-reset-field="rewardEnabled">恢复默认</button>
+                    </div>
+                </div>
+                <div class="settings-field full">
+                    <label for="session-bpm">Reward BPM</label>
+                    <div class="settings-slider">
+                        <input type="range" id="session-bpm" min="65" max="75" step="1" value="72">
+                        <span id="session-bpm-value" class="settings-slider-value">72 BPM</span>
+                    </div>
+                    <div class="settings-field-meta">
+                        <span>默认: 72 | 可调: 65–75 | 风险: 过快难预测</span>
+                        <button class="settings-reset" type="button" data-reset-field="rewardBpm">恢复默认</button>
+                    </div>
+                </div>
+                <div class="settings-field full">
+                    <label for="session-duration">Reward 时长</label>
+                    <div class="settings-slider">
+                        <input type="range" id="session-duration" min="10" max="20" step="1" value="20">
+                        <span id="session-duration-value" class="settings-slider-value">20s</span>
+                    </div>
+                    <div class="settings-field-meta">
+                        <span>默认: 20s | 可调: 10–20s | 风险: 过长可能过载</span>
+                        <button class="settings-reset" type="button" data-reset-field="rewardDurationSec">恢复默认</button>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-actions">
+                <button id="session-reset-btn" class="result-btn secondary">恢复默认</button>
+                <button id="session-start-btn" class="result-btn primary">开始本轮</button>
+                <button id="session-close-btn" class="result-btn secondary">关闭</button>
+            </div>
+        </div>
+    </div>
 
     <script src="js/audio-notes.js"></script>
     <script src="js/audio-engine.js"></script>
@@ -179,13 +407,9 @@
     <script src="js/game-result-manager.js"></script>
     <script src="js/game-integration.js"></script>
     <script src="js/debug-collision.js"></script>
-    <script src="js/debug-hand-tracking.js"></script>
-    <script src="js/hand-data-tracker.js"></script>
 
     <script src="js/bubble-manager.js"></script>
-    <script src="js/pose-detector.js"></script>
     <script src="js/collision-detector.js"></script>
-    <script src="js/hand-tracker.js"></script>
     <script src="js/game-engine.js"></script>
 
   

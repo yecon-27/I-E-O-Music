@@ -27,8 +27,83 @@ const elements = {
     fastBtn: null,
     pauseOverlay: null,
     encouragementMessage: null,
-    // pictogramToggle: null
+    sessionSettingsBtn: null,
+    sessionModal: null,
+    sessionStartBtn: null,
+    sessionCloseBtn: null,
+    sessionResetBtn: null,
+    sessionVolume: null,
+    sessionDensity: null,
+    sessionTimbre: null,
+    sessionLatency: null,
+    sessionImmediate: null,
+    sessionReward: null,
+    sessionModeSafe: null,
+    sessionModeExpert: null,
+    sessionModeNote: null,
+    sessionBpm: null,
+    sessionBpmValue: null,
+    sessionDuration: null,
+    sessionDurationValue: null,
+    sessionResetButtons: [],
+    sessionPreset: null,
+    panicMuteBtn: null,
+    resultMuteBtn: null,
+    };
+
+const SESSION_DEFAULTS = {
+    volumeLevel: 'medium',
+    rhythmDensity: 'normal',
+    timbre: 'soft',
+    feedbackLatencyMs: 0,
+    immediateToneMode: 'full',
+    rewardEnabled: true,
+    rewardBpm: 72,
+    rewardDurationSec: 20,
+    expertMode: false,
 };
+
+const SESSION_ENVELOPE = {
+    rewardBpm: { min: 65, max: 75 },
+    rewardDurationSec: { min: 10, max: 20 },
+};
+
+let statusUpdatesStarted = false;
+let pausedBySettings = false;
+let lastExpertDraft = null;
+let panicMuted = false;
+
+function clampValue(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+}
+
+window.SESSION_DEFAULTS = SESSION_DEFAULTS;
+window.SESSION_ENVELOPE = SESSION_ENVELOPE;
+
+function syncSessionElements() {
+    elements.sessionSettingsBtn = document.getElementById('session-settings-btn');
+    elements.sessionModal = document.getElementById('session-settings-modal');
+    elements.sessionStartBtn = document.getElementById('session-start-btn');
+    elements.sessionCloseBtn = document.getElementById('session-close-btn');
+    elements.sessionResetBtn = document.getElementById('session-reset-btn');
+    elements.sessionVolume = document.getElementById('session-volume');
+    elements.sessionDensity = document.getElementById('session-density');
+    elements.sessionTimbre = document.getElementById('session-timbre');
+    elements.sessionLatency = document.getElementById('session-latency');
+    elements.sessionImmediate = document.getElementById('session-immediate');
+    elements.sessionReward = document.getElementById('session-reward');
+    elements.sessionModeSafe = document.getElementById('session-mode-safe');
+    elements.sessionModeExpert = document.getElementById('session-mode-expert');
+    elements.sessionModeNote = document.getElementById('session-mode-note');
+    elements.sessionBpm = document.getElementById('session-bpm');
+    elements.sessionBpmValue = document.getElementById('session-bpm-value');
+    elements.sessionDuration = document.getElementById('session-duration');
+    elements.sessionDurationValue = document.getElementById('session-duration-value');
+    elements.sessionResetButtons = Array.from(document.querySelectorAll('[data-reset-field]'));
+    elements.sessionPreset = document.getElementById('session-preset');
+    elements.panicMuteBtn = document.getElementById('panic-mute-btn');
+    elements.resultMuteBtn = document.getElementById('result-mute-btn');
+}
 
 /**
  * Initialize the application when DOM is loaded
@@ -62,11 +137,14 @@ function initializeUIElements() {
     elements.fastBtn = document.getElementById('fast-btn');
     elements.pauseOverlay = document.getElementById('pause-overlay');
     elements.encouragementMessage = document.getElementById('encouragement-message');
-    // elements.pictogramToggle = document.getElementById('pictogram-toggle'); // Removed as not in HTML
-    // elements.cameraToggle = document.getElementById('camera-toggle'); // Removed as not in HTML
     elements.inputMode = document.getElementById('input-mode');
     elements.bubbleCount = document.getElementById('bubble-count');
-    elements.poseModeToggle = document.getElementById('pose-mode-toggle');
+    syncSessionElements();
+
+    // 如果缺少设置 UI，尝试注入
+    ensureSessionSettingsUI();
+    syncSessionElements();
+    refreshPanicButtons();
     
     // Verify all elements were found
     const missingElements = Object.entries(elements)
@@ -82,10 +160,167 @@ function initializeUIElements() {
     return true;
 }
 
+function ensureSessionSettingsUI() {
+    let controls = document.querySelector('.controls');
+    if (!controls) {
+        const header = document.querySelector('.game-header');
+        if (header) {
+            controls = document.createElement('div');
+            controls.className = 'controls';
+            header.appendChild(controls);
+            console.warn('[SettingsUI] .controls 不存在，已创建回退容器');
+        }
+    }
+    if (!controls) {
+        console.warn('[SettingsUI] 未找到控件容器，跳过 UI 注入');
+        return;
+    }
+    if (controls && !document.getElementById('session-settings-btn')) {
+        const btn = document.createElement('button');
+        btn.id = 'session-settings-btn';
+        btn.className = 'control-btn';
+        btn.textContent = '⚙️ 参数';
+        controls.insertBefore(btn, controls.querySelector('.speed-controls') || null);
+    }
+    if (controls && !document.getElementById('panic-mute-btn')) {
+        const btn = document.createElement('button');
+        btn.id = 'panic-mute-btn';
+        btn.className = 'control-btn panic-btn';
+        btn.textContent = '🔇 停止/静音';
+        controls.insertBefore(btn, controls.querySelector('.speed-controls') || null);
+    }
+    if (controls && !document.getElementById('session-preset')) {
+        const preset = document.createElement('div');
+        preset.id = 'session-preset';
+        preset.className = 'session-preset';
+        preset.textContent = 'Preset: medium / normal / soft';
+        controls.appendChild(preset);
+    }
+    if (!document.getElementById('session-settings-modal')) {
+        const modal = document.createElement('div');
+        modal.id = 'session-settings-modal';
+      modal.className = 'settings-modal hidden';
+      modal.innerHTML = `
+          <div class="settings-panel">
+            <h2>Session Settings</h2>
+            <p class="settings-subtitle">当前设置会用于本轮 / 下一轮</p>
+            <div class="settings-mode">
+              <div class="settings-mode-toggle" role="group" aria-label="Session mode">
+                <button type="button" id="session-mode-safe" class="mode-btn active">默认/安全</button>
+                <button type="button" id="session-mode-expert" class="mode-btn">专家/调参</button>
+              </div>
+              <div id="session-mode-note" class="settings-mode-note">默认/安全模式：使用保守默认值（只读）。</div>
+            </div>
+            <div class="settings-disclaimer">
+              保守默认值 + 可调包络（用于专家校准，不是临床验证阈值）。
+            </div>
+            <div class="settings-grid">
+              <div class="settings-field">
+                <label for="session-volume">音量</label>
+                <select id="session-volume">
+                  <option value="low">low</option>
+                  <option value="medium" selected>medium</option>
+                  <option value="high">high</option>
+                </select>
+                <div class="settings-field-meta">
+                  <span>默认: medium | 可调: low/medium/high | 风险: 过高可能刺激</span>
+                  <button class="settings-reset" type="button" data-reset-field="volumeLevel">恢复默认</button>
+                </div>
+              </div>
+              <div class="settings-field">
+                <label for="session-density">节奏密度</label>
+                <select id="session-density">
+                  <option value="sparse">sparse</option>
+                  <option value="normal" selected>normal</option>
+                </select>
+                <div class="settings-field-meta">
+                  <span>默认: normal | 可调: sparse/normal | 风险: 过密增加负荷</span>
+                  <button class="settings-reset" type="button" data-reset-field="rhythmDensity">恢复默认</button>
+                </div>
+              </div>
+              <div class="settings-field">
+                <label for="session-timbre">音色</label>
+                <select id="session-timbre">
+                  <option value="soft" selected>soft</option>
+                  <option value="bright">bright</option>
+                </select>
+                <div class="settings-field-meta">
+                  <span>默认: soft | 可调: soft/bright | 风险: bright 更刺激</span>
+                  <button class="settings-reset" type="button" data-reset-field="timbre">恢复默认</button>
+                </div>
+              </div>
+              <div class="settings-field">
+                <label for="session-latency">反馈延迟</label>
+                <select id="session-latency">
+                  <option value="0" selected>Immediate</option>
+                  <option value="500">0.5s Delay</option>
+                </select>
+                <div class="settings-field-meta">
+                  <span>默认: Immediate | 可调: 0/0.5s | 风险: 延迟影响因果感</span>
+                  <button class="settings-reset" type="button" data-reset-field="feedbackLatencyMs">恢复默认</button>
+                </div>
+              </div>
+              <div class="settings-field">
+                <label for="session-immediate">即时音模式</label>
+                <select id="session-immediate">
+                  <option value="full" selected>Full</option>
+                  <option value="visual">Visual-only</option>
+                  <option value="off">Off</option>
+                </select>
+                <div class="settings-field-meta">
+                  <span>默认: Full | 可调: full/visual/off | 风险: 反馈过强</span>
+                  <button class="settings-reset" type="button" data-reset-field="immediateToneMode">恢复默认</button>
+                </div>
+              </div>
+              <div class="settings-field">
+                <label for="session-reward">Reward 音乐</label>
+                <select id="session-reward">
+                  <option value="on" selected>On</option>
+                  <option value="off">Off</option>
+                </select>
+                <div class="settings-field-meta">
+                  <span>默认: On | 可调: On/Off | 风险: Off 仅保留即时反馈</span>
+                  <button class="settings-reset" type="button" data-reset-field="rewardEnabled">恢复默认</button>
+                </div>
+              </div>
+              <div class="settings-field full">
+                <label for="session-bpm">Reward BPM</label>
+                <div class="settings-slider">
+                  <input type="range" id="session-bpm" min="65" max="75" step="1" value="72">
+                  <span id="session-bpm-value" class="settings-slider-value">72 BPM</span>
+                </div>
+                <div class="settings-field-meta">
+                  <span>默认: 72 | 可调: 65–75 | 风险: 过快难预测</span>
+                  <button class="settings-reset" type="button" data-reset-field="rewardBpm">恢复默认</button>
+                </div>
+              </div>
+              <div class="settings-field full">
+                <label for="session-duration">Reward 时长</label>
+                <div class="settings-slider">
+                  <input type="range" id="session-duration" min="10" max="20" step="1" value="20">
+                  <span id="session-duration-value" class="settings-slider-value">20s</span>
+                </div>
+                <div class="settings-field-meta">
+                  <span>默认: 20s | 可调: 10–20s | 风险: 过长可能过载</span>
+                  <button class="settings-reset" type="button" data-reset-field="rewardDurationSec">恢复默认</button>
+                </div>
+              </div>
+            </div>
+            <div class="settings-actions">
+              <button id="session-reset-btn" class="result-btn secondary">恢复默认</button>
+              <button id="session-start-btn" class="result-btn primary">开始本轮</button>
+              <button id="session-close-btn" class="result-btn secondary">关闭</button>
+            </div>
+          </div>
+        `;
+      document.body.appendChild(modal);
+    }
+}
+
 /**
  * Initialize the game engine
  */
-async function initializeGame() {
+  async function initializeGame() {
     try {
       // ① 固定随机种子
       if (!window.__LEVEL_SEED) {
@@ -118,65 +353,9 @@ async function initializeGame() {
   
       // （可选）额外加一个 keydown 解锁兜底；pointerdown 已在 GameEngine 里加过
       window.addEventListener('keydown', () => window.popSynth?.resume?.(), { once: true });
-  
-      // ③ 启动游戏 & 开一局 60s
-      setTimeout(() => {
-        // 重置自闭症友好功能的成就系统
-        if (window.autismFeatures) {
-          window.autismFeatures.resetAchievements();
-        }
-        
-        // 启动游戏结果追踪
-        if (window.gameResultManager) {
-          window.gameResultManager.startGame();
-          console.log('Game result tracking started');
-        }
-        
-        game.start();
-        game.startRound(60, {
-          clearHistory: true,
-          onEnd: async (session) => {
-            try {
-              console.log('Round ended:', session);
-              game.stop();
-              
-              // 触发游戏结果管理器结束游戏并显示结果
-              if (window.gameResultManager) {
-                window.gameResultManager.endGame();
-                console.log('📊 游戏结果已显示');
-              }
-          
-              // 可选的音乐生成（默认禁用以避免卡顿）
-              // 可以通过 window.enableAIMusic = true 来动态启用AI音乐生成
-              const enableMusicGeneration = window.enableAIMusic || false;
-              
-              if (enableMusicGeneration) {
-                setTimeout(async () => {
-                  try {
-                    await generateMelodyFromSession(session, {
-                      primerBars: 2,
-                      continueSteps: 64, // 减少步数，加快生成
-                      temperature: 1.0,
-                      downloadMidi: false, // 禁用自动下载
-                    });
-                  } catch (musicError) {
-                    console.warn('🎵 音乐生成失败，但不影响游戏结果:', musicError);
-                  }
-                }, 100);
-              } else {
-                // 创建更丰富的测试音乐供结果窗口使用
-                window.lastGeneratedSequence = createRichTestMusic(session);
-                console.log('🎵 音乐生成已禁用，使用丰富测试序列');
-              }
-            } catch (err) {
-              console.error('[AI] submit failed:', err);
-              showEncouragementMessage('AI 生成失败：查看控制台错误', 1500);
-            }
-          }
-        });
-        showEncouragementMessage('欢迎！移动鼠标/伸出食指戳泡泡！');
-        startStatusUpdates();
-      }, 1000);
+
+      // 默认弹出设置窗口，等待专家点击“开始本轮”
+      openSessionSettingsModal();
   
     } catch (e) {
       console.error('Failed to initialize game:', e);
@@ -195,43 +374,58 @@ function setupEventListeners() {
     elements.slowBtn.addEventListener('click', () => handleSpeedChange(0.5, 'slow'));
     elements.normalBtn.addEventListener('click', () => handleSpeedChange(1.0, 'normal'));
     elements.fastBtn.addEventListener('click', () => handleSpeedChange(1.5, 'fast'));
+
+    // Session settings
+    if (elements.sessionSettingsBtn && elements.sessionStartBtn && elements.sessionCloseBtn) {
+        elements.sessionSettingsBtn.addEventListener('click', () => openSessionSettingsModal());
+        elements.sessionStartBtn.addEventListener('click', () => handleStartRound());
+        elements.sessionCloseBtn.addEventListener('click', () => closeSessionSettingsModal());
+
+        if (elements.sessionModeSafe) {
+            elements.sessionModeSafe.addEventListener('click', () => handleModeToggle(false));
+        }
+        if (elements.sessionModeExpert) {
+            elements.sessionModeExpert.addEventListener('click', () => handleModeToggle(true));
+        }
+        if (elements.sessionBpm) {
+            elements.sessionBpm.addEventListener('input', (e) => {
+                const value = clampValue(parseInt(e.target.value, 10), SESSION_ENVELOPE.rewardBpm.min, SESSION_ENVELOPE.rewardBpm.max);
+                updateBpmDisplay(value);
+            });
+        }
+        if (elements.sessionDuration) {
+            elements.sessionDuration.addEventListener('input', (e) => {
+                const value = clampValue(parseInt(e.target.value, 10), SESSION_ENVELOPE.rewardDurationSec.min, SESSION_ENVELOPE.rewardDurationSec.max);
+                updateDurationDisplay(value);
+            });
+        }
+        if (elements.sessionResetButtons?.length) {
+            elements.sessionResetButtons.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const field = btn.dataset.resetField;
+                    if (field) resetSessionField(field);
+                });
+            });
+        }
+        if (elements.sessionResetBtn) {
+            elements.sessionResetBtn.addEventListener('click', () => resetSessionForm());
+        }
+    } else {
+        console.warn('[SettingsUI] 设置控件未就绪，跳过绑定');
+    }
+
+    if (elements.panicMuteBtn) {
+        elements.panicMuteBtn.addEventListener('click', () => setPanicMuted(!panicMuted));
+    }
+    if (elements.resultMuteBtn) {
+        elements.resultMuteBtn.addEventListener('click', () => setPanicMuted(!panicMuted));
+    }
     
     // Keyboard shortcuts
     document.addEventListener('keydown', handleKeyboardInput);
     
     // Window resize handling
     window.addEventListener('resize', handleWindowResize);
-    
-    // 移除重复的pictogramToggle功能，只保留pose-mode-toggle
-    
-    // Camera toggle
-    if (elements.cameraToggle) {
-        elements.cameraToggle.addEventListener('click', async () => {
-            if (!game || !game.poseDetector) return;
-            
-            try {
-                await game.poseDetector.init();
-                elements.cameraToggle.textContent = '摄像头: 开';
-                if (elements.inputMode) {
-                    elements.inputMode.textContent = '手势';
-                }
-                showEncouragementMessage('摄像头已启动！伸出食指戳泡泡！');
-            } catch (error) {
-                console.log('摄像头启动失败，继续使用鼠标模式');
-                showEncouragementMessage('摄像头启动失败，使用鼠标模式');
-            }
-        });
-    }
-    
-    // Pose mode toggle (Tokyo2020 pictogram)
-    if (elements.poseModeToggle) {
-        elements.poseModeToggle.addEventListener('click', () => {
-            if (!game || !game.poseDetector) return;
-            const enabled = game.poseDetector.togglePictogramMode();
-            elements.poseModeToggle.textContent = enabled ? '标准模式' : '小人模式';
-            elements.poseModeToggle.className = enabled ? 'pose-btn active' : 'pose-btn';
-        });
-    }
     
     console.log('Event listeners set up successfully');
 }
@@ -456,14 +650,325 @@ function startStatusUpdates() {
           elements.bubbleCount.textContent = state.bubbleCount || 0;
         }
   
-        // Update input mode based on pose detector status
-        if (elements.inputMode && game.poseDetector) {
-          const isCamera = game.poseDetector.isInitialized;
-          elements.inputMode.textContent = isCamera ? '手势' : '鼠标';
+        if (elements.inputMode) {
+          elements.inputMode.textContent = '鼠标';
         }
       }
     }, 500);
   }
+
+function normalizeSessionConfig(config = {}) {
+    const merged = { ...SESSION_DEFAULTS, ...config };
+    merged.rewardBpm = clampValue(
+        Number(merged.rewardBpm || SESSION_DEFAULTS.rewardBpm),
+        SESSION_ENVELOPE.rewardBpm.min,
+        SESSION_ENVELOPE.rewardBpm.max
+    );
+    merged.rewardDurationSec = clampValue(
+        Number(merged.rewardDurationSec || SESSION_DEFAULTS.rewardDurationSec),
+        SESSION_ENVELOPE.rewardDurationSec.min,
+        SESSION_ENVELOPE.rewardDurationSec.max
+    );
+    merged.expertMode = Boolean(merged.expertMode);
+    return merged;
+}
+
+function getCurrentSessionConfig() {
+    return normalizeSessionConfig(window.sessionConfig || game?.sessionConfig || {});
+}
+
+function updateSessionPresetLabel(config) {
+    if (!elements.sessionPreset) return;
+    const modeLabel = config.expertMode ? "Expert" : "Safe";
+    elements.sessionPreset.textContent = `Preset: ${config.volumeLevel} / ${config.rhythmDensity} / ${config.timbre} | BPM ${config.rewardBpm} | ${config.rewardDurationSec}s | ${modeLabel}`;
+}
+
+function updateBpmDisplay(value) {
+    if (elements.sessionBpmValue) {
+        elements.sessionBpmValue.textContent = `${value} BPM`;
+    }
+}
+
+function updateDurationDisplay(value) {
+    if (elements.sessionDurationValue) {
+        elements.sessionDurationValue.textContent = `${value}s`;
+    }
+}
+
+function setSettingsDisabled(disabled) {
+    const fields = [
+        elements.sessionVolume,
+        elements.sessionDensity,
+        elements.sessionTimbre,
+        elements.sessionLatency,
+        elements.sessionImmediate,
+        elements.sessionReward,
+        elements.sessionBpm,
+        elements.sessionDuration,
+    ];
+    fields.forEach((field) => {
+        if (!field) return;
+        field.disabled = disabled;
+        const wrapper = field.closest('.settings-field');
+        if (wrapper) {
+            wrapper.classList.toggle('is-disabled', disabled);
+        }
+    });
+    if (elements.sessionResetButtons?.length) {
+        elements.sessionResetButtons.forEach((btn) => {
+            btn.disabled = disabled;
+        });
+    }
+}
+
+function setModeUI(isExpert) {
+    if (elements.sessionModeSafe) {
+        elements.sessionModeSafe.classList.toggle('active', !isExpert);
+    }
+    if (elements.sessionModeExpert) {
+        elements.sessionModeExpert.classList.toggle('active', isExpert);
+    }
+    if (elements.sessionModeNote) {
+        elements.sessionModeNote.textContent = isExpert
+            ? '专家/调参模式：仅在可调包络内微调参数。'
+            : '默认/安全模式：使用保守默认值（只读）。';
+    }
+    setSettingsDisabled(!isExpert);
+}
+
+function loadSessionSettingsForm(config) {
+    if (!elements.sessionModal) return;
+    const normalized = normalizeSessionConfig(config);
+    elements.sessionVolume.value = normalized.volumeLevel || 'medium';
+    elements.sessionDensity.value = normalized.rhythmDensity || 'normal';
+    elements.sessionTimbre.value = normalized.timbre || 'soft';
+    elements.sessionLatency.value = String(normalized.feedbackLatencyMs ?? 0);
+    elements.sessionImmediate.value = normalized.immediateToneMode || 'full';
+    elements.sessionReward.value = normalized.rewardEnabled ? 'on' : 'off';
+    if (elements.sessionBpm) {
+        elements.sessionBpm.min = SESSION_ENVELOPE.rewardBpm.min;
+        elements.sessionBpm.max = SESSION_ENVELOPE.rewardBpm.max;
+        elements.sessionBpm.value = normalized.rewardBpm;
+        updateBpmDisplay(normalized.rewardBpm);
+    }
+    if (elements.sessionDuration) {
+        elements.sessionDuration.min = SESSION_ENVELOPE.rewardDurationSec.min;
+        elements.sessionDuration.max = SESSION_ENVELOPE.rewardDurationSec.max;
+        elements.sessionDuration.value = normalized.rewardDurationSec;
+        updateDurationDisplay(normalized.rewardDurationSec);
+    }
+    setModeUI(normalized.expertMode);
+    updateSessionPresetLabel(normalized);
+}
+
+function readSessionSettingsForm() {
+    const expertMode = Boolean(elements.sessionModeExpert?.classList.contains('active'));
+    const rewardBpm = clampValue(
+        parseInt(elements.sessionBpm?.value || SESSION_DEFAULTS.rewardBpm, 10) || SESSION_DEFAULTS.rewardBpm,
+        SESSION_ENVELOPE.rewardBpm.min,
+        SESSION_ENVELOPE.rewardBpm.max
+    );
+    const rewardDurationSec = clampValue(
+        parseInt(elements.sessionDuration?.value || SESSION_DEFAULTS.rewardDurationSec, 10) || SESSION_DEFAULTS.rewardDurationSec,
+        SESSION_ENVELOPE.rewardDurationSec.min,
+        SESSION_ENVELOPE.rewardDurationSec.max
+    );
+    return normalizeSessionConfig({
+        volumeLevel: elements.sessionVolume.value,
+        rhythmDensity: elements.sessionDensity.value,
+        timbre: elements.sessionTimbre.value,
+        feedbackLatencyMs: parseInt(elements.sessionLatency.value, 10) || 0,
+        immediateToneMode: elements.sessionImmediate.value,
+        rewardEnabled: elements.sessionReward.value === 'on',
+        rewardBpm,
+        rewardDurationSec,
+        expertMode,
+    });
+}
+
+function resetSessionField(field) {
+    const defaults = SESSION_DEFAULTS;
+    switch (field) {
+        case 'volumeLevel':
+            elements.sessionVolume.value = defaults.volumeLevel;
+            break;
+        case 'rhythmDensity':
+            elements.sessionDensity.value = defaults.rhythmDensity;
+            break;
+        case 'timbre':
+            elements.sessionTimbre.value = defaults.timbre;
+            break;
+        case 'feedbackLatencyMs':
+            elements.sessionLatency.value = String(defaults.feedbackLatencyMs);
+            break;
+        case 'immediateToneMode':
+            elements.sessionImmediate.value = defaults.immediateToneMode;
+            break;
+        case 'rewardEnabled':
+            elements.sessionReward.value = defaults.rewardEnabled ? 'on' : 'off';
+            break;
+        case 'rewardBpm':
+            if (elements.sessionBpm) {
+                elements.sessionBpm.value = defaults.rewardBpm;
+                updateBpmDisplay(defaults.rewardBpm);
+            }
+            break;
+        case 'rewardDurationSec':
+            if (elements.sessionDuration) {
+                elements.sessionDuration.value = defaults.rewardDurationSec;
+                updateDurationDisplay(defaults.rewardDurationSec);
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+function handleModeToggle(isExpert) {
+    if (isExpert) {
+        const restore = lastExpertDraft || getCurrentSessionConfig();
+        loadSessionSettingsForm({ ...restore, expertMode: true });
+        return;
+    }
+    lastExpertDraft = readSessionSettingsForm();
+    loadSessionSettingsForm({ ...SESSION_DEFAULTS, expertMode: false });
+}
+
+function resetSessionForm() {
+    loadSessionSettingsForm({ ...SESSION_DEFAULTS, expertMode: Boolean(elements.sessionModeExpert?.classList.contains('active')) });
+}
+
+function syncPanicButton(btn, isMuted) {
+    if (!btn) return;
+    btn.classList.toggle('is-muted', isMuted);
+    btn.textContent = isMuted ? '🔊 恢复声音' : '🔇 停止/静音';
+}
+
+function refreshPanicButtons() {
+    const muted = window.__panicMute === true;
+    syncPanicButton(elements.panicMuteBtn, muted);
+    syncPanicButton(elements.resultMuteBtn, muted);
+}
+
+function setPanicMuted(isMuted) {
+    const nextMuted = Boolean(isMuted);
+    if (panicMuted === nextMuted) {
+        refreshPanicButtons();
+        return;
+    }
+    panicMuted = nextMuted;
+    window.__panicMute = panicMuted;
+    refreshPanicButtons();
+    if (window.MAGENTA?.player) {
+        window.MAGENTA.player.stop();
+    }
+    if (window.autismFeatures?.applySoundVolume) {
+        window.autismFeatures.applySoundVolume();
+        window.autismFeatures.updateUIValues?.();
+    } else if (window.popSynth?.setVolume) {
+        window.popSynth.setVolume(panicMuted ? 0 : 0.7);
+    }
+}
+
+function openSessionSettingsModal() {
+    if (!elements.sessionModal) {
+        ensureSessionSettingsUI();
+        syncSessionElements();
+    }
+    if (!elements.sessionModal) {
+        console.warn('[SettingsUI] session-settings-modal 缺失，请确认加载了最新 index.html');
+        return;
+    }
+    const config = getCurrentSessionConfig();
+    loadSessionSettingsForm(config);
+    if (elements.sessionStartBtn) {
+        elements.sessionStartBtn.textContent = game?.roundActive ? '保存设置' : '开始本轮';
+    }
+    if (game?.roundActive && !game.isPaused) {
+        game.togglePause();
+        pausedBySettings = true;
+    }
+    elements.sessionModal.classList.remove('hidden');
+}
+
+function closeSessionSettingsModal() {
+    elements.sessionModal.classList.add('hidden');
+    if (pausedBySettings && game?.isPaused) {
+        game.togglePause();
+    }
+    pausedBySettings = false;
+}
+
+function handleStartRound() {
+    const config = readSessionSettingsForm();
+    window.sessionConfig = { ...config };
+    game?.setSessionConfig?.(config);
+    updateSessionPresetLabel(config);
+
+    if (game?.roundActive) {
+        showEncouragementMessage('设置已保存，将在下一轮生效', 1200);
+        closeSessionSettingsModal();
+        return;
+    }
+
+    if (!game?.isRunning) {
+        game.start();
+    }
+
+    if (!statusUpdatesStarted) {
+        startStatusUpdates();
+        statusUpdatesStarted = true;
+    }
+
+    // 重置成就与结果统计
+    if (window.autismFeatures) {
+        window.autismFeatures.resetAchievements();
+    }
+    if (window.gameResultManager) {
+        window.gameResultManager.startGame();
+    }
+
+    game.startRound(60, {
+        clearHistory: true,
+        onEnd: async (session) => {
+            try {
+                console.log('Round ended:', session);
+                game.stop();
+
+                if (window.gameResultManager) {
+                    window.gameResultManager.endGame();
+                    console.log('📊 游戏结果已显示');
+                }
+
+                const enableMusicGeneration = window.enableAIMusic || false;
+                if (enableMusicGeneration) {
+                    setTimeout(async () => {
+                        try {
+                            await generateMelodyFromSession(session, {
+                                primerBars: 2,
+                                continueSteps: 64,
+                                temperature: 1.0,
+                                downloadMidi: false,
+                            });
+                        } catch (musicError) {
+                            console.warn('🎵 音乐生成失败，但不影响游戏结果:', musicError);
+                        }
+                    }, 100);
+                } else {
+                    window.lastGeneratedSequence = createRichTestMusic(session);
+                    console.log('🎵 音乐生成已禁用，使用丰富测试序列');
+                    window.gameResultManager?.updateDebugPanel?.();
+                }
+            } catch (err) {
+                console.error('[AI] submit failed:', err);
+                showEncouragementMessage('AI 生成失败：查看控制台错误', 1500);
+            }
+        },
+    });
+
+    showEncouragementMessage('欢迎！移动鼠标戳泡泡！');
+    closeSessionSettingsModal();
+}
 
 // Export functions for global access
 window.gameApp = {
@@ -472,7 +977,14 @@ window.gameApp = {
     getGameState,
     getBubbleManager,
     getHandTracker,
-    startStatusUpdates
+    startStatusUpdates,
+    setPanicMuted,
+    refreshPanicButtons
+};
+
+window.sessionUI = {
+    open: openSessionSettingsModal,
+    close: closeSessionSettingsModal
 };
 
 // ===== Magenta MusicRNN（固定 CPU 后端）=====
@@ -609,13 +1121,11 @@ const MAGENTA = {
   
     try { await mm.Player.tone?.context?.resume?.(); } catch {}
   
-    MAGENTA.player.stop();
-    MAGENTA.player.start(full);
-    
-    // 保存生成的音乐序列供后续播放
+    // 仅生成，不自动播放（由用户点击播放）
     window.lastGeneratedSequence = full;
+    window.gameResultManager?.updateDebugPanel?.();
     
-    window.gameApp?.showEncouragementMessage?.('已生成并播放 AI 旋律 🎵', 1500);
+    window.gameApp?.showEncouragementMessage?.('Reward 已生成，点击“享受你创作的音乐”播放 🎵', 1800);
   
     if (downloadMidi) {
       try {
@@ -756,90 +1266,25 @@ const MAGENTA = {
   
   /**
    * 创建丰富的测试音乐序列
-   * 基于游戏数据生成更有趣的多乐器音乐
+   * 改为调用安全的儿歌风格生成器（AdvancedMusicGenerator）
    */
   function createRichTestMusic(session) {
-    const bubbleCount = session?.notes?.length || 0;
-    const duration = Math.max(12, Math.min(30, bubbleCount * 0.4)); // 12-30秒
-    
-    // 基于泡泡数量选择音乐风格和乐器
-    let musicStyle, instruments;
-    if (bubbleCount < 10) {
-      musicStyle = 'gentle'; // 温和风格
-      instruments = [
-        { channel: 0, program: 0, name: 'Acoustic Grand Piano' },
-        { channel: 1, program: 73, name: 'Flute' }
-      ];
-    } else if (bubbleCount < 25) {
-      musicStyle = 'cheerful'; // 欢快风格
-      instruments = [
-        { channel: 0, program: 0, name: 'Acoustic Grand Piano' },
-        { channel: 1, program: 40, name: 'Violin' },
-        { channel: 2, program: 32, name: 'Acoustic Bass' }
-      ];
-    } else {
-      musicStyle = 'orchestral'; // 管弦乐风格
-      instruments = [
-        { channel: 0, program: 0, name: 'Acoustic Grand Piano' },
-        { channel: 1, program: 40, name: 'Violin' },
-        { channel: 2, program: 41, name: 'Viola' },
-        { channel: 3, program: 32, name: 'Acoustic Bass' },
-        { channel: 4, program: 73, name: 'Flute' }
-      ];
+    try {
+      if (typeof AdvancedMusicGenerator !== 'function') {
+        console.warn('AdvancedMusicGenerator not ready, returning empty sequence');
+        return { notes: [], tempos: [{ time: 0, qpm: 72 }], totalTime: 0 };
+      }
+      const generator = new AdvancedMusicGenerator();
+      if (window.sessionConfig) {
+        generator.setSessionConfig(window.sessionConfig);
+      }
+      const actions = generator.buildActionTraceFromSession(session);
+      const { sequence } = generator.generateReward(actions, generator.getSessionConfig());
+      return sequence;
+    } catch (e) {
+      console.warn('Fallback createRichTestMusic failed:', e);
+      return { notes: [], tempos: [{ time: 0, qpm: 72 }], totalTime: 0 };
     }
-    
-    // 音阶选择
-    const scales = {
-      gentle: [60, 62, 64, 67, 69], // 五声音阶，温和
-      cheerful: [60, 62, 64, 65, 67, 69, 71, 72], // 大调音阶，欢快
-      orchestral: [60, 62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79] // 扩展音阶
-    };
-    
-    const scale = scales[musicStyle];
-    const notes = [];
-    
-    // 1. 生成主旋律（钢琴 - 通道0）
-    generateMelody(notes, scale, duration, 0, 0);
-    
-    // 2. 生成和声层（根据乐器数量）
-    if (instruments.length > 1) {
-      generateHarmony(notes, scale, duration, 1, instruments[1].program);
-    }
-    
-    if (instruments.length > 2) {
-      generateBassLine(notes, scale, duration, 2, instruments[2].program);
-    }
-    
-    if (instruments.length > 3) {
-      generateCounterMelody(notes, scale, duration, 3, instruments[3].program);
-    }
-    
-    if (instruments.length > 4) {
-      generateOrnaments(notes, scale, duration, 4, instruments[4].program);
-    }
-    
-    // 3. 添加打击乐（如果是管弦乐风格）
-    if (musicStyle === 'orchestral') {
-      generatePercussion(notes, duration);
-    }
-    
-    // 4. 创建动态变化
-    addDynamicChanges(notes, duration);
-    
-    return {
-      ticksPerQuarter: 220,
-      totalTime: duration,
-      tempos: [{ time: 0, qpm: 120 }],
-      notes: notes,
-      instrumentInfos: instruments.map(inst => ({
-        instrument: inst.channel,
-        program: inst.program,
-        isDrum: inst.channel === 9, // 通道9是打击乐
-        name: inst.name
-      })),
-      keySignatures: [{ time: 0, key: 0, scale: 0 }],
-      timeSignatures: [{ time: 0, numerator: 4, denominator: 4 }]
-    };
   }
   
   // 生成主旋律

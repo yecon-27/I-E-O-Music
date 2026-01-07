@@ -38,6 +38,22 @@ class GameEngine {
         this.roundEndAt = 0;        // 计划结束的绝对时间戳
         this.roundRemainingMs = null; // 暂停时的剩余毫秒
         this.roundPausedAt = 0;     // 进入暂停的时间戳
+
+        // Session 级配置（与 reward 生成一致）
+        this.sessionConfig = {
+            volumeLevel: 'medium',
+            rhythmDensity: 'normal',
+            timbre: 'soft',
+            feedbackLatencyMs: 0,
+            immediateToneMode: 'full', // full | visual | off
+            rewardEnabled: true,
+            rewardBpm: 72,
+            rewardDurationSec: 20,
+            expertMode: false,
+        };
+        if (window.sessionConfig) {
+            this.sessionConfig = { ...this.sessionConfig, ...window.sessionConfig };
+        }
                 
         // Canvas setup
         this.setupCanvas();
@@ -46,6 +62,17 @@ class GameEngine {
         this.gameLoop = this.gameLoop.bind(this);
         this.update = this.update.bind(this);
         this.render = this.render.bind(this);
+    }
+
+    setSessionConfig(cfg = {}) {
+        this.sessionConfig = { ...this.sessionConfig, ...cfg };
+        // 兼容通过全局配置的用法
+        window.sessionConfig = this.sessionConfig;
+        const vol = this.sessionConfig.volumeLevel;
+        const gain =
+            vol === 'low' ? 0.4 :
+            vol === 'high' ? 1.0 : 0.7;
+        window.popSynth?.setVolume?.(gain);
     }
     
     /**
@@ -76,6 +103,8 @@ class GameEngine {
         // —— 在 init() 里 —-
         // 让 PopSynth 可用（如未创建则创建一次）
         window.popSynth ??= new PopSynth();
+        this.setSessionConfig(this.sessionConfig);
+        this.setupLaneGuides();
 
         // 解锁 AudioContext（一次用户手势即可，兜底）
         const unlockAudio = () => window.popSynth?.resume?.();
@@ -85,24 +114,31 @@ class GameEngine {
         this.bubbleManager.setOnPop((b) => {
             if (!b?.note) return;
         
-            // 声音
-            window.popSynth?.resume?.();
-            window.popSynth?.play?.(b.note.freq);
+            const cfg = this.sessionConfig || {};
+            const playImmediate = cfg.immediateToneMode === 'full';
+            const delay = cfg.feedbackLatencyMs || 0;
+        
+            if (playImmediate) {
+                window.popSynth?.resume?.();
+                setTimeout(() => {
+                    window.popSynth?.play?.(b.note.freq, { dur: 0.15 });
+                }, delay);
+            }
+
+            // 记录点击轨迹
+            this.appendTrailDot(b.note?.name, b.color);
         
             // ✅ 只记录到“本局”的 notes
             if (this.roundActive) {
-            this.roundNotes.push({
-                dt: performance.now() - this.roundStart,
-                id: b.id,
-                midi: b.note.midi,
-                freq: b.note.freq,
-                name: b.note.name,
-            });
+                this.roundNotes.push({
+                    dt: performance.now() - this.roundStart,
+                    id: b.id,
+                    midi: b.note.midi,
+                    freq: b.note.freq,
+                    name: b.note.name,
+                    laneId: b.laneId,
+                });
             }
-        
-            // 移除音符提示，避免与成就系统冲突
-            
-            // 记录已移至 handleBubblePop 中，避免重复记录
         });
         this.collisionDetector = new CollisionDetector();
         this.collisionDetector.addCollisionCallback(this.handleBubblePop.bind(this));
@@ -126,16 +162,9 @@ class GameEngine {
         // this.handTracker.onHandLost     = () => { this.handPositions.rightHand.visible = false; };
         // this.handTracker.initialize();
       
-        // 3) PoseDetector
-        this.poseDetector = new PoseDetector(this.canvas.width, this.canvas.height);
-        this.poseDetector.setHandMoveCallback((positions) => {
-          this.handPositions.leftHand  = { ...positions.leftHand  };
-          this.handPositions.rightHand = { ...positions.rightHand };
-          
-          // 检测快速移动作为尝试戳泡泡的动作
-          this.detectPopAttempts(positions);
-        });
-        await this.poseDetector.init();
+        // 3) 仅保留鼠标控制（移除摄像头/姿态检测）
+        this.poseDetector = null;
+        this.setupMouseFallback();
       
         // 通知感官设置系统音频已就绪
         if (window.autismFeatures && typeof window.autismFeatures.onAudioSystemReady === 'function') {
@@ -145,6 +174,39 @@ class GameEngine {
         console.log('Game Engine initialized successfully');
         return true;
       }
+
+    setupLaneGuides() {
+        const gameMain = this.canvas?.parentElement;
+        this.laneLabelsEl = document.getElementById('lane-labels');
+        this.clickTrailEl = document.getElementById('click-trail');
+        if (!this.laneLabelsEl && gameMain) {
+            this.laneLabelsEl = document.createElement('div');
+            this.laneLabelsEl.id = 'lane-labels';
+            this.laneLabelsEl.className = 'lane-labels';
+            gameMain.appendChild(this.laneLabelsEl);
+        }
+        if (!this.clickTrailEl && gameMain) {
+            this.clickTrailEl = document.createElement('div');
+            this.clickTrailEl.id = 'click-trail';
+            this.clickTrailEl.className = 'click-trail';
+            gameMain.appendChild(this.clickTrailEl);
+        }
+        if (!this.laneLabelsEl || !window.BUBBLE_LANES) return;
+        const lanes = window.BUBBLE_LANES;
+        const laneWidth = this.canvas.width / (lanes.length + 1);
+        this.laneLabelsEl.innerHTML = '';
+        lanes.forEach((lane, idx) => {
+            const div = document.createElement('div');
+            div.className = 'lane-label';
+            div.textContent = lane.note.name[0];
+            div.style.background = lane.color;
+            div.style.left = `${laneWidth * (idx + 1)}px`;
+            div.style.transform = 'translateX(-50%)';
+            this.laneLabelsEl.appendChild(div);
+        });
+        // 初始化点击轨迹为空
+        if (this.clickTrailEl) this.clickTrailEl.innerHTML = '<span class="trail-title">轨迹</span>';
+    }
     
     /**
      * Start the game loop
@@ -480,6 +542,16 @@ class GameEngine {
         this.onRoundEnd = (typeof opts.onEnd === 'function') ? opts.onEnd : null;
         if (opts.clearHistory) window.Sessions = [];
 
+        // 重置泡泡并按 lane 生成固定数量
+        this.bubbleManager?.clearAllBubbles();
+        // 初始按顺序生成一组 4 个，每个间隔延迟，形成明显高度差
+        const initialCount = this.bubbleManager?.targetBubbleCount || 4;
+        for (let i = 0; i < initialCount; i++) {
+            this.bubbleManager?.scheduleSpawn(null, i * 800);
+        }
+        // 清空点击轨迹
+        if (this.clickTrailEl) this.clickTrailEl.innerHTML = '';
+
         // 记录总时长与计划结束时间
         this.roundDurationMs = seconds * 1000;
         this.roundEndAt = this.roundStart + this.roundDurationMs;
@@ -541,6 +613,25 @@ class GameEngine {
     return window.Sessions?.[window.Sessions.length - 1] ?? null;
     }
 
+    /**
+     * 点击轨迹追加一个标记
+     */
+    appendTrailDot(noteName = '', color = '#666') {
+        if (!this.clickTrailEl) return;
+        if (this.clickTrailEl.querySelector('.trail-title')) {
+            this.clickTrailEl.innerHTML = '';
+        }
+        const dot = document.createElement('span');
+        dot.className = 'trail-dot';
+        dot.textContent = (noteName || '').charAt(0) || '';
+        dot.style.background = color;
+        this.clickTrailEl.appendChild(dot);
+        // 保持最多 30 个点，避免过长
+        if (this.clickTrailEl.children.length > 30) {
+            this.clickTrailEl.removeChild(this.clickTrailEl.firstChild);
+        }
+    }
+
     /** 导出最近一局为 JSON（可选） */
     downloadLastSessionJSON(filename = 'session.json') {
     const s = this.getLastSession();
@@ -587,7 +678,7 @@ class GameEngine {
      * Setup mouse fallback for testing without camera
      */
     setupMouseFallback() {
-        console.log('Setting up mouse fallback for pose detection');
+        console.log('Setting up mouse control');
         
         // Track mouse position as right hand
         this.canvas.addEventListener('mousemove', (event) => {
