@@ -84,6 +84,17 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.control-btn.panic-btn {
+    background: #f3d8d8;
+    color: #7b3b3b;
+    border: 1px solid #e3bcbc;
+}
+
+.control-btn.panic-btn.is-muted {
+    background: #e98d8d;
+    color: #fff;
+}
+
 .control-btn:hover, .speed-btn:hover {
     background-color: var(--button-hover);
     transform: translateY(-1px);
@@ -482,6 +493,54 @@ body.high-animation * {
     font-size: 0.95rem;
 }
 
+.settings-mode {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.settings-mode-toggle {
+    display: inline-flex;
+    gap: 6px;
+    padding: 4px;
+    border-radius: 999px;
+    border: 1px solid var(--border-light);
+    background: #fff;
+    width: fit-content;
+}
+
+.settings-mode-toggle .mode-btn {
+    border: none;
+    background: transparent;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.settings-mode-toggle .mode-btn.active {
+    background: var(--accent-soft);
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.settings-mode-note {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.settings-disclaimer {
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px dashed var(--border-light);
+    background: #fff;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}
+
 .settings-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -496,11 +555,59 @@ body.high-animation * {
     font-size: 0.9rem;
 }
 
+.settings-field.full {
+    grid-column: 1 / -1;
+}
+
+.settings-field.is-disabled {
+    opacity: 0.6;
+}
+
 .settings-field select {
     padding: 8px 10px;
     border-radius: 10px;
     border: 1px solid var(--accent-soft);
     background: #fff;
+}
+
+.settings-field input[type="range"] {
+    width: 100%;
+}
+
+.settings-slider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.settings-slider-value {
+    min-width: 70px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.settings-field-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+.settings-reset {
+    border: none;
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: #f3ede5;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 0.78rem;
+}
+
+.settings-reset:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .settings-actions {
@@ -667,6 +774,18 @@ body.high-animation * {
 .result-btn.secondary:hover {
     background: var(--border-light);
     transform: translateY(-2px);
+}
+
+.result-btn.panic-btn {
+    background: #f3d8d8;
+    color: #7b3b3b;
+    border: 2px solid #e3bcbc;
+}
+
+.result-btn.panic-btn.is-muted {
+    background: #e98d8d;
+    color: #fff;
+    border-color: #e98d8d;
 }
 
 .result-btn.music {

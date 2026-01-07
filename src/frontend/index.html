@@ -94,6 +94,7 @@
                 
                     <button id="pause-btn" class="control-btn">⏸️ 暂停</button>
                     <button id="session-settings-btn" class="control-btn">⚙️ 参数</button>
+                    <button id="panic-mute-btn" class="control-btn panic-btn">🔇 停止/静音</button>
                     
                     <div class="speed-controls">
                         <button id="slow-btn" class="speed-btn">🐌 慢速</button>
@@ -245,11 +246,17 @@
                                         <ul id="debug-constraint-list" class="debug-list"></ul>
                                         <div class="debug-note">Safety by design: reward 生成器=约束集合，而不是事后过滤。</div>
                                     </div>
+                                    <div class="debug-block">
+                                        <h4>本轮配置 / 变更记录</h4>
+                                        <ul id="debug-config-list" class="debug-list"></ul>
+                                        <div class="debug-note">展示与保守默认值的差异，便于审计与复现。</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="result-actions">
                             <button id="play-music-btn" class="result-btn music">🎵 享受你创作的音乐</button>
+                            <button id="result-mute-btn" class="result-btn secondary panic-btn">🔇 停止/静音</button>
                             <button id="play-again-btn" class="result-btn primary">🎮 再玩一轮</button>
                             <button id="finish-game-btn" class="result-btn secondary">✨ 结束游戏</button>
                         </div>
@@ -282,6 +289,16 @@
         <div class="settings-panel">
             <h2>Session Settings</h2>
             <p class="settings-subtitle">当前设置会用于本轮 / 下一轮</p>
+            <div class="settings-mode">
+                <div class="settings-mode-toggle" role="group" aria-label="Session mode">
+                    <button type="button" id="session-mode-safe" class="mode-btn active">默认/安全</button>
+                    <button type="button" id="session-mode-expert" class="mode-btn">专家/调参</button>
+                </div>
+                <div id="session-mode-note" class="settings-mode-note">默认/安全模式：使用保守默认值（只读）。</div>
+            </div>
+            <div class="settings-disclaimer">
+                保守默认值 + 可调包络（用于专家校准，不是临床验证阈值）。
+            </div>
             <div class="settings-grid">
                 <div class="settings-field">
                     <label for="session-volume">音量</label>
@@ -290,6 +307,10 @@
                         <option value="medium" selected>medium</option>
                         <option value="high">high</option>
                     </select>
+                    <div class="settings-field-meta">
+                        <span>默认: medium | 可调: low/medium/high | 风险: 过高可能刺激</span>
+                        <button class="settings-reset" type="button" data-reset-field="volumeLevel">恢复默认</button>
+                    </div>
                 </div>
                 <div class="settings-field">
                     <label for="session-density">节奏密度</label>
@@ -297,6 +318,10 @@
                         <option value="sparse">sparse</option>
                         <option value="normal" selected>normal</option>
                     </select>
+                    <div class="settings-field-meta">
+                        <span>默认: normal | 可调: sparse/normal | 风险: 过密增加负荷</span>
+                        <button class="settings-reset" type="button" data-reset-field="rhythmDensity">恢复默认</button>
+                    </div>
                 </div>
                 <div class="settings-field">
                     <label for="session-timbre">音色</label>
@@ -304,6 +329,10 @@
                         <option value="soft" selected>soft</option>
                         <option value="bright">bright</option>
                     </select>
+                    <div class="settings-field-meta">
+                        <span>默认: soft | 可调: soft/bright | 风险: bright 更刺激</span>
+                        <button class="settings-reset" type="button" data-reset-field="timbre">恢复默认</button>
+                    </div>
                 </div>
                 <div class="settings-field">
                     <label for="session-latency">反馈延迟</label>
@@ -311,6 +340,10 @@
                         <option value="0" selected>Immediate</option>
                         <option value="500">0.5s Delay</option>
                     </select>
+                    <div class="settings-field-meta">
+                        <span>默认: Immediate | 可调: 0/0.5s | 风险: 延迟影响因果感</span>
+                        <button class="settings-reset" type="button" data-reset-field="feedbackLatencyMs">恢复默认</button>
+                    </div>
                 </div>
                 <div class="settings-field">
                     <label for="session-immediate">即时音模式</label>
@@ -319,6 +352,10 @@
                         <option value="visual">Visual-only</option>
                         <option value="off">Off</option>
                     </select>
+                    <div class="settings-field-meta">
+                        <span>默认: Full | 可调: full/visual/off | 风险: 反馈过强</span>
+                        <button class="settings-reset" type="button" data-reset-field="immediateToneMode">恢复默认</button>
+                    </div>
                 </div>
                 <div class="settings-field">
                     <label for="session-reward">Reward 音乐</label>
@@ -326,9 +363,36 @@
                         <option value="on" selected>On</option>
                         <option value="off">Off</option>
                     </select>
+                    <div class="settings-field-meta">
+                        <span>默认: On | 可调: On/Off | 风险: Off 仅保留即时反馈</span>
+                        <button class="settings-reset" type="button" data-reset-field="rewardEnabled">恢复默认</button>
+                    </div>
+                </div>
+                <div class="settings-field full">
+                    <label for="session-bpm">Reward BPM</label>
+                    <div class="settings-slider">
+                        <input type="range" id="session-bpm" min="65" max="75" step="1" value="72">
+                        <span id="session-bpm-value" class="settings-slider-value">72 BPM</span>
+                    </div>
+                    <div class="settings-field-meta">
+                        <span>默认: 72 | 可调: 65–75 | 风险: 过快难预测</span>
+                        <button class="settings-reset" type="button" data-reset-field="rewardBpm">恢复默认</button>
+                    </div>
+                </div>
+                <div class="settings-field full">
+                    <label for="session-duration">Reward 时长</label>
+                    <div class="settings-slider">
+                        <input type="range" id="session-duration" min="10" max="20" step="1" value="20">
+                        <span id="session-duration-value" class="settings-slider-value">20s</span>
+                    </div>
+                    <div class="settings-field-meta">
+                        <span>默认: 20s | 可调: 10–20s | 风险: 过长可能过载</span>
+                        <button class="settings-reset" type="button" data-reset-field="rewardDurationSec">恢复默认</button>
+                    </div>
                 </div>
             </div>
             <div class="settings-actions">
+                <button id="session-reset-btn" class="result-btn secondary">恢复默认</button>
                 <button id="session-start-btn" class="result-btn primary">开始本轮</button>
                 <button id="session-close-btn" class="result-btn secondary">关闭</button>
             </div>

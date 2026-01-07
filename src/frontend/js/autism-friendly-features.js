@@ -103,7 +103,8 @@ class AutismFriendlyFeatures {
      * 应用音量设置
      */
     applySoundVolume() {
-        const volume = this.settings.soundVolume / 100;
+        const isMuted = window.__panicMute === true;
+        const volume = isMuted ? 0 : this.settings.soundVolume / 100;
         
         // 应用到PopSynth音效
         if (window.popSynth && typeof window.popSynth.setVolume === 'function') {

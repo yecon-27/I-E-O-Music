@@ -47,6 +47,9 @@ class GameEngine {
             feedbackLatencyMs: 0,
             immediateToneMode: 'full', // full | visual | off
             rewardEnabled: true,
+            rewardBpm: 72,
+            rewardDurationSec: 20,
+            expertMode: false,
         };
         if (window.sessionConfig) {
             this.sessionConfig = { ...this.sessionConfig, ...window.sessionConfig };

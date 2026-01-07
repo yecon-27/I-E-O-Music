@@ -447,6 +447,7 @@ class GameResultManager {
     const signalList = document.getElementById("debug-signal-list");
     const counterfactualList = document.getElementById("debug-counterfactual-list");
     const constraintList = document.getElementById("debug-constraint-list");
+    const configList = document.getElementById("debug-config-list");
     const timelineCanvas = document.getElementById("debug-timeline");
     const laneBars = document.getElementById("debug-lane-bars");
 
@@ -478,6 +479,9 @@ class GameResultManager {
       if (constraintList) {
         this.fillDebugList(constraintList, ["等待 reward 生成后进行审计"]);
       }
+      if (configList) {
+        this.fillDebugList(configList, ["暂无配置记录"]);
+      }
       if (timelineCanvas) {
         this.drawEmptyTimeline(timelineCanvas);
       }
@@ -491,6 +495,14 @@ class GameResultManager {
     const melodySpec = payload.melodySpec || {};
     const sessionConfig = payload.sessionConfig || {};
     const actionTrace = Array.isArray(payload.actionTrace) ? payload.actionTrace : [];
+    const envelope = window.SESSION_ENVELOPE || {};
+    const bpmEnvelope = envelope.rewardBpm || {};
+    const durationEnvelope = envelope.rewardDurationSec || {};
+    const bpmMin = Number.isFinite(bpmEnvelope.min) ? bpmEnvelope.min : 65;
+    const bpmMax = Number.isFinite(bpmEnvelope.max) ? bpmEnvelope.max : 75;
+    const durationMin = Number.isFinite(durationEnvelope.min) ? durationEnvelope.min : 10;
+    const durationMax = Number.isFinite(durationEnvelope.max) ? durationEnvelope.max : 20;
+    const rewardEnabled = sessionConfig.rewardEnabled !== false;
 
     const seqScore = Number(patternSummary.seqScore || 0);
     const repScore = Number(patternSummary.repScore || 0);
@@ -529,8 +541,8 @@ class GameResultManager {
     confidenceEl.textContent = confidence;
 
     const bpm = melodySpec.bpm || sequence?.tempos?.[0]?.qpm || 0;
-    const bpmOk = bpm >= 65 && bpm <= 75;
-    const bpmBorderline = bpmOk && (bpm - 65 < 1.5 || 75 - bpm < 1.5);
+    const bpmOk = bpm >= bpmMin && bpm <= bpmMax;
+    const bpmBorderline = bpmOk && (bpm - bpmMin < 1.5 || bpmMax - bpm < 1.5);
 
     const pitchClassSet = new Set([0, 2, 4, 7, 9]); // C D E G A
     const notes = Array.isArray(sequence?.notes) ? sequence.notes : [];
@@ -540,8 +552,8 @@ class GameResultManager {
         inScaleCount += 1;
       }
     });
-    const notesInScale = notes.length > 0 && inScaleCount === notes.length;
-    const outOfScaleCount = Math.max(0, notes.length - inScaleCount);
+    const notesInScale = notes.length === 0 ? true : inScaleCount === notes.length;
+    const outOfScaleCount = notes.length === 0 ? 0 : Math.max(0, notes.length - inScaleCount);
 
     const beatSec = bpm ? 60 / bpm : 0.8;
     const melodyNotes = notes
@@ -565,16 +577,31 @@ class GameResultManager {
     const badChordCount = chordTrack.filter((c) => c.chordType !== "I" && c.chordType !== "V").length;
     const harmonyOk = chordTrack.length === 0 ? true : badChordCount === 0;
 
-    const safe = notesInScale && bpmOk && dynamicOk && harmonyOk;
-    const violationCount = [notesInScale, bpmOk, dynamicOk, harmonyOk].filter((v) => !v).length;
+    const durationSec = Number.isFinite(melodySpec.durationSec)
+      ? melodySpec.durationSec
+      : typeof sequence?.totalTime === "number"
+      ? sequence.totalTime
+      : 0;
+    const durationOk = rewardEnabled
+      ? durationSec >= durationMin && durationSec <= durationMax
+      : true;
+    const durationBorderline =
+      rewardEnabled &&
+      durationOk &&
+      (durationSec - durationMin < 1 || durationMax - durationSec < 1);
+
+    const safe = notesInScale && bpmOk && dynamicOk && harmonyOk && durationOk;
+    const violationCount = [notesInScale, bpmOk, dynamicOk, harmonyOk, durationOk].filter((v) => !v).length;
     safetyEl.textContent = safe
-      ? `Safe（0 违规）${bpmBorderline || dynamicBorderline ? " ⚠️" : ""}`
+      ? `Safe（0 违规）${bpmBorderline || dynamicBorderline || durationBorderline ? " ⚠️" : ""}`
       : `Needs attention（${violationCount} 违规）`;
 
     const density = melodySpec.rhythmDensity || sessionConfig.rhythmDensity || "normal";
     const densityLabel = density === "sparse" ? "稀疏" : "正常";
-    const totalTime = typeof sequence?.totalTime === "number" ? sequence.totalTime.toFixed(1) : "0";
-    rewardEl.textContent = `BPM ${Math.round(bpm)} | ${melodySpec.scale || "C pentatonic"} | 和声 I/V | 时长 ${totalTime}s | 密度 ${densityLabel}`;
+    const totalTime = durationSec ? durationSec.toFixed(1) : "0.0";
+    rewardEl.textContent = rewardEnabled
+      ? `BPM ${Math.round(bpm)} | ${melodySpec.scale || "C pentatonic"} | 和声 I/V | 时长 ${totalTime}s | 密度 ${densityLabel}`
+      : "Reward Off（仅即时反馈）";
 
     if (reasonEl) {
       const coverage = Number(patternSummary.coverage || 0).toFixed(2);
@@ -741,9 +768,10 @@ class GameResultManager {
         : "soft（柔和）";
       const volumeLabel = sessionConfig.volumeLevel || "medium";
       const latencyLabel = Number(sessionConfig.feedbackLatencyMs || 0) > 0 ? "0.5s Delay" : "Immediate";
-      const rewardEnabled = sessionConfig.rewardEnabled !== false;
+      const modeLabel = sessionConfig.expertMode ? "专家/调参" : "默认/安全";
 
       const structureItems = [
+        `模式: ${modeLabel}`,
         `结构风格: ${this.formatStyleType(melodySpec.styleType)}`,
         `主旋律: ${motifPreview}（${noteCount} 音）`,
         `时长: ${totalTime}s | BPM ${Math.round(bpm)}`,
@@ -809,13 +837,58 @@ class GameResultManager {
     }
 
     if (constraintList) {
+      const durationLabel = rewardEnabled
+        ? `${durationMin}–${durationMax}s（当前 ${totalTime}s）`
+        : "Reward Off（未生成）";
       const checks = [
         `${notesInScale ? "✅" : "❌"} 音阶限制：${inScaleCount}/${notes.length} 在 C-D-E-G-A${outOfScaleCount ? `（超出 ${outOfScaleCount}）` : ""}`,
-        `${bpmOk ? "✅" : "❌"} 速度限制：65–75 BPM（当前 ${Math.round(bpm)})`,
+        `${bpmOk ? "✅" : "❌"} 速度限制：${bpmMin}–${bpmMax} BPM（当前 ${Math.round(bpm)})`,
+        `${rewardEnabled ? (durationOk ? "✅" : "❌") : "⏸️"} 时长限制：${durationLabel}`,
         `${dynamicOk ? "✅" : "❌"} 动态跳变：最大 ${(maxJump * 100).toFixed(0)}%（阈值 15%）`,
         `${harmonyOk ? "✅" : "❌"} 和声限制：${badChordCount ? `超出 ${badChordCount}` : "仅 I-V"}`,
       ];
       this.fillDebugList(constraintList, checks);
+    }
+
+    if (configList) {
+      const defaults = window.SESSION_DEFAULTS || {};
+      const configItems = [];
+      const modeLabel = sessionConfig.expertMode ? "专家/调参" : "默认/安全";
+      const diffItems = [];
+      const formatBool = (value) => (value ? "On" : "Off");
+      const formatLatency = (value) =>
+        Number(value || 0) > 0 ? "0.5s Delay" : "Immediate";
+      const addDiff = (key, label, formatValue = (v) => v) => {
+        if (!(key in defaults) || !(key in sessionConfig)) return;
+        const base = defaults[key];
+        const current = sessionConfig[key];
+        const same = typeof base === "number"
+          ? Number(base) === Number(current)
+          : typeof base === "boolean"
+          ? Boolean(base) === Boolean(current)
+          : base === current;
+        if (!same) {
+          diffItems.push(`${label}: ${formatValue(base)} → ${formatValue(current)}`);
+        }
+      };
+
+      addDiff("volumeLevel", "音量");
+      addDiff("rhythmDensity", "密度");
+      addDiff("timbre", "音色");
+      addDiff("feedbackLatencyMs", "反馈延迟", formatLatency);
+      addDiff("immediateToneMode", "即时音模式");
+      addDiff("rewardEnabled", "Reward", formatBool);
+      addDiff("rewardBpm", "Reward BPM", (v) => `${Math.round(Number(v))}`);
+      addDiff("rewardDurationSec", "Reward 时长", (v) => `${Math.round(Number(v))}s`);
+
+      configItems.push(`模式: ${modeLabel}`);
+      if (diffItems.length) {
+        configItems.push(`调整项: ${diffItems.length} 项`);
+        diffItems.forEach((item) => configItems.push(item));
+      } else {
+        configItems.push("未调整（保守默认值）");
+      }
+      this.fillDebugList(configList, configItems);
     }
   }
 
@@ -1133,6 +1206,10 @@ class GameResultManager {
     console.log("🎵 尝试播放生成的音乐");
 
     try {
+      if (window.__panicMute) {
+        this.showMusicError("当前为静音状态，请先点击“恢复声音”");
+        return;
+      }
       // 检查是否有最后生成的音乐序列
       if (!window.lastGeneratedSequence) {
         console.warn("⚠️ 没有找到生成的音乐序列");

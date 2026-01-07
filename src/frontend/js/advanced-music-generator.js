@@ -18,11 +18,16 @@ const DEFAULT_SESSION_CONFIG = {
   feedbackLatencyMs: 0, // 0 | 500
   immediateToneMode: "full", // full | visual | off
   rewardEnabled: true,
+  rewardBpm: 72,
+  rewardDurationSec: 20,
+  expertMode: false,
 };
 
 const REWARD_SETTINGS = {
-  minDurationSec: 20,
+  minDurationSec: 10,
   maxDurationSec: 20,
+  minBpm: 65,
+  maxBpm: 75,
   baseBpm: 72,
   pentatonic: ["C4", "D4", "E4", "G4", "A4"],
 };
@@ -379,9 +384,15 @@ class AdvancedMusicGenerator {
     if (!config.rewardEnabled) {
       const actionTrace = actions || [];
       const patternSummary = this.analyzePatterns(actionTrace);
+      const mutedBpm = clamp(
+        Number(config.rewardBpm ?? REWARD_SETTINGS.baseBpm),
+        REWARD_SETTINGS.minBpm,
+        REWARD_SETTINGS.maxBpm
+      );
       const melodySpec = {
         scale: "C pentatonic",
-        bpm: REWARD_SETTINGS.baseBpm,
+        bpm: mutedBpm,
+        durationSec: 0,
         phrases: [],
         chordTrack: [],
         rhythmDensity: config.rhythmDensity,
@@ -391,7 +402,7 @@ class AdvancedMusicGenerator {
       const sequence = {
         notes: [],
         totalTime: 0,
-        tempos: [{ qpm: REWARD_SETTINGS.baseBpm, time: 0 }],
+        tempos: [{ qpm: mutedBpm, time: 0 }],
         timeSignatures: [{ time: 0, numerator: 4, denominator: 4 }],
       };
       sequence.debugPayload = {
@@ -407,10 +418,18 @@ class AdvancedMusicGenerator {
     const patternSummary = this.analyzePatterns(actionTrace);
 
     // 儿歌风格：固定接近 72 BPM，稳定节拍
-    const bpm = clamp(72, 65, 75);
+    const bpm = clamp(
+      Number(config.rewardBpm ?? REWARD_SETTINGS.baseBpm),
+      REWARD_SETTINGS.minBpm,
+      REWARD_SETTINGS.maxBpm
+    );
     const secondsPerBeat = 60 / bpm;
-    // 固定 20 秒
-    const rewardDurationSec = clamp(20, REWARD_SETTINGS.minDurationSec, REWARD_SETTINGS.maxDurationSec);
+    // 默认 20 秒，可在 envelope 内调节
+    const rewardDurationSec = clamp(
+      Number(config.rewardDurationSec ?? REWARD_SETTINGS.maxDurationSec),
+      REWARD_SETTINGS.minDurationSec,
+      REWARD_SETTINGS.maxDurationSec
+    );
     const beatsTotal = Math.max(8, Math.round(rewardDurationSec / secondsPerBeat));
 
     const pitchPool = this.buildPitchPool(actionTrace, patternSummary);
@@ -440,6 +459,7 @@ class AdvancedMusicGenerator {
     const melodySpec = {
       scale: "C pentatonic",
       bpm,
+      durationSec: rewardDurationSec,
       phrases: [
         {
           label: styleType === "sequential" ? "CDEGA" : styleType === "mixed" ? "MIX" : "A",
