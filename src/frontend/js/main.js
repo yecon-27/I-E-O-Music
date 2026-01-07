@@ -124,7 +124,7 @@ const TRANSLATIONS = {
         'panic-btn-muted': '🔊 Unmute',
         'panic-btn-unmuted': '🔇 Stop/Mute',
         'settings-btn': '⚙️ Settings',
-        'sensory-btn': '🎛️ Sensory',
+        // 'sensory-btn': '🎛️ Sensory', // Removed
         'slow-btn': '🐌 Slow',
         'normal-btn': '🚶 Normal',
         'fast-btn': '🏃 Fast',

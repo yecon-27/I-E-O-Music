@@ -238,7 +238,7 @@ button, input, select, textarea {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: var(--bg-secondary);
+    background-color: #FFFFFF; /* 改为纯白背景，避免发灰 */
     border-radius: 12px;
     overflow: visible;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -248,7 +248,7 @@ button, input, select, textarea {
 }
 
 #game-canvas {
-    background: linear-gradient(180deg, #E3F2FD 0%, #F3E5F5 100%);
+    background: linear-gradient(180deg, #FFFFFF 0%, #E1F5FE 100%); /* 匹配 JS 中的新渐变 */
     border-radius: 8px;
     width: 800px;
     height: 600px;
@@ -393,13 +393,19 @@ button, input, select, textarea {
     max-width: 90vw;
     text-align: center;
 }
-/* Lane guides and click trails - Absolute positioning to prevent layout shifts */
-.lane-labels, .click-trail {
+/* Lane guides - Absolute positioning to prevent layout shifts */
+.lane-labels {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.click-trail {
+    /* Previously shared styles with lane-labels, but now handled separately or in HTML */
     pointer-events: none;
     z-index: 5;
 }
@@ -518,64 +524,8 @@ button, input, select, textarea {
     }
 }
 
-/* 自闭症友好增强功能样式 */
-.autism-controls {
-    position: relative;
-    display: inline-block;
-}
-
-.sensory-panel {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background: white;
-    border: 2px solid var(--border-light);
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
-    min-width: 300px;
-    margin-top: 8px;
-}
-
-.sensory-panel.hidden {
-    display: none;
-}
-
-.sensory-control {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 15px;
-    gap: 10px;
-}
-
-.sensory-control:last-child {
-    margin-bottom: 0;
-}
-
-.sensory-control label {
-    font-weight: 500;
-    color: var(--text-primary);
-    min-width: 100px;
-}
-
-.sensory-control input[type="range"] {
-    flex: 1;
-    margin: 0 10px;
-}
-
-.sensory-control select {
-    padding: 6px 12px;
-    border: 1px solid var(--border-light);
-    border-radius: 6px;
-    background: white;
-    color: var(--text-primary);
-}
-
-.sensory-control input[type="checkbox"] {
-    margin-right: 8px;
-}
+/* 自闭症友好增强功能样式 - 已移除面板，保留类名防止报错 */
+/* .autism-controls, .sensory-panel, .sensory-control styles removed */
 
 /* 进度指示器 */
 .progress-indicator {
@@ -1340,33 +1290,5 @@ body.high-animation * {
     }
 }
 
-/* 高对比度模式下修正感官面板的文字与背景对比 */
-body.high-contrast .sensory-panel {
-    background: #FFFFFF;          /* 保持白色背景，形成黑/白对比 */
-    border-color: #000000;
-    color: #000000;
-}
-
-/* 面板内所有文本强制黑色，确保可读性 */
-body.high-contrast .sensory-panel .sensory-control label,
-body.high-contrast .sensory-panel .sensory-control span,
-body.high-contrast .sensory-panel .sensory-control select {
-    color: #000000;
-}
-
-/* 下拉框及其选项的可读性 */
-body.high-contrast .sensory-panel .sensory-control select {
-    background: #FFFFFF;
-    border-color: #000000;
-}
-body.high-contrast .sensory-panel .sensory-control select option {
-    color: #000000;
-    background: #FFFFFF;
-}
-
-/* 如果面板里还有按钮（例如“开/关”），也强制黑字白底 */
-body.high-contrast .sensory-panel .control-btn {
-    background: #FFFFFF;
-    color: #000000;
-    border: 1px solid #000000;
-}
+/* 高对比度模式下修正感官面板的文字与背景对比 - 已移除 */
+/* body.high-contrast .sensory-panel styles removed */

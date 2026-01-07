@@ -376,9 +376,10 @@ class GameEngine {
      */
     drawBackground() {
         // Create gradient background (autism-friendly soft colors)
+        // 使用更干净的白色到浅蓝色的渐变，避免看起来发灰
         const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-        gradient.addColorStop(0, '#E3F2FD'); // Light blue
-        gradient.addColorStop(1, '#F3E5F5'); // Light purple
+        gradient.addColorStop(0, '#FFFFFF'); // Pure White
+        gradient.addColorStop(1, '#E1F5FE'); // Very Light Blue
         
         this.ctx.fillStyle = gradient;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
