@@ -38,14 +38,6 @@ const elements = {
     sessionLatency: null,
     sessionImmediate: null,
     sessionReward: null,
-    sessionModeSafe: null,
-    sessionModeExpert: null,
-    sessionModeNote: null,
-    sessionBpm: null,
-    sessionBpmValue: null,
-    sessionDuration: null,
-    sessionDurationValue: null,
-    sessionResetButtons: [],
     sessionPreset: null,
     panicMuteBtn: null,
     resultMuteBtn: null,
@@ -58,9 +50,6 @@ const SESSION_DEFAULTS = {
     feedbackLatencyMs: 0,
     immediateToneMode: 'full',
     rewardEnabled: true,
-    rewardBpm: 72,
-    rewardDurationSec: 20,
-    expertMode: false,
 };
 
 const SESSION_ENVELOPE = {
@@ -70,7 +59,6 @@ const SESSION_ENVELOPE = {
 
 let statusUpdatesStarted = false;
 let pausedBySettings = false;
-let lastExpertDraft = null;
 let panicMuted = false;
 
 function clampValue(value, min, max) {
@@ -92,14 +80,6 @@ function syncSessionElements() {
     elements.sessionLatency = document.getElementById('session-latency');
     elements.sessionImmediate = document.getElementById('session-immediate');
     elements.sessionReward = document.getElementById('session-reward');
-    elements.sessionModeSafe = document.getElementById('session-mode-safe');
-    elements.sessionModeExpert = document.getElementById('session-mode-expert');
-    elements.sessionModeNote = document.getElementById('session-mode-note');
-    elements.sessionBpm = document.getElementById('session-bpm');
-    elements.sessionBpmValue = document.getElementById('session-bpm-value');
-    elements.sessionDuration = document.getElementById('session-duration');
-    elements.sessionDurationValue = document.getElementById('session-duration-value');
-    elements.sessionResetButtons = Array.from(document.querySelectorAll('[data-reset-field]'));
     elements.sessionPreset = document.getElementById('session-preset');
     elements.panicMuteBtn = document.getElementById('panic-mute-btn');
     elements.resultMuteBtn = document.getElementById('result-mute-btn');
@@ -152,8 +132,8 @@ function initializeUIElements() {
         .map(([key]) => key);
     
     if (missingElements.length > 0) {
-        console.error('Missing UI elements:', missingElements);
-        return false;
+        // Some elements are optional now (like bpm sliders), so just warn
+        // console.warn('Missing UI elements:', missingElements);
     }
     
     console.log('UI elements initialized successfully');
@@ -202,114 +182,64 @@ function ensureSessionSettingsUI() {
       modal.className = 'settings-modal hidden';
       modal.innerHTML = `
           <div class="settings-panel">
-            <h2>Session Settings</h2>
-            <p class="settings-subtitle">当前设置会用于本轮 / 下一轮</p>
-            <div class="settings-mode">
-              <div class="settings-mode-toggle" role="group" aria-label="Session mode">
-                <button type="button" id="session-mode-safe" class="mode-btn active">默认/安全</button>
-                <button type="button" id="session-mode-expert" class="mode-btn">专家/调参</button>
-              </div>
-              <div id="session-mode-note" class="settings-mode-note">默认/安全模式：使用保守默认值（只读）。</div>
+            <div class="settings-header">
+                <h2>游戏设置</h2>
+                <p class="settings-subtitle">调整感官体验，让游戏更适合你</p>
             </div>
-            <div class="settings-disclaimer">
-              保守默认值 + 可调包络（用于专家校准，不是临床验证阈值）。
+            
+            <div class="settings-scroll-area">
+                <div class="settings-grid">
+                <div class="settings-field">
+                    <label for="session-volume">音量大小</label>
+                    <select id="session-volume">
+                    <option value="low">柔和 (Low)</option>
+                    <option value="medium" selected>标准 (Medium)</option>
+                    <option value="high">响亮 (High)</option>
+                    </select>
+                </div>
+                <div class="settings-field">
+                    <label for="session-density">泡泡数量</label>
+                    <select id="session-density">
+                    <option value="sparse">少一点 (Sparse)</option>
+                    <option value="normal" selected>正常 (Normal)</option>
+                    </select>
+                </div>
+                <div class="settings-field">
+                    <label for="session-timbre">乐器音色</label>
+                    <select id="session-timbre">
+                    <option value="soft" selected>柔和钢琴 (Soft)</option>
+                    <option value="bright">明亮小提琴 (Bright)</option>
+                    </select>
+                </div>
+                <div class="settings-field">
+                    <label for="session-latency">声音延迟</label>
+                    <select id="session-latency">
+                    <option value="0" selected>即时 (Immediate)</option>
+                    <option value="500">稍慢 (0.5s Delay)</option>
+                    </select>
+                </div>
+                <div class="settings-field">
+                    <label for="session-immediate">点击反馈</label>
+                    <select id="session-immediate">
+                    <option value="full" selected>声音+视觉 (Full)</option>
+                    <option value="visual">仅视觉 (Visual-only)</option>
+                    <option value="off">关闭 (Off)</option>
+                    </select>
+                </div>
+                <div class="settings-field">
+                    <label for="session-reward">结束音乐</label>
+                    <select id="session-reward">
+                    <option value="on" selected>开启 (On)</option>
+                    <option value="off">关闭 (Off)</option>
+                    </select>
+                </div>
+                </div>
             </div>
-            <div class="settings-grid">
-              <div class="settings-field">
-                <label for="session-volume">音量</label>
-                <select id="session-volume">
-                  <option value="low">low</option>
-                  <option value="medium" selected>medium</option>
-                  <option value="high">high</option>
-                </select>
-                <div class="settings-field-meta">
-                  <span>默认: medium | 可调: low/medium/high | 风险: 过高可能刺激</span>
-                  <button class="settings-reset" type="button" data-reset-field="volumeLevel">恢复默认</button>
-                </div>
-              </div>
-              <div class="settings-field">
-                <label for="session-density">节奏密度</label>
-                <select id="session-density">
-                  <option value="sparse">sparse</option>
-                  <option value="normal" selected>normal</option>
-                </select>
-                <div class="settings-field-meta">
-                  <span>默认: normal | 可调: sparse/normal | 风险: 过密增加负荷</span>
-                  <button class="settings-reset" type="button" data-reset-field="rhythmDensity">恢复默认</button>
-                </div>
-              </div>
-              <div class="settings-field">
-                <label for="session-timbre">音色</label>
-                <select id="session-timbre">
-                  <option value="soft" selected>soft</option>
-                  <option value="bright">bright</option>
-                </select>
-                <div class="settings-field-meta">
-                  <span>默认: soft | 可调: soft/bright | 风险: bright 更刺激</span>
-                  <button class="settings-reset" type="button" data-reset-field="timbre">恢复默认</button>
-                </div>
-              </div>
-              <div class="settings-field">
-                <label for="session-latency">反馈延迟</label>
-                <select id="session-latency">
-                  <option value="0" selected>Immediate</option>
-                  <option value="500">0.5s Delay</option>
-                </select>
-                <div class="settings-field-meta">
-                  <span>默认: Immediate | 可调: 0/0.5s | 风险: 延迟影响因果感</span>
-                  <button class="settings-reset" type="button" data-reset-field="feedbackLatencyMs">恢复默认</button>
-                </div>
-              </div>
-              <div class="settings-field">
-                <label for="session-immediate">即时音模式</label>
-                <select id="session-immediate">
-                  <option value="full" selected>Full</option>
-                  <option value="visual">Visual-only</option>
-                  <option value="off">Off</option>
-                </select>
-                <div class="settings-field-meta">
-                  <span>默认: Full | 可调: full/visual/off | 风险: 反馈过强</span>
-                  <button class="settings-reset" type="button" data-reset-field="immediateToneMode">恢复默认</button>
-                </div>
-              </div>
-              <div class="settings-field">
-                <label for="session-reward">Reward 音乐</label>
-                <select id="session-reward">
-                  <option value="on" selected>On</option>
-                  <option value="off">Off</option>
-                </select>
-                <div class="settings-field-meta">
-                  <span>默认: On | 可调: On/Off | 风险: Off 仅保留即时反馈</span>
-                  <button class="settings-reset" type="button" data-reset-field="rewardEnabled">恢复默认</button>
-                </div>
-              </div>
-              <div class="settings-field full">
-                <label for="session-bpm">Reward BPM</label>
-                <div class="settings-slider">
-                  <input type="range" id="session-bpm" min="65" max="75" step="1" value="72">
-                  <span id="session-bpm-value" class="settings-slider-value">72 BPM</span>
-                </div>
-                <div class="settings-field-meta">
-                  <span>默认: 72 | 可调: 65–75 | 风险: 过快难预测</span>
-                  <button class="settings-reset" type="button" data-reset-field="rewardBpm">恢复默认</button>
-                </div>
-              </div>
-              <div class="settings-field full">
-                <label for="session-duration">Reward 时长</label>
-                <div class="settings-slider">
-                  <input type="range" id="session-duration" min="10" max="20" step="1" value="20">
-                  <span id="session-duration-value" class="settings-slider-value">20s</span>
-                </div>
-                <div class="settings-field-meta">
-                  <span>默认: 20s | 可调: 10–20s | 风险: 过长可能过载</span>
-                  <button class="settings-reset" type="button" data-reset-field="rewardDurationSec">恢复默认</button>
-                </div>
-              </div>
-            </div>
+
             <div class="settings-actions">
-              <button id="session-reset-btn" class="result-btn secondary">恢复默认</button>
-              <button id="session-start-btn" class="result-btn primary">开始本轮</button>
-              <button id="session-close-btn" class="result-btn secondary">关闭</button>
+              <button id="session-reset-btn" class="result-btn secondary small">恢复默认</button>
+              <button id="session-start-btn" class="result-btn primary small">开始游戏</button>
+              <button id="session-close-btn" class="result-btn secondary small">关闭</button>
             </div>
           </div>
         `;
@@ -376,42 +306,30 @@ function setupEventListeners() {
     elements.fastBtn.addEventListener('click', () => handleSpeedChange(1.5, 'fast'));
 
     // Session settings
-    if (elements.sessionSettingsBtn && elements.sessionStartBtn && elements.sessionCloseBtn) {
-        elements.sessionSettingsBtn.addEventListener('click', () => openSessionSettingsModal());
-        elements.sessionStartBtn.addEventListener('click', () => handleStartRound());
-        elements.sessionCloseBtn.addEventListener('click', () => closeSessionSettingsModal());
+    if (elements.sessionModal) {
+        // 使用事件委托处理模态框内的所有点击，确保动态内容也能响应
+        elements.sessionModal.addEventListener('click', (e) => {
+            const target = e.target;
+            
+            // 开始按钮
+            if (target.id === 'session-start-btn') {
+                handleStartRound();
+            }
+            // 关闭按钮
+            else if (target.id === 'session-close-btn') {
+                closeSessionSettingsModal();
+            }
+            // 恢复默认按钮
+            else if (target.id === 'session-reset-btn') {
+                resetSessionForm();
+            }
+        });
+    }
 
-        if (elements.sessionModeSafe) {
-            elements.sessionModeSafe.addEventListener('click', () => handleModeToggle(false));
-        }
-        if (elements.sessionModeExpert) {
-            elements.sessionModeExpert.addEventListener('click', () => handleModeToggle(true));
-        }
-        if (elements.sessionBpm) {
-            elements.sessionBpm.addEventListener('input', (e) => {
-                const value = clampValue(parseInt(e.target.value, 10), SESSION_ENVELOPE.rewardBpm.min, SESSION_ENVELOPE.rewardBpm.max);
-                updateBpmDisplay(value);
-            });
-        }
-        if (elements.sessionDuration) {
-            elements.sessionDuration.addEventListener('input', (e) => {
-                const value = clampValue(parseInt(e.target.value, 10), SESSION_ENVELOPE.rewardDurationSec.min, SESSION_ENVELOPE.rewardDurationSec.max);
-                updateDurationDisplay(value);
-            });
-        }
-        if (elements.sessionResetButtons?.length) {
-            elements.sessionResetButtons.forEach((btn) => {
-                btn.addEventListener('click', () => {
-                    const field = btn.dataset.resetField;
-                    if (field) resetSessionField(field);
-                });
-            });
-        }
-        if (elements.sessionResetBtn) {
-            elements.sessionResetBtn.addEventListener('click', () => resetSessionForm());
-        }
+    if (elements.sessionSettingsBtn) {
+        elements.sessionSettingsBtn.addEventListener('click', () => openSessionSettingsModal());
     } else {
-        console.warn('[SettingsUI] 设置控件未就绪，跳过绑定');
+        console.warn('[SettingsUI] 设置按钮未找到');
     }
 
     if (elements.panicMuteBtn) {
@@ -659,17 +577,7 @@ function startStatusUpdates() {
 
 function normalizeSessionConfig(config = {}) {
     const merged = { ...SESSION_DEFAULTS, ...config };
-    merged.rewardBpm = clampValue(
-        Number(merged.rewardBpm || SESSION_DEFAULTS.rewardBpm),
-        SESSION_ENVELOPE.rewardBpm.min,
-        SESSION_ENVELOPE.rewardBpm.max
-    );
-    merged.rewardDurationSec = clampValue(
-        Number(merged.rewardDurationSec || SESSION_DEFAULTS.rewardDurationSec),
-        SESSION_ENVELOPE.rewardDurationSec.min,
-        SESSION_ENVELOPE.rewardDurationSec.max
-    );
-    merged.expertMode = Boolean(merged.expertMode);
+    // Keep rewardBpm and duration safe just in case, but they come from defaults now
     return merged;
 }
 
@@ -679,163 +587,35 @@ function getCurrentSessionConfig() {
 
 function updateSessionPresetLabel(config) {
     if (!elements.sessionPreset) return;
-    const modeLabel = config.expertMode ? "Expert" : "Safe";
-    elements.sessionPreset.textContent = `Preset: ${config.volumeLevel} / ${config.rhythmDensity} / ${config.timbre} | BPM ${config.rewardBpm} | ${config.rewardDurationSec}s | ${modeLabel}`;
-}
-
-function updateBpmDisplay(value) {
-    if (elements.sessionBpmValue) {
-        elements.sessionBpmValue.textContent = `${value} BPM`;
-    }
-}
-
-function updateDurationDisplay(value) {
-    if (elements.sessionDurationValue) {
-        elements.sessionDurationValue.textContent = `${value}s`;
-    }
-}
-
-function setSettingsDisabled(disabled) {
-    const fields = [
-        elements.sessionVolume,
-        elements.sessionDensity,
-        elements.sessionTimbre,
-        elements.sessionLatency,
-        elements.sessionImmediate,
-        elements.sessionReward,
-        elements.sessionBpm,
-        elements.sessionDuration,
-    ];
-    fields.forEach((field) => {
-        if (!field) return;
-        field.disabled = disabled;
-        const wrapper = field.closest('.settings-field');
-        if (wrapper) {
-            wrapper.classList.toggle('is-disabled', disabled);
-        }
-    });
-    if (elements.sessionResetButtons?.length) {
-        elements.sessionResetButtons.forEach((btn) => {
-            btn.disabled = disabled;
-        });
-    }
-}
-
-function setModeUI(isExpert) {
-    if (elements.sessionModeSafe) {
-        elements.sessionModeSafe.classList.toggle('active', !isExpert);
-    }
-    if (elements.sessionModeExpert) {
-        elements.sessionModeExpert.classList.toggle('active', isExpert);
-    }
-    if (elements.sessionModeNote) {
-        elements.sessionModeNote.textContent = isExpert
-            ? '专家/调参模式：仅在可调包络内微调参数。'
-            : '默认/安全模式：使用保守默认值（只读）。';
-    }
-    setSettingsDisabled(!isExpert);
+    elements.sessionPreset.textContent = `Preset: ${config.volumeLevel} / ${config.rhythmDensity} / ${config.timbre}`;
 }
 
 function loadSessionSettingsForm(config) {
     if (!elements.sessionModal) return;
     const normalized = normalizeSessionConfig(config);
-    elements.sessionVolume.value = normalized.volumeLevel || 'medium';
-    elements.sessionDensity.value = normalized.rhythmDensity || 'normal';
-    elements.sessionTimbre.value = normalized.timbre || 'soft';
-    elements.sessionLatency.value = String(normalized.feedbackLatencyMs ?? 0);
-    elements.sessionImmediate.value = normalized.immediateToneMode || 'full';
-    elements.sessionReward.value = normalized.rewardEnabled ? 'on' : 'off';
-    if (elements.sessionBpm) {
-        elements.sessionBpm.min = SESSION_ENVELOPE.rewardBpm.min;
-        elements.sessionBpm.max = SESSION_ENVELOPE.rewardBpm.max;
-        elements.sessionBpm.value = normalized.rewardBpm;
-        updateBpmDisplay(normalized.rewardBpm);
-    }
-    if (elements.sessionDuration) {
-        elements.sessionDuration.min = SESSION_ENVELOPE.rewardDurationSec.min;
-        elements.sessionDuration.max = SESSION_ENVELOPE.rewardDurationSec.max;
-        elements.sessionDuration.value = normalized.rewardDurationSec;
-        updateDurationDisplay(normalized.rewardDurationSec);
-    }
-    setModeUI(normalized.expertMode);
+    if(elements.sessionVolume) elements.sessionVolume.value = normalized.volumeLevel || 'medium';
+    if(elements.sessionDensity) elements.sessionDensity.value = normalized.rhythmDensity || 'normal';
+    if(elements.sessionTimbre) elements.sessionTimbre.value = normalized.timbre || 'soft';
+    if(elements.sessionLatency) elements.sessionLatency.value = String(normalized.feedbackLatencyMs ?? 0);
+    if(elements.sessionImmediate) elements.sessionImmediate.value = normalized.immediateToneMode || 'full';
+    if(elements.sessionReward) elements.sessionReward.value = normalized.rewardEnabled ? 'on' : 'off';
+    
     updateSessionPresetLabel(normalized);
 }
 
 function readSessionSettingsForm() {
-    const expertMode = Boolean(elements.sessionModeExpert?.classList.contains('active'));
-    const rewardBpm = clampValue(
-        parseInt(elements.sessionBpm?.value || SESSION_DEFAULTS.rewardBpm, 10) || SESSION_DEFAULTS.rewardBpm,
-        SESSION_ENVELOPE.rewardBpm.min,
-        SESSION_ENVELOPE.rewardBpm.max
-    );
-    const rewardDurationSec = clampValue(
-        parseInt(elements.sessionDuration?.value || SESSION_DEFAULTS.rewardDurationSec, 10) || SESSION_DEFAULTS.rewardDurationSec,
-        SESSION_ENVELOPE.rewardDurationSec.min,
-        SESSION_ENVELOPE.rewardDurationSec.max
-    );
     return normalizeSessionConfig({
-        volumeLevel: elements.sessionVolume.value,
-        rhythmDensity: elements.sessionDensity.value,
-        timbre: elements.sessionTimbre.value,
-        feedbackLatencyMs: parseInt(elements.sessionLatency.value, 10) || 0,
-        immediateToneMode: elements.sessionImmediate.value,
-        rewardEnabled: elements.sessionReward.value === 'on',
-        rewardBpm,
-        rewardDurationSec,
-        expertMode,
+        volumeLevel: elements.sessionVolume?.value || 'medium',
+        rhythmDensity: elements.sessionDensity?.value || 'normal',
+        timbre: elements.sessionTimbre?.value || 'soft',
+        feedbackLatencyMs: parseInt(elements.sessionLatency?.value || '0', 10),
+        immediateToneMode: elements.sessionImmediate?.value || 'full',
+        rewardEnabled: elements.sessionReward?.value === 'on',
     });
 }
 
-function resetSessionField(field) {
-    const defaults = SESSION_DEFAULTS;
-    switch (field) {
-        case 'volumeLevel':
-            elements.sessionVolume.value = defaults.volumeLevel;
-            break;
-        case 'rhythmDensity':
-            elements.sessionDensity.value = defaults.rhythmDensity;
-            break;
-        case 'timbre':
-            elements.sessionTimbre.value = defaults.timbre;
-            break;
-        case 'feedbackLatencyMs':
-            elements.sessionLatency.value = String(defaults.feedbackLatencyMs);
-            break;
-        case 'immediateToneMode':
-            elements.sessionImmediate.value = defaults.immediateToneMode;
-            break;
-        case 'rewardEnabled':
-            elements.sessionReward.value = defaults.rewardEnabled ? 'on' : 'off';
-            break;
-        case 'rewardBpm':
-            if (elements.sessionBpm) {
-                elements.sessionBpm.value = defaults.rewardBpm;
-                updateBpmDisplay(defaults.rewardBpm);
-            }
-            break;
-        case 'rewardDurationSec':
-            if (elements.sessionDuration) {
-                elements.sessionDuration.value = defaults.rewardDurationSec;
-                updateDurationDisplay(defaults.rewardDurationSec);
-            }
-            break;
-        default:
-            break;
-    }
-}
-
-function handleModeToggle(isExpert) {
-    if (isExpert) {
-        const restore = lastExpertDraft || getCurrentSessionConfig();
-        loadSessionSettingsForm({ ...restore, expertMode: true });
-        return;
-    }
-    lastExpertDraft = readSessionSettingsForm();
-    loadSessionSettingsForm({ ...SESSION_DEFAULTS, expertMode: false });
-}
-
 function resetSessionForm() {
-    loadSessionSettingsForm({ ...SESSION_DEFAULTS, expertMode: Boolean(elements.sessionModeExpert?.classList.contains('active')) });
+    loadSessionSettingsForm(SESSION_DEFAULTS);
 }
 
 function syncPanicButton(btn, isMuted) {
