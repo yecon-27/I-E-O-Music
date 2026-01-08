@@ -59,7 +59,7 @@ const SESSION_DEFAULTS = {
 
 const SESSION_ENVELOPE = {
     rewardBpm: { min: 65, max: 75 },
-    rewardDurationSec: { min: 15, max: 15 },
+    rewardDurationSec: { min: 8, max: 20 },
 };
 
 let statusUpdatesStarted = false;

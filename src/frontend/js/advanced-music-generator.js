@@ -430,7 +430,7 @@ class AdvancedMusicGenerator {
     // 默认 20 秒，可在 envelope 内调节
     const rewardDurationSec = clamp(
       Number(config.rewardDurationSec ?? REWARD_SETTINGS.maxDurationSec),
-      REWARD_SETTINGS.minDurationSec,
+      8,
       REWARD_SETTINGS.maxDurationSec
     );
     const beatsTotal = Math.max(8, Math.round(rewardDurationSec / secondsPerBeat));
@@ -780,10 +780,33 @@ class AdvancedMusicGenerator {
       });
     });
 
-    const totalTime = notes.reduce(
-      (max, n) => Math.max(max, n.endTime),
-      0
-    );
+    // 片段裁剪（测试模式选择窗口：左/右边界）
+    const segmentStart = typeof config.segmentStartSec === 'number' ? Math.max(0, config.segmentStartSec) : 0;
+    let segmentEnd = undefined;
+    if (typeof config.segmentEndSec === 'number') {
+      segmentEnd = Math.max(segmentStart + 0.1, Math.min(20, config.segmentEndSec));
+    } else if (typeof config.rewardDurationSec === 'number') {
+      segmentEnd = segmentStart + Math.max(0.1, config.rewardDurationSec);
+    }
+    if (segmentEnd !== undefined) {
+      const cropped = [];
+      for (const n of notes) {
+        if (n.endTime <= segmentStart || n.startTime >= segmentEnd) continue;
+        const start = Math.max(0, n.startTime - segmentStart);
+        const end = Math.min(n.endTime, segmentEnd) - segmentStart;
+        if (end > start) {
+          cropped.push({ ...n, startTime: start, endTime: end });
+        }
+      }
+      if (cropped.length) {
+        notes.length = 0;
+        notes.push(...cropped);
+      }
+    }
+
+    const totalTime = (segmentEnd !== undefined)
+      ? (segmentEnd - segmentStart)
+      : notes.reduce((max, n) => Math.max(max, n.endTime), 0);
 
     return {
       notes,

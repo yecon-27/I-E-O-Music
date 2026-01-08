@@ -377,18 +377,45 @@
                                         </div>
                                     </div>
                                     
+                                    <div class="param-item" id="duration-param-item">
+                                        <label>
+                                            <span>奖励时长 <span class="param-safe-range">安全: 8-20s</span></span>
+                                        </label>
+                                        <div class="param-control">
+                                            <span id="report-param-duration-value" class="param-value">15s</span>
+                                        </div>
+                                    </div>
+                                    
                                     <div class="param-item">
                                         <label>
-                                            <span>和声组合</span>
+                                            <span>音乐</span>
                                             <span id="harmony-warning" class="param-warning-badge hidden">可能有感官过载风险</span>
                                         </label>
                                         <div class="harmony-options" id="harmony-options">
                                             <button class="harmony-btn safe active" data-value="I-V">I-V</button>
                                             <button class="harmony-btn unsafe" data-value="I-IV">I-IV</button>
-                                            <button class="harmony-btn unsafe" data-value="I-VI">I-VI</button>
+                                            <button class="harmony-btn unsafe" data-value="I-vi">I-vi</button>
                                             <button class="harmony-btn unsafe" data-value="I-IV-V">I-IV-V</button>
-                                            <button class="harmony-btn unsafe" data-value="I-VI-IV-V">I-VI-IV-V</button>
+                                            <button class="harmony-btn unsafe" data-value="I-vi-IV-V">I-vi-IV-V</button>
                                         </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="segment-selector">
+                                    <div class="segment-header">
+                                        <span id="segment-label">片段选择</span>
+                                        <span class="segment-tip">拖动下方滑块设置起始/结束位置</span>
+                                    </div>
+                                    <div class="segment-canvas-wrapper" style="position:relative;">
+                                        <canvas id="segment-canvas" width="560" height="120"></canvas>
+                                        <div class="segment-sliders-overlay" style="position:absolute;left:0;right:0;bottom:0;height:40px;">
+                                            <input type="range" id="segment-start-slider" min="0" max="12" value="0" step="0.5" style="position:absolute;left:0;right:0;bottom:0;width:100%;">
+                                            <input type="range" id="segment-end-slider" min="8" max="20" value="15" step="0.5" style="position:absolute;left:0;right:0;bottom:0;width:100%;">
+                                        </div>
+                                    </div>
+                                    <div class="segment-values" style="display:flex;justify-content:space-between;margin-top:4px;font-size:12px;color:var(--text-secondary);">
+                                        <span>起始: <strong id="segment-start-value" style="color:var(--accent-primary);">0.0s</strong></span>
+                                        <span>结束: <strong id="segment-end-value" style="color:var(--accent-primary);">15.0s</strong></span>
                                     </div>
                                 </div>
                                 
@@ -414,7 +441,36 @@
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                                         设定安全区间
                                     </h4>
-                                    <div class="daw-range-grid">
+                                        <div class="daw-range-grid">
+                                        <div class="daw-range-item">
+                                            <div class="daw-range-header">
+                                                <label>时长</label>
+                                                <span class="daw-range-values">
+                                                    <span id="converge-duration-min-val" class="daw-value">12</span>
+                                                    <span class="daw-separator">-</span>
+                                                    <span id="converge-duration-max-val" class="daw-value">18</span>
+                                                    <span class="daw-unit">s</span>
+                                                </span>
+                                            </div>
+                                            <div class="daw-dual-slider" data-param="duration" data-min="8" data-max="20" data-scope="converge">
+                                                <div class="daw-track">
+                                                    <div class="daw-track-fill"></div>
+                                                    <div class="daw-lock-icon daw-lock-left">
+                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                                    </div>
+                                                    <div class="daw-lock-icon daw-lock-right">
+                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                                    </div>
+                                                </div>
+                                                <div class="daw-scale" data-min="8" data-max="20">
+                                                    <span class="daw-scale-mark" style="--pos: 0%">8</span>
+                                                    <span class="daw-scale-mark" style="--pos: 50%">14</span>
+                                                    <span class="daw-scale-mark" style="--pos: 100%">20</span>
+                                                </div>
+                                                <input type="range" class="daw-thumb daw-thumb-min" id="converge-duration-min" min="8" max="20" value="12">
+                                                <input type="range" class="daw-thumb daw-thumb-max" id="converge-duration-max" min="8" max="20" value="18">
+                                            </div>
+                                        </div>
                                         <div class="daw-range-item">
                                             <div class="daw-range-header">
                                                 <label>BPM</label>

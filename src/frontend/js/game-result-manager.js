@@ -202,13 +202,9 @@ class GameResultManager {
           if (reportSections[1]) this.updateWithIcon(reportSections[1], this.t('report.musicParams'));
       }
 
-      // Report Params
-      const reportParamLabels = document.querySelectorAll('.music-params-grid label');
-      if(reportParamLabels.length >= 3) {
-          reportParamLabels[0].textContent = this.t('expert.tempo');
-          reportParamLabels[1].textContent = this.t('expert.volume');
-          reportParamLabels[2].textContent = this.t('expert.density');
-      }
+      // Report Params - 不再在这里设置，由 music-param-controller.js 统一管理
+      // const reportParamLabels = document.querySelectorAll('.music-params-grid label');
+      // 标签顺序: Tempo, 动态对比度, 音量, 奖励时长, 音乐
 
       // Expert Left Panel titles
       const expertLeftTitles = document.querySelectorAll('.expert-left .expert-panel-title');
@@ -900,16 +896,19 @@ class GameResultManager {
     }
     const sequentialRatio = notes.length > 1 ? sequentialHits / (notes.length - 1) : 0;
     
-    // 计算三种模式的得分 (0-100)
-    const seqScore = Math.round(Math.min(1, (sequentialRatio / 0.4) * 0.6 + (laneDiversity / 5) * 0.4) * 100);
-    const repScore = Math.round(Math.min(1, dominantRatio / 0.6) * 100);
-    const expScore = Math.round(Math.min(1, (laneDiversity / 5) * 0.6 + (1 - dominantRatio) * 0.4) * 100);
-    
-    const scores = {
-      sequential: seqScore,
-      repetitive: repScore,
-      exploratory: expScore
-    };
+    // 计算三种模式的原始分数 (0-1)
+    const seqRaw = Math.min(1, (sequentialRatio / 0.4) * 0.6 + (laneDiversity / 5) * 0.4);
+    const repRaw = Math.min(1, dominantRatio / 0.6);
+    const expRaw = Math.min(1, (laneDiversity / 5) * 0.6 + (1 - dominantRatio) * 0.4);
+    // 归一化为比例分布（总和 = 100%）
+    const total = seqRaw + repRaw + expRaw;
+    let seqScore = 0, repScore = 0, expScore = 0;
+    if (total > 0) {
+      seqScore = Math.round((seqRaw / total) * 100);
+      repScore = Math.round((repRaw / total) * 100);
+      expScore = Math.max(0, 100 - seqScore - repScore);
+    }
+    const scores = { sequential: seqScore, repetitive: repScore, exploratory: expScore };
     
     // 判断主导模式
     let patternType, icon, name, rule;
@@ -1234,8 +1233,39 @@ class GameResultManager {
   }
 
   downloadGeneratedMusic() {
-      // ...
-      this.showMusicMessage(this.t('msg.downloadMidi'));
+      // 获取最后生成的音乐序列
+      const sequence = window.lastGeneratedSequence || window.rewardSequence;
+      
+      if (!sequence || !sequence.notes || sequence.notes.length === 0) {
+          this.showMusicError(this.t('music.error'));
+          return;
+      }
+      
+      try {
+          // 使用 Magenta 的 sequenceProtoToMidi 转换
+          const midi = window.mm?.sequenceProtoToMidi?.(sequence);
+          
+          if (!midi || !midi.length) {
+              console.warn('⚠️ MIDI转换结果为空');
+              this.showMusicError(this.t('music.error'));
+              return;
+          }
+          
+          // 创建下载链接
+          const blob = new Blob([midi], { type: 'audio/midi' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `musibubbles_${Date.now()}.mid`;
+          a.click();
+          URL.revokeObjectURL(url);
+          
+          this.showMusicMessage(this.t('msg.downloadMidi'));
+          console.log('✅ MIDI文件已下载');
+      } catch (error) {
+          console.error('❌ MIDI下载失败:', error);
+          this.showMusicError(this.t('music.error'));
+      }
   }
   
   createTestMusicSequence() { /* ... */ return {}; }

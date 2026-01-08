@@ -408,6 +408,12 @@
     flex-direction: column;
 }
 
+/* 右侧专家面板允许纵向滚动 */
+.expert-panel.expert-right {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
 .expert-panel-title {
     margin: 0 0 16px;
     font-size: 1rem;

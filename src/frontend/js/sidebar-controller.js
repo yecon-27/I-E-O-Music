@@ -14,6 +14,7 @@
             this.successfulClicks = 0;  // 成功命中次数
             this.recentClicks = [];
             this.maxRecentClicks = 12;  // 显示最近12个点击
+            this.prevPatternProbs = { seq: 0.33, rep: 0.33, exp: 0.33 };
             
             this.elements = {};
             this.init();
@@ -352,15 +353,29 @@
             const uniqueLanes = new Set(lanes).size;
             const expRatio = uniqueLanes / 5;
 
-            if (seqRatio >= 0.6) {
-                return { type: 'sequential', confidence: seqRatio };
-            } else if (repRatio >= 0.5) {
-                return { type: 'repetitive', confidence: repRatio };
-            } else if (expRatio >= 0.8) {
-                return { type: 'exploratory', confidence: expRatio };
-            } else {
-                return { type: 'mixed', confidence: 0.5 };
-            }
+            // 归一化分数（与报告面板一致）
+            const seqRaw = Math.min(1, (seqRatio / 0.4) * 0.6 + (uniqueLanes / 5) * 0.4);
+            const repRaw = Math.min(1, repRatio / 0.6);
+            const expRaw = Math.min(1, (uniqueLanes / 5) * 0.6 + (1 - repRatio) * 0.4);
+            const total = seqRaw + repRaw + expRaw || 1;
+            let probs = {
+                seq: seqRaw / total,
+                rep: repRaw / total,
+                exp: expRaw / total,
+            };
+            // EMA 平滑，降低波动与夸张
+            const alpha = 0.5;
+            probs = {
+                seq: alpha * this.prevPatternProbs.seq + (1 - alpha) * probs.seq,
+                rep: alpha * this.prevPatternProbs.rep + (1 - alpha) * probs.rep,
+                exp: alpha * this.prevPatternProbs.exp + (1 - alpha) * probs.exp,
+            };
+            this.prevPatternProbs = { ...probs };
+            const entries = Object.entries(probs).sort((a, b) => b[1] - a[1]);
+            const [topKey, topProb] = entries[0];
+            const typeMap = { seq: 'sequential', rep: 'repetitive', exp: 'exploratory' };
+            const type = topProb >= 0.4 ? typeMap[topKey] : 'mixed';
+            return { type, confidence: topProb };
         }
     }
 

@@ -24,7 +24,9 @@ class MusicParamController {
             tempo: 72,
             contrast: 10,
             volume: 70,
-            harmony: 'I-V'
+            harmony: 'I-V',
+            durationSec: 15,
+            segmentStartSec: 0
         };
         
         // 收敛后的参数（用于提交到数据库）
@@ -50,6 +52,7 @@ class MusicParamController {
         this.bindModeToggle();
         this.bindSliders();
         this.bindHarmonyOptions();
+        this.bindDurationAndSegment();
         this.bindActionButtons();
         this.bindDawDualSliders();
         this.updateAllSliderStyles();
@@ -85,8 +88,8 @@ class MusicParamController {
 
         // Labels with Safe Range
         const labels = document.querySelectorAll('.music-params-grid label');
-        if (labels.length >= 4) {
-            // Tempo
+        if (labels.length >= 5) {
+            // labels[0] = Tempo (BPM)
             const tempoLabel = labels[0];
             if (tempoLabel) {
                 const span = tempoLabel.querySelector('span:first-child');
@@ -97,7 +100,7 @@ class MusicParamController {
                 if (warning) warning.textContent = this.t('expert.warning.unsafe');
             }
 
-            // Contrast
+            // labels[1] = 动态对比度
             const contrastLabel = labels[1];
             if (contrastLabel) {
                 const span = contrastLabel.querySelector('span:first-child');
@@ -108,7 +111,7 @@ class MusicParamController {
                 if (warning) warning.textContent = this.t('expert.warning.unsafe');
             }
 
-            // Volume
+            // labels[2] = 音量
             const volumeLabel = labels[2];
             if (volumeLabel) {
                 const span = volumeLabel.querySelector('span:first-child');
@@ -118,17 +121,26 @@ class MusicParamController {
                 const warning = volumeLabel.querySelector('.param-warning-badge');
                 if (warning) warning.textContent = this.t('expert.warning.unsafe');
             }
+            
+            // labels[3] = 奖励时长
+            const durationLabel = labels[3];
+            if (durationLabel) {
+                const span = durationLabel.querySelector('span:first-child');
+                if (span) {
+                    span.innerHTML = `${this.t('expert.duration')} <span class="param-safe-range">${this.t('expert.safeRange')}8-20s</span>`;
+                }
+            }
 
-         // Harmony
-         const harmonyLabel = labels[3];
-         if (harmonyLabel) {
-             const span = harmonyLabel.querySelector('span:first-child');
-             if (span) {
-                 span.textContent = this.t('expert.harmony');
-             }
-             const warning = harmonyLabel.querySelector('.param-warning-badge');
-             if (warning) warning.textContent = this.t('expert.warning.unsafe');
-         }
+            // labels[4] = 音乐
+            const harmonyLabel = labels[4];
+            if (harmonyLabel) {
+                const span = harmonyLabel.querySelector('span:first-child');
+                if (span) {
+                    span.textContent = this.t('expert.harmony');
+                }
+                const warning = harmonyLabel.querySelector('.param-warning-badge');
+                if (warning) warning.textContent = this.t('expert.warning.unsafe');
+            }
         }
 
         // Action Buttons
@@ -188,6 +200,200 @@ class MusicParamController {
         if (submitNote) {
             submitNote.textContent = this.t('expert.dbNotConfigured');
         }
+        
+        // Segment labels
+        const segLabel = document.getElementById('segment-label');
+        const segTip = document.querySelector('.segment-tip');
+        if (segLabel) segLabel.textContent = this.t('expert.segment');
+        if (segTip) segTip.textContent = this.t('expert.segment.tip');
+    }
+    
+    bindDurationAndSegment() {
+        const durValue = document.getElementById('report-param-duration-value');
+        const segStartSlider = document.getElementById('segment-start-slider');
+        const segEndSlider = document.getElementById('segment-end-slider');
+        const segStartValue = document.getElementById('segment-start-value');
+        const segEndValue = document.getElementById('segment-end-value');
+        const segCanvas = document.getElementById('segment-canvas');
+        const segLabel = document.getElementById('segment-label');
+        const segTip = document.querySelector('.segment-tip');
+        if (segLabel) segLabel.textContent = this.t('expert.segment');
+        if (segTip) segTip.textContent = this.t('expert.segment.tip');
+        
+        const drawSegment = () => {
+            if (!segCanvas) return;
+            const ctx = segCanvas.getContext('2d');
+            const w = segCanvas.width;
+            const h = segCanvas.height;
+            const spectrumH = h - 28; // 频谱图高度，留出底部刻度空间
+            
+            ctx.clearRect(0, 0, w, h);
+            
+            // 背景
+            ctx.fillStyle = '#fafbfc';
+            ctx.fillRect(0, 0, w, h);
+            
+            // 简单波形（根据 lastGeneratedSequence 画力度条，否则画占位）
+            const seq = window.lastGeneratedSequence;
+            if (seq && Array.isArray(seq.notes) && seq.notes.length) {
+                ctx.fillStyle = '#c7d2fe';
+                const total = Math.max(seq.totalTime || 0, 20);
+                const buckets = 100;
+                const energy = new Array(buckets).fill(0);
+                seq.notes.forEach(n => {
+                    const startIdx = Math.floor((n.startTime / total) * buckets);
+                    const endIdx = Math.floor((n.endTime / total) * buckets);
+                    for (let i = startIdx; i <= endIdx && i < buckets; i++) {
+                        energy[i] += (n.velocity || 80);
+                    }
+                });
+                for (let i = 0; i < buckets; i++) {
+                    const x = (i / buckets) * w;
+                    const barH = Math.min(spectrumH - 4, (energy[i] / 400) * (spectrumH - 4));
+                    ctx.fillRect(x, spectrumH - barH, w / buckets - 1, barH);
+                }
+            } else {
+                ctx.fillStyle = '#e0e7ff';
+                for (let i = 0; i < 100; i++) {
+                    const x = (i / 100) * w;
+                    const barH = (Math.sin(i * 0.2) * 0.5 + 0.5) * (spectrumH * 0.6) + 10;
+                    ctx.fillRect(x, spectrumH - barH, w / 100 - 1, barH);
+                }
+            }
+            
+            // 选中片段高亮
+            const start = this.currentParams.segmentStartSec;
+            const end = this.currentParams.segmentEndSec;
+            const startX = (start / 20) * w;
+            const endX = (end / 20) * w;
+            ctx.fillStyle = 'rgba(99,102,241,0.15)';
+            ctx.fillRect(startX, 0, Math.max(2, endX - startX), spectrumH);
+            
+            // 边界线（主题色渐变，紧贴频谱图）
+            const gradient = ctx.createLinearGradient(0, 0, 0, spectrumH);
+            gradient.addColorStop(0, '#818cf8');
+            gradient.addColorStop(1, '#6366f1');
+            
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(startX, 0);
+            ctx.lineTo(startX, spectrumH);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(endX, 0);
+            ctx.lineTo(endX, spectrumH);
+            ctx.stroke();
+            
+            // 边界手柄（主题色三角形，紧贴频谱图底部）
+            const handleY = spectrumH;
+            const handleSize = 8;
+            
+            // 左边界手柄
+            ctx.fillStyle = '#6366f1';
+            ctx.beginPath();
+            ctx.moveTo(startX, handleY);
+            ctx.lineTo(startX - handleSize, handleY + handleSize + 2);
+            ctx.lineTo(startX + handleSize, handleY + handleSize + 2);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 右边界手柄
+            ctx.beginPath();
+            ctx.moveTo(endX, handleY);
+            ctx.lineTo(endX - handleSize, handleY + handleSize + 2);
+            ctx.lineTo(endX + handleSize, handleY + handleSize + 2);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 时间刻度线（在频谱图底部）
+            const rulerY = spectrumH + 12;
+            ctx.strokeStyle = '#d1d5db';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, rulerY);
+            ctx.lineTo(w, rulerY);
+            ctx.stroke();
+            
+            // 时间刻度标签（8s, 12s, 15s, 20s）
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '11px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            
+            const keyTimes = [0, 8, 12, 15, 20];
+            keyTimes.forEach(t => {
+                const tx = (t / 20) * w;
+                // 刻度线
+                ctx.strokeStyle = '#9ca3af';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(tx, rulerY - 3);
+                ctx.lineTo(tx, rulerY + 3);
+                ctx.stroke();
+                // 刻度文字
+                ctx.fillText(`${t}s`, tx, rulerY + 14);
+            });
+            
+            ctx.textAlign = 'left'; // 重置
+        };
+        
+        const updateComputedDuration = () => {
+            const dur = Math.max(8, Math.min(20, this.currentParams.segmentEndSec - this.currentParams.segmentStartSec));
+            this.currentParams.durationSec = dur;
+            if (durValue) durValue.textContent = `${dur}s`;
+        };
+        
+        const enforceBounds = (source) => {
+            let start = this.currentParams.segmentStartSec;
+            let end = this.currentParams.segmentEndSec;
+            if (end - start < 8) {
+                if (source === 'start') {
+                    end = Math.min(20, start + 8);
+                } else {
+                    start = Math.max(0, end - 8);
+                }
+            }
+            start = Math.max(0, Math.min(start, 20));
+            end = Math.max(8, Math.min(end, 20));
+            if (start >= end) {
+                end = Math.min(20, start + 8);
+            }
+            this.currentParams.segmentStartSec = start;
+            this.currentParams.segmentEndSec = end;
+            if (segStartSlider) segStartSlider.max = String(Math.max(0, end - 8));
+            if (segEndSlider) segEndSlider.min = String(Math.min(20, start + 8));
+            if (segStartSlider) segStartSlider.value = String(start);
+            if (segEndSlider) segEndSlider.value = String(end);
+            if (segStartValue) segStartValue.textContent = `${start.toFixed(1)}s`;
+            if (segEndValue) segEndValue.textContent = `${end.toFixed(1)}s`;
+            updateComputedDuration();
+            drawSegment();
+        };
+        
+        if (segStartSlider && segStartValue) {
+            segStartSlider.addEventListener('input', (e) => {
+                const v = parseFloat(e.target.value);
+                this.currentParams.segmentStartSec = Math.max(0, Math.min(20, v));
+                enforceBounds('start');
+                try { localStorage.setItem('expert.segmentStartSec', String(this.currentParams.segmentStartSec)); } catch {}
+            });
+        }
+        if (segEndSlider && segEndValue) {
+            segEndSlider.addEventListener('input', (e) => {
+                const v = parseFloat(e.target.value);
+                this.currentParams.segmentEndSec = Math.max(8, Math.min(20, v));
+                enforceBounds('end');
+                try { localStorage.setItem('expert.segmentEndSec', String(this.currentParams.segmentEndSec)); } catch {}
+            });
+        }
+        // 初始化
+        const savedStart = parseFloat(localStorage.getItem('expert.segmentStartSec') || '0');
+        const savedEnd = parseFloat(localStorage.getItem('expert.segmentEndSec') || '15');
+        this.currentParams.segmentStartSec = Math.max(0, Math.min(20, savedStart));
+        this.currentParams.segmentEndSec = Math.max(8, Math.min(20, savedEnd));
+        enforceBounds('init');
+        
+        drawSegment();
     }
     
     /**
@@ -209,6 +415,8 @@ class MusicParamController {
                 // 显示测试模式的滑动条和操作按钮
                 paramsGrid?.classList.remove('hidden');
                 paramActions?.classList.remove('hidden');
+                // 隐藏测试模式的奖励时长 label 栏
+                document.getElementById('duration-param-item')?.classList.add('hidden');
             });
         }
         
@@ -221,6 +429,8 @@ class MusicParamController {
                 // 隐藏测试模式的滑动条和操作按钮
                 paramsGrid?.classList.add('hidden');
                 paramActions?.classList.add('hidden');
+                // 收敛模式保留奖励时长 label 栏
+                document.getElementById('duration-param-item')?.classList.remove('hidden');
                 this.updateConvergeSummary();
                 // 播放收敛动画
                 setTimeout(() => this.playConvergeAnimation(), 50);
@@ -392,6 +602,26 @@ class MusicParamController {
     setMode(mode) {
         this.mode = mode;
         console.log(`[MusicParamController] 模式切换: ${mode}`);
+        if (mode === 'converge') {
+            // 将测试模式的片段与时长范围迁移到收敛模式的双滑块
+            const durRange = this.testDurationRange || { min: Math.max(8, this.currentParams.durationSec - 2), max: Math.min(20, this.currentParams.durationSec + 2) };
+            const durMinSlider = document.getElementById('converge-duration-min');
+            const durMaxSlider = document.getElementById('converge-duration-max');
+            const durTrackFill = document.querySelector('.daw-dual-slider[data-param="duration"][data-scope="converge"] .daw-track-fill');
+            if (durMinSlider && durMaxSlider && durTrackFill) {
+                durMinSlider.value = String(durRange.min);
+                durMaxSlider.value = String(durRange.max);
+                const rangeMin = 8, rangeMax = 20, range = rangeMax - rangeMin;
+                durTrackFill.style.left = (((durRange.min - rangeMin) / range) * 100) + '%';
+                durTrackFill.style.right = (100 - ((durRange.max - rangeMin) / range) * 100) + '%';
+                const minValEl = document.getElementById('converge-duration-min-val');
+                const maxValEl = document.getElementById('converge-duration-max-val');
+                if (minValEl) minValEl.textContent = durRange.min;
+                if (maxValEl) maxValEl.textContent = durRange.max;
+                this.convergedDuration = { ...durRange };
+            }
+            this.updateConvergeSummary();
+        }
     }
     
     /**
@@ -480,11 +710,15 @@ class MusicParamController {
         const contrastEl = document.getElementById('converge-contrast');
         const volumeEl = document.getElementById('converge-volume');
         const harmonyEl = document.getElementById('converge-harmony');
+        const durationMinEl = document.getElementById('converge-duration-min-val');
+        const durationMaxEl = document.getElementById('converge-duration-max-val');
         
         if (tempoEl) tempoEl.textContent = this.currentParams.tempo;
         if (contrastEl) contrastEl.textContent = this.currentParams.contrast + '%';
         if (volumeEl) volumeEl.textContent = this.currentParams.volume + '%';
         if (harmonyEl) harmonyEl.textContent = this.currentParams.harmony;
+        if (durationMinEl && this.convergedDuration) durationMinEl.textContent = this.convergedDuration.min;
+        if (durationMaxEl && this.convergedDuration) durationMaxEl.textContent = this.convergedDuration.max;
     }
     
     /**
@@ -492,12 +726,23 @@ class MusicParamController {
      */
     previewMusic() {
         console.log('[MusicParamController] 预览音乐，参数:', this.currentParams);
+        if (this.mode !== 'test') {
+            console.warn('[MusicParamController] 仅测试模式允许预览范围内的音乐');
+            return;
+        }
         
         // 应用参数到音乐生成器
         if (window.sessionConfig) {
             window.sessionConfig.rewardBpm = this.currentParams.tempo;
             window.sessionConfig.dynamicContrast = this.currentParams.contrast / 100;
             window.sessionConfig.harmonyType = this.currentParams.harmony;
+            const baseDuration = Math.max(8, Math.min(20, (this.currentParams.segmentEndSec ?? 15) - (this.currentParams.segmentStartSec ?? 0)));
+            const finalDuration = this.testDurationRange
+                ? Math.max(this.testDurationRange.min, Math.min(this.testDurationRange.max, baseDuration))
+                : baseDuration;
+            window.sessionConfig.segmentStartSec = this.currentParams.segmentStartSec ?? 0;
+            window.sessionConfig.segmentEndSec = this.currentParams.segmentEndSec ?? (window.sessionConfig.segmentStartSec + finalDuration);
+            window.sessionConfig.rewardDurationSec = finalDuration;
             
             // 根据音量值设置音量级别
             if (this.currentParams.volume <= 50) {
@@ -555,7 +800,10 @@ class MusicParamController {
             tempo: 72,
             contrast: 10,
             volume: 70,
-            harmony: 'I-V'
+            harmony: 'I-V',
+            durationSec: 15,
+            segmentStartSec: 0,
+            segmentEndSec: 15
         };
         
         // 更新滑动条
@@ -718,6 +966,7 @@ class MusicParamController {
             const maxSlider = container.querySelector('.daw-thumb-max');
             const trackFill = container.querySelector('.daw-track-fill');
             const param = container.dataset.param;
+            const scope = container.dataset.scope || 'converge';
             const rangeMin = parseInt(container.dataset.min);
             const rangeMax = parseInt(container.dataset.max);
             
@@ -740,6 +989,15 @@ class MusicParamController {
                 // 更新数值显示
                 if (minValEl) minValEl.textContent = minVal;
                 if (maxValEl) maxValEl.textContent = maxVal;
+                
+                // 记录范围
+                if (param === 'duration') {
+                    if (scope === 'converge') {
+                        this.convergedDuration = { min: minVal, max: maxVal };
+                    } else {
+                        this.testDurationRange = { min: minVal, max: maxVal };
+                    }
+                }
             };
             
             // 确保min不超过max
