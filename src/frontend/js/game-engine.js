@@ -642,7 +642,7 @@ class GameEngine {
         // 初始按顺序生成一组 4 个，每个间隔延迟，形成明显高度差
         const initialCount = this.bubbleManager?.targetBubbleCount || 4;
         for (let i = 0; i < initialCount; i++) {
-            this.bubbleManager?.scheduleSpawn(null, i * 800);
+            this.bubbleManager?.scheduleSpawn(null, i * 1200);
         }
         // 清空点击轨迹
         if (this.clickTrailEl) this.clickTrailEl.innerHTML = '';

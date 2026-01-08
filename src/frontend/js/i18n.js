@@ -1,0 +1,453 @@
+/**
+ * Internationalization (i18n) Module
+ * Centralizes all text resources for the application
+ */
+
+const TRANSLATIONS = {
+    zh: {
+        // Main UI
+        'ui.pause': '暂停',
+        'ui.resume': '继续',
+        'ui.mute': '静音',
+        'ui.unmute': '恢复声音',
+        'ui.settings': '参数',
+        'ui.sensory': '感官设置',
+        'ui.slow': '慢速',
+        'ui.normal': '正常',
+        'ui.fast': '快速',
+        'ui.startRound': '开始本轮',
+        'ui.saveSettings': '保存设置',
+        'ui.instructions': '移动光标戳泡泡',
+        'ui.inputMode': '输入方式: ',
+        'input.mouse': '鼠标',
+        'ui.bubbleCount': '泡泡数: ',
+        'ui.timeRemaining': '剩余: ',
+        'ui.gamePaused': '游戏已暂停',
+        'ui.clickContinue': '点击继续按钮恢复游戏',
+        'ui.expertMode': '专家模式',
+        'ui.gameOver': '游戏结束',
+        'ui.play': '播放',
+        'ui.playAgain': '重玩',
+        'ui.finish': '结束',
+        'ui.report': '游戏报告',
+        'ui.analyzing': '分析中...',
+        'ui.waitingData': '等待游戏数据...',
+        'ui.realtimeData': '实时数据',
+        'ui.recentClicks': '最近点击',
+        'ui.noData': '暂无',
+        'ui.patternPredict': '模式预测',
+        'ui.laneDist': 'Lane 分布',
+
+        // Sidebar
+        'sidebar.waitingForData': '等待更多数据...',
+        'sidebar.noData': '暂无',
+        'sidebar.pattern.sequential': '顺序型 (CDEGA)',
+        'sidebar.pattern.repetitive': '重复型',
+        'sidebar.pattern.exploratory': '探索型',
+        'sidebar.pattern.mixed': '混合型',
+
+        // Expert Drawer
+        'expert.titleTooltip': '专家模式 (Ctrl+Shift+E)',
+        'expert.title': '🎵 音乐参数调整',
+        'expert.close': '关闭',
+        'expert.tempo': 'Tempo (BPM)',
+        'expert.audioParams': '音效参数',
+        'expert.volume': '音量',
+        'expert.density': '密度',
+        'expert.warning.unsafe': '⚠️ 超出包络，不推荐可部署',
+        
+        // Game Engine
+        'game.ready': '游戏准备就绪！',
+        'game.paused': '已暂停',
+        'game.samplingStarted': '开始采样：{seconds}s',
+        'game.samplingCompleted': '采样完成，共 {count} 个音符',
+
+        // Sidebar
+        'sidebar.waitingForData': 'Waiting for more data...',
+        'sidebar.noData': 'No Data',
+        'sidebar.pattern.sequential': 'Sequential (CDEGA)',
+        'sidebar.pattern.repetitive': 'Repetitive',
+        'sidebar.pattern.exploratory': 'Exploratory',
+        'sidebar.pattern.mixed': 'Mixed',
+
+        // Expert Drawer
+        'expert.titleTooltip': 'Expert Mode (Ctrl+Shift+E)',
+        'expert.title': '🎵 Music Parameters',
+        'expert.close': 'Close',
+        'expert.tempo': 'Tempo (BPM)',
+        'expert.audioParams': 'Audio Parameters',
+        'expert.volume': 'Volume',
+        'expert.density': 'Density',
+        'expert.warning.unsafe': '⚠️ Unsafe Envelope, Not Recommended',
+        
+        // Game Engine
+        'game.ready': 'Game Ready!',
+        'game.paused': 'Paused',
+        'game.samplingStarted': 'Sampling Started: {seconds}s',
+        'game.samplingCompleted': 'Sampling Completed, {count} notes',
+
+        // Settings Modal
+        'settings.title': '游戏设置',
+        'settings.subtitle': '调整感官体验，让游戏更适合你',
+        'settings.volume': '音量大小',
+        'settings.density': '泡泡数量',
+        'settings.timbre': '乐器音色',
+        'settings.latency': '声音延迟',
+        'settings.feedback': '点击反馈',
+        'settings.reward': '结束音乐',
+        'settings.reset': '恢复默认',
+        'settings.start': '开始游戏',
+        'settings.close': '关闭',
+        
+        // Options
+        'opt.low': '柔和',
+        'opt.medium': '标准',
+        'opt.high': '响亮',
+        'opt.sparse': '少一点',
+        'opt.normal': '正常',
+        'opt.soft': '柔和钢琴',
+        'opt.bright': '明亮小提琴',
+        'opt.immediate': '即时',
+        'opt.delay': '稍慢',
+        'opt.full': '声音+视觉',
+        'opt.visual': '仅视觉',
+        'opt.off': '关闭',
+        'opt.on': '开启',
+
+        // Messages
+        'msg.paused': '休息一下！',
+        'msg.resume': '继续加油！',
+        'msg.slow': '慢慢来，很好！',
+        'msg.normal': '节奏刚好！',
+        'msg.fast': '快速挑战！',
+        'msg.welcome': '欢迎！移动鼠标戳泡泡！',
+        'msg.saved': '设置已保存，将在下一轮生效',
+        'msg.reward': 'Reward 已生成，点击“播放”欣赏音乐🎵',
+        'msg.error': 'AI 生成失败：查看控制台错误',
+        'msg.musicPlaying': '正在播放你创作的音乐！',
+        'msg.musicError': '播放音乐时出现错误，请重试',
+        'msg.downloadMidi': 'MIDI音乐文件已下载！',
+        'msg.downloadJson': '音乐数据已下载（JSON格式）！',
+
+        // Achievements & Autism Friendly
+        'ach.consecutive5': '太棒了！连续戳中5个泡泡！',
+        'ach.consecutive10': '连击高手！连续戳中10个泡泡！',
+        'ach.consecutive15': '超级连击！连续戳中15个泡泡！',
+        'ach.total10': '第一个里程碑！戳中10个泡泡！',
+        'ach.total25': '进步神速！戳中25个泡泡！',
+        'ach.total50': '协调大师！戳中50个泡泡！',
+        'ach.total100': '传奇玩家！戳中100个泡泡！',
+        'af.predictableMode': '🔄 规律模式：泡泡按固定位置出现',
+
+        // Game Results & Stats
+        'res.success': '成功击破',
+        'res.speed': '平均速度',
+        'res.combo': '最高连击',
+        'res.unitBubbles': '个泡泡',
+        'res.unitSpeed': '秒/个',
+        'res.unitCombo': '连续',
+        
+        // Encouragement
+        'enc.excellent': ['太棒了！你是真正的泡泡大师！', '完美的表现！你的协调性令人惊叹！', '出色！你已经掌握了游戏的精髓！'],
+        'enc.great': ['很棒的表现！继续保持这个节奏！', '做得很好！你的技巧在不断提升！', '优秀！你的专注力很强！'],
+        'enc.good': ['不错的开始！多练习会更好！', '很好！每一次尝试都是进步！', '加油！你正在稳步提升！'],
+        'enc.encouraging': ['很好的尝试！游戏就是要享受过程！', '没关系，放松心情最重要！', '继续努力！每个人都有自己的节奏！'],
+
+        // Patterns & Analysis
+        'pat.sequential': '顺序型',
+        'pat.repetitive': '重复型',
+        'pat.exploratory': '探索型',
+        'pat.mixed': '混合型',
+        'pat.sparse': '稀疏型',
+        'pat.dense': '密集型',
+        'pat.desc.sequential': '顺序型（CDEGA 上下行）',
+        'pat.desc.repetitive': '重复型（高重复）',
+        'pat.desc.exploratory': '探索型（高多样）',
+        'pat.desc.sparse': '稀疏型（低密度）',
+        'pat.desc.dense': '密集型（高密度）',
+        'pat.desc.mixed': '混合型',
+        'pat.rule.sequential': '顺序命中率 {ratio}% > 40% 且 lane覆盖 {diversity} ≥ 4',
+        'pat.rule.repetitive': '主导lane占比 {ratio}% > 60%（{lane}音）',
+        'pat.rule.exploratory': 'lane覆盖 {diversity} ≥ 4 且 主导占比 {ratio}% ≤ 60%',
+        'pat.rule.mixed': '未满足任一主导模式条件',
+
+        // Hand Preference
+        'hand.left': '你更喜欢用左手！下次试试右手，平衡使用双手更有益。',
+        'hand.right': '你更喜欢用右手！下次试试左手，平衡使用双手更有益。',
+        'hand.balanced': '很棒！你平衡使用了双手，对运动技能发展很好。',
+        'hand.none': '开始戳破泡泡来看看你更喜欢用哪只手！',
+
+        // Debug / Expert
+        'debug.unsafe': '不安全模式',
+        'debug.preview': '预览模式',
+        'debug.clickRate': '点击率',
+        'debug.successRate': '成功率',
+        'debug.intercepts': '拦截数',
+        'debug.safe': 'Safe（0 违规）',
+        'debug.attention': 'Needs attention（{count} 违规）',
+        'debug.rewardOff': 'Reward Off（仅即时反馈）',
+        'debug.noData': '请先完成一局以生成分析',
+        'debug.waiting': '等待 reward 生成',
+        
+        // Music Player
+        'music.playing': ' 正在播放...',
+        'music.download': ' 下载音乐文件',
+        'music.error': '没有找到生成的音乐，请先完成一局游戏',
+        'music.muted': '当前为静音状态，请先点击“恢复声音”',
+        'music.playerNotReady': '音乐播放器未准备好，请稍后再试'
+    },
+    en: {
+        // Main UI
+        'ui.pause': 'Pause',
+        'ui.resume': 'Resume',
+        'ui.mute': 'Mute',
+        'ui.unmute': 'Unmute',
+        'ui.settings': 'Settings',
+        'ui.sensory': 'Sensory',
+        'ui.slow': 'Slow',
+        'ui.normal': 'Normal',
+        'ui.fast': 'Fast',
+        'ui.startRound': 'Start Round',
+        'ui.saveSettings': 'Save Settings',
+        'ui.instructions': 'Move cursor to pop bubbles!',
+        'ui.inputMode': 'Input: ',
+        'input.mouse': 'Mouse',
+        'ui.bubbleCount': 'Bubbles: ',
+        'ui.timeRemaining': 'Time: ',
+        'ui.gamePaused': 'Game Paused',
+        'ui.clickContinue': 'Click resume button to continue',
+        'ui.expertMode': 'Expert Mode',
+        'ui.gameOver': 'Game Over',
+        'ui.play': 'Play',
+        'ui.playAgain': 'Play Again',
+        'ui.finish': 'Finish',
+        'ui.report': 'Game Report',
+        'ui.analyzing': 'Analyzing...',
+        'ui.waitingData': 'Waiting for data...',
+        'ui.realtimeData': 'Real-time',
+        'ui.recentClicks': 'Recent Clicks',
+        'ui.noData': 'No Data',
+        'ui.patternPredict': 'Pattern Prediction',
+        'ui.laneDist': 'Lane Distribution',
+
+        // Settings Modal
+        'settings.title': 'Game Settings',
+        'settings.subtitle': 'Adjust sensory experience',
+        'settings.volume': 'Volume',
+        'settings.density': 'Density',
+        'settings.timbre': 'Timbre',
+        'settings.latency': 'Latency',
+        'settings.feedback': 'Feedback',
+        'settings.reward': 'End Music',
+        'settings.reset': 'Reset',
+        'settings.start': 'Start Game',
+        'settings.close': 'Close',
+
+        // Options
+        'opt.low': 'Low',
+        'opt.medium': 'Medium',
+        'opt.high': 'High',
+        'opt.sparse': 'Sparse',
+        'opt.normal': 'Normal',
+        'opt.soft': 'Soft Piano',
+        'opt.bright': 'Bright Violin',
+        'opt.immediate': 'Immediate',
+        'opt.delay': '0.5s Delay',
+        'opt.full': 'Audio+Visual',
+        'opt.visual': 'Visual Only',
+        'opt.off': 'Off',
+        'opt.on': 'On',
+
+        // Messages
+        'msg.paused': 'Take a break!',
+        'msg.resume': 'Keep going!',
+        'msg.slow': 'Take your time!',
+        'msg.normal': 'Good pace!',
+        'msg.fast': 'Fast challenge!',
+        'msg.welcome': 'Welcome! Move cursor to pop bubbles!',
+        'msg.saved': 'Settings saved, will apply next round',
+        'msg.reward': 'Reward generated, click "Play" to listen🎵',
+        'msg.error': 'AI Generation Failed: Check Console',
+        'msg.musicPlaying': 'Playing your created music!',
+        'msg.musicError': 'Error playing music, please try again',
+        'msg.downloadMidi': 'MIDI file downloaded!',
+        'msg.downloadJson': 'Music data downloaded (JSON)!',
+
+        // Achievements & Autism Friendly
+        'ach.consecutive5': 'Great job! 5 bubbles in a row!',
+        'ach.consecutive10': 'Combo Master! 10 bubbles in a row!',
+        'ach.consecutive15': 'Super Combo! 15 bubbles in a row!',
+        'ach.total10': 'First Milestone! 10 bubbles popped!',
+        'ach.total25': 'Rapid Progress! 25 bubbles popped!',
+        'ach.total50': 'Coordination Master! 50 bubbles popped!',
+        'ach.total100': 'Legendary Player! 100 bubbles popped!',
+        'af.predictableMode': '🔄 Predictable Mode: Bubbles appear in fixed spots',
+
+        // Game Results & Stats
+        'res.success': 'Bubbles Popped',
+        'res.speed': 'Avg Speed',
+        'res.combo': 'Max Combo',
+        'res.unitBubbles': 'bubbles',
+        'res.unitSpeed': 'sec/bubble',
+        'res.unitCombo': 'streak',
+
+        // Encouragement
+        'enc.excellent': ['Amazing! You are a true Bubble Master!', 'Perfect performance! Your coordination is incredible!', 'Outstanding! You mastered the game!'],
+        'enc.great': ['Great job! Keep up the good rhythm!', 'Well done! Your skills are improving!', 'Excellent! Great focus!'],
+        'enc.good': ['Good start! Practice makes perfect!', 'Good job! Every attempt counts!', 'Keep going! You are improving steadily!'],
+        'enc.encouraging': ['Nice try! Enjoy the process!', 'Relax and have fun!', 'Keep trying! Everyone has their own pace!'],
+
+        // Patterns & Analysis
+        'pat.sequential': 'Sequential',
+        'pat.repetitive': 'Repetitive',
+        'pat.exploratory': 'Exploratory',
+        'pat.mixed': 'Mixed',
+        'pat.sparse': 'Sparse',
+        'pat.dense': 'Dense',
+        'pat.desc.sequential': 'Sequential (CDEGA Asc/Desc)',
+        'pat.desc.repetitive': 'Repetitive (High Repetition)',
+        'pat.desc.exploratory': 'Exploratory (High Diversity)',
+        'pat.desc.sparse': 'Sparse (Low Density)',
+        'pat.desc.dense': 'Dense (High Density)',
+        'pat.desc.mixed': 'Mixed Type',
+        'pat.rule.sequential': 'Seq Ratio {ratio}% > 40% & Coverage {diversity} ≥ 4',
+        'pat.rule.repetitive': 'Dominant Lane {ratio}% > 60% ({lane})',
+        'pat.rule.exploratory': 'Coverage {diversity} ≥ 4 & Dominant {ratio}% ≤ 60%',
+        'pat.rule.mixed': 'Does not meet dominant pattern criteria',
+
+        // Hand Preference
+        'hand.left': 'You prefer your left hand! Try using your right hand next time for balance.',
+        'hand.right': 'You prefer your right hand! Try using your left hand next time for balance.',
+        'hand.balanced': 'Great! You are using both hands equally, which is good for motor skills.',
+        'hand.none': 'Pop some bubbles to see which hand you prefer!',
+
+        // Debug / Expert
+        'debug.unsafe': 'Unsafe Mode',
+        'debug.preview': 'Preview Mode',
+        'debug.clickRate': 'Click Rate',
+        'debug.successRate': 'Success Rate',
+        'debug.intercepts': 'Intercepts',
+        'debug.safe': 'Safe (0 violations)',
+        'debug.attention': 'Needs attention ({count} violations)',
+        'debug.rewardOff': 'Reward Off (Instant feedback only)',
+        'debug.noData': 'Complete a round to see analysis',
+        'debug.waiting': 'Waiting for reward generation',
+
+        // Music Player
+        'music.playing': ' Playing...',
+        'music.download': ' Download MIDI',
+        'music.error': 'No music found, please finish a game first',
+        'music.muted': 'Currently muted, please click "Unmute" first',
+        'music.playerNotReady': 'Music player not ready, please try again later'
+    }
+};
+
+class I18n {
+    constructor() {
+        this.currentLang = localStorage.getItem('gameLanguage') || 'zh';
+        this.listeners = [];
+        console.log('[I18n] Initialized with language:', this.currentLang);
+    }
+
+    /**
+     * Get translated string
+     * @param {string} key - Translation key (e.g., 'ui.pause')
+     * @param {object} params - Parameters to replace in string (e.g., {ratio: 50})
+     * @returns {string|string[]} Translated string or array (for random selection)
+     */
+    t(key, params = {}) {
+        const value = TRANSLATIONS[this.currentLang][key];
+        
+        if (value === undefined) {
+            console.warn(`[I18n] Missing translation for key: ${key} in ${this.currentLang}`);
+            return key;
+        }
+
+        // Handle array (return random item)
+        if (Array.isArray(value)) {
+            const randomItem = value[Math.floor(Math.random() * value.length)];
+            return this.processParams(randomItem, params);
+        }
+
+        return this.processParams(value, params);
+    }
+
+    /**
+     * Process parameter replacement
+     */
+    processParams(text, params) {
+        if (!params || Object.keys(params).length === 0) return text;
+        
+        return text.replace(/\{(\w+)\}/g, (match, p1) => {
+            return params[p1] !== undefined ? params[p1] : match;
+        });
+    }
+
+    /**
+     * Set current language
+     * @param {string} lang - 'zh' or 'en'
+     */
+    setLanguage(lang) {
+        if (lang !== 'zh' && lang !== 'en') {
+            console.error('[I18n] Unsupported language:', lang);
+            return;
+        }
+        
+        if (this.currentLang === lang) return;
+
+        this.currentLang = lang;
+        localStorage.setItem('gameLanguage', lang);
+        console.log('[I18n] Language set to:', lang);
+        
+        this.notifyListeners();
+        this.updateDocumentTitle();
+    }
+
+    /**
+     * Toggle between zh and en
+     */
+    toggleLanguage() {
+        const newLang = this.currentLang === 'zh' ? 'en' : 'zh';
+        this.setLanguage(newLang);
+        return newLang;
+    }
+
+    /**
+     * Subscribe to language changes
+     */
+    subscribe(callback) {
+        if (typeof callback === 'function') {
+            this.listeners.push(callback);
+        }
+    }
+
+    /**
+     * Notify all listeners
+     */
+    notifyListeners() {
+        this.listeners.forEach(cb => {
+            try {
+                cb(this.currentLang);
+            } catch (e) {
+                console.error('[I18n] Error in listener:', e);
+            }
+        });
+        
+        // Dispatch global event
+        window.dispatchEvent(new CustomEvent('languageChanged', { 
+            detail: { lang: this.currentLang } 
+        }));
+    }
+
+    /**
+     * Update document title based on language
+     */
+    updateDocumentTitle() {
+        document.title = this.currentLang === 'zh' 
+            ? '泡泡戳戳乐 - 自闭症友好音乐游戏' 
+            : 'Bubble Popping Game - Autism Friendly Music';
+    }
+}
+
+// Create global instance
+window.i18n = new I18n();

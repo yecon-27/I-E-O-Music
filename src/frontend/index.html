@@ -216,29 +216,6 @@
                                 </button>
                             </div>
                             
-                            <!-- 游戏概览 -->
-                            <div class="report-section">
-                                <h4 class="report-section-title">游戏概览</h4>
-                                <div class="report-grid">
-                                    <div class="report-item">
-                                        <span class="report-label">游戏时长</span>
-                                        <span class="report-value" id="report-duration">60s</span>
-                                    </div>
-                                    <div class="report-item">
-                                        <span class="report-label">总点击数</span>
-                                        <span class="report-value" id="report-total-clicks">0</span>
-                                    </div>
-                                    <div class="report-item">
-                                        <span class="report-label">成功命中</span>
-                                        <span class="report-value" id="report-successful">0</span>
-                                    </div>
-                                    <div class="report-item">
-                                        <span class="report-label">命中率</span>
-                                        <span class="report-value" id="report-accuracy">0%</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
                             <!-- 行为模式分析 -->
                             <div class="report-section">
                                 <h4 class="report-section-title">行为模式</h4>
@@ -248,12 +225,51 @@
                                         <span class="pattern-name">分析中...</span>
                                     </div>
                                     <p class="pattern-desc" id="report-pattern-desc">等待游戏数据...</p>
+                                    
+                                    <!-- 模式得分比例 -->
+                                    <div class="pattern-scores" id="report-pattern-scores">
+                                        <div class="score-item">
+                                            <span class="score-label">
+                                                🎹 顺序型
+                                                <span class="info-icon" data-tooltip="顺序命中率 > 40% 且 lane覆盖 ≥ 4&#10;按 C→D→E→G→A 顺序点击的比例">ⓘ</span>
+                                            </span>
+                                            <div class="score-bar-bg"><div class="score-bar-fill seq" id="score-seq" style="width: 0%;"></div></div>
+                                            <span class="score-value" id="score-seq-val">0%</span>
+                                        </div>
+                                        <div class="score-item">
+                                            <span class="score-label">
+                                                🔁 重复型
+                                                <span class="info-icon" data-tooltip="主导lane占比 > 60%&#10;偏好重复点击同一个音符">ⓘ</span>
+                                            </span>
+                                            <div class="score-bar-bg"><div class="score-bar-fill rep" id="score-rep" style="width: 0%;"></div></div>
+                                            <span class="score-value" id="score-rep-val">0%</span>
+                                        </div>
+                                        <div class="score-item">
+                                            <span class="score-label">
+                                                🌈 探索型
+                                                <span class="info-icon" data-tooltip="lane覆盖 ≥ 4 且 主导占比 ≤ 60%&#10;积极探索不同音符，分布均匀">ⓘ</span>
+                                            </span>
+                                            <div class="score-bar-bg"><div class="score-bar-fill exp" id="score-exp" style="width: 0%;"></div></div>
+                                            <span class="score-value" id="score-exp-val">0%</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             
-                            <!-- Lane 分布 -->
+                            <!-- 点击轨迹与 Lane 分布 -->
                             <div class="report-section">
-                                <h4 class="report-section-title">音符分布</h4>
+                                <h4 class="report-section-title">点击轨迹与 Lane 分布</h4>
+                                
+                                <!-- 时间轴散点图 -->
+                                <div class="timeline-scatter" id="report-timeline-scatter">
+                                    <div class="scatter-row" data-lane="C"><span class="scatter-label">C</span><div class="scatter-track"></div></div>
+                                    <div class="scatter-row" data-lane="D"><span class="scatter-label">D</span><div class="scatter-track"></div></div>
+                                    <div class="scatter-row" data-lane="E"><span class="scatter-label">E</span><div class="scatter-track"></div></div>
+                                    <div class="scatter-row" data-lane="G"><span class="scatter-label">G</span><div class="scatter-track"></div></div>
+                                    <div class="scatter-row" data-lane="A"><span class="scatter-label">A</span><div class="scatter-track"></div></div>
+                                </div>
+                                
+                                <!-- Lane 分布条形图 -->
                                 <div class="report-lane-chart" id="report-lane-chart">
                                     <div class="lane-bar-item" data-lane="C">
                                         <span class="lane-name">C</span>
@@ -279,21 +295,6 @@
                                         <span class="lane-name">A</span>
                                         <div class="lane-bar-bg"><div class="lane-bar-fill" style="width: 0%; background: #A78BFA;"></div></div>
                                         <span class="lane-count">0</span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- 节奏分析 -->
-                            <div class="report-section">
-                                <h4 class="report-section-title">节奏分析</h4>
-                                <div class="report-grid">
-                                    <div class="report-item">
-                                        <span class="report-label">平均BPM</span>
-                                        <span class="report-value" id="report-bpm">-</span>
-                                    </div>
-                                    <div class="report-item">
-                                        <span class="report-label">最高连击</span>
-                                        <span class="report-value" id="report-max-combo">0</span>
                                     </div>
                                 </div>
                             </div>
@@ -359,6 +360,7 @@
                     <h4 class="section-title">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
                         模式预测
+                        <span class="info-icon" data-tooltip="🎹 顺序型: 顺序命中率>40% 且 lane≥4&#10;🔁 重复型: 主导lane占比>60%&#10;🌈 探索型: lane≥4 且 主导≤60%">ⓘ</span>
                     </h4>
                     <div id="rt-pattern" class="rt-pattern">
                         <span class="pattern-label">等待更多数据...</span>
@@ -507,6 +509,7 @@
         </div>
     </div>
 
+    <script src="js/i18n.js"></script>
     <script src="js/audio-notes.js"></script>
     <script src="js/audio-engine.js"></script>
     <script src="js/note-log.js"></script>

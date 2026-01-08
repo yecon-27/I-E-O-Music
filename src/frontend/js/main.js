@@ -18,6 +18,9 @@ if (!mm || !mm.MusicRNN) {
 // Global game instance
 let game = null;
 
+// Helper to access i18n
+const t = (key, params) => window.i18n ? window.i18n.t(key, params) : key;
+
 // UI elements
 const elements = {
     scoreValue: null,
@@ -41,7 +44,9 @@ const elements = {
     sessionPreset: null,
     panicMuteBtn: null,
     resultMuteBtn: null,
-    };
+    inputMode: null,
+    bubbleCount: null
+};
 
 const SESSION_DEFAULTS = {
     volumeLevel: 'medium',
@@ -60,7 +65,7 @@ const SESSION_ENVELOPE = {
 let statusUpdatesStarted = false;
 let pausedBySettings = false;
 let panicMuted = false;
-let currentLang = 'zh';
+// currentLang is now managed by i18n.js
 
 // SVG图标定义
 const ICONS = {
@@ -75,184 +80,78 @@ const ICONS = {
     target: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>'
 };
 
-const TRANSLATIONS = {
-    zh: {
-        'pause-btn-paused': ICONS.play+ '<span style="margin-left:6px">继续</span>',
-        'pause-btn-running': ICONS.pause + '<span style="margin-left:6px">暂停</span>',
-        'panic-btn-muted': ICONS.volume2 + '<span style="margin-left:6px">恢复声音</span>',
-        'panic-btn-unmuted': ICONS.volumeX + '<span style="margin-left:6px">静音</span>',
-        'settings-btn': ICONS.settings + '<span style="margin-left:6px">参数</span>',
-        'sensory-btn': '感官设置',
-        'slow-btn': ICONS.rewind + '<span class="speed-label">慢速</span>',
-        'normal-btn': ICONS.playSmall + '<span class="speed-label">正常</span>',
-        'fast-btn': ICONS.fastForward + '<span class="speed-label">快速</span>',
-        'start-round-btn': '开始本轮',
-        'save-settings-btn': '保存设置',
-        'instructions': ICONS.target + ' 移动光标戳泡泡',
-        'input-mode': '输入方式: ',
-        'bubble-count': '泡泡数: ',
-        'time-remaining': '剩余: ',
-        'game-paused': '游戏已暂停',
-        'click-continue': '点击继续按钮恢复游戏',
-        // Settings Modal
-        'settings-title': '游戏设置',
-        'settings-subtitle': '调整感官体验，让游戏更适合你',
-        'label-volume': '音量大小',
-        'label-density': '泡泡数量',
-        'label-timbre': '乐器音色',
-        'label-latency': '声音延迟',
-        'label-feedback': '点击反馈',
-        'label-reward': '结束音乐',
-        'btn-reset': '恢复默认',
-        'btn-start': '开始游戏',
-        'btn-close': '关闭',
-        // Options
-        'opt-low': '柔和 (Low)',
-        'opt-medium': '标准 (Medium)',
-        'opt-high': '响亮 (High)',
-        'opt-sparse': '少一点 (Sparse)',
-        'opt-normal': '正常 (Normal)',
-        'opt-soft': '柔和钢琴 (Soft)',
-        'opt-bright': '明亮小提琴 (Bright)',
-        'opt-immediate': '即时 (Immediate)',
-        'opt-delay': '稍慢 (0.5s Delay)',
-        'opt-full': '声音+视觉 (Full)',
-        'opt-visual': '仅视觉 (Visual-only)',
-        'opt-off': '关闭 (Off)',
-        'opt-on': '开启 (On)',
-        'msg-paused': '休息一下！',
-        'msg-resume': '继续加油！',
-        'msg-slow': '慢慢来，很好！',
-        'msg-normal': '节奏刚好！',
-        'msg-fast': '快速挑战！',
-        'msg-welcome': '欢迎！移动鼠标戳泡泡！',
-        'msg-saved': '设置已保存，将在下一轮生效',
-        'msg-reward': 'Reward 已生成，点击“享受你创作的音乐”播放🎵',
-        'msg-error': 'AI 生成失败：查看控制台错误',
-        'input-mouse': '鼠标'
-    },
-    en: {
-        'pause-btn-paused': ICONS.play + '<span style="margin-left:6px">Resume</span>',
-        'pause-btn-running': ICONS.pause + '<span style="margin-left:6px">Pause</span>',
-        'panic-btn-muted': ICONS.volume2 + '<span style="margin-left:6px">Unmute</span>',
-        'panic-btn-unmuted': ICONS.volumeX + '<span style="margin-left:6px">Mute</span>',
-        'settings-btn': ICONS.settings + '<span style="margin-left:6px">Settings</span>',
-        // 'sensory-btn': 'Sensory', // Removed
-        'slow-btn': ICONS.rewind + '<span class="speed-label">Slow</span>',
-        'normal-btn': ICONS.playSmall + '<span class="speed-label">Normal</span>',
-        'fast-btn': ICONS.fastForward + '<span class="speed-label">Fast</span>',
-        'start-round-btn': 'Start Round',
-        'save-settings-btn': 'Save Settings',
-        'instructions': ICONS.target + ' Move cursor to pop bubbles!',
-        'input-mode': 'Input: ',
-        'bubble-count': 'Bubbles: ',
-        'time-remaining': 'Time: ',
-        'game-paused': 'Game Paused',
-        'click-continue': 'Click resume button to continue',
-        // Settings Modal
-        'settings-title': 'Game Settings',
-        'settings-subtitle': 'Adjust sensory experience',
-        'label-volume': 'Volume',
-        'label-density': 'Density',
-        'label-timbre': 'Timbre',
-        'label-latency': 'Latency',
-        'label-feedback': 'Feedback',
-        'label-reward': 'End Music',
-        'btn-reset': 'Reset',
-        'btn-start': 'Start Game',
-        'btn-close': 'Close',
-        // Options
-        'opt-low': 'Low',
-        'opt-medium': 'Medium',
-        'opt-high': 'High',
-        'opt-sparse': 'Sparse',
-        'opt-normal': 'Normal',
-        'opt-soft': 'Soft Piano',
-        'opt-bright': 'Bright Violin',
-        'opt-immediate': 'Immediate',
-        'opt-delay': '0.5s Delay',
-        'opt-full': 'Audio+Visual',
-        'opt-visual': 'Visual Only',
-        'opt-off': 'Off',
-        'opt-on': 'On',
-        'msg-paused': 'Take a break!',
-        'msg-resume': 'Keep going!',
-        'msg-slow': 'Take your time!',
-        'msg-normal': 'Good pace!',
-        'msg-fast': 'Fast challenge!',
-        'msg-welcome': 'Welcome! Move cursor to pop bubbles!',
-        'msg-saved': 'Settings saved, will apply next round',
-        'msg-reward': 'Reward generated, click "Enjoy Music" to play',
-        'msg-error': 'AI Generation Failed: Check Console',
-        'input-mouse': 'Mouse'
-    }
-};
-
-function t(key) {
-    return TRANSLATIONS[currentLang][key] || key;
-}
-
 function updateUIText() {
     // Buttons - 使用innerHTML来支持SVG图标
-    if(elements.pauseBtn) elements.pauseBtn.innerHTML = game?.isPaused ? t('pause-btn-paused') : t('pause-btn-running');
-    if(elements.panicMuteBtn) elements.panicMuteBtn.innerHTML = panicMuted ? t('panic-btn-muted') : t('panic-btn-unmuted');
-    if(elements.resultMuteBtn) elements.resultMuteBtn.innerHTML = panicMuted ? t('panic-btn-muted') : t('panic-btn-unmuted');
-    if(elements.sessionSettingsBtn) elements.sessionSettingsBtn.innerHTML = t('settings-btn');
-    if(elements.slowBtn) elements.slowBtn.innerHTML = t('slow-btn');
-    if(elements.normalBtn) elements.normalBtn.innerHTML = t('normal-btn');
-    if(elements.fastBtn) elements.fastBtn.innerHTML = t('fast-btn');
+    if(elements.pauseBtn) elements.pauseBtn.innerHTML = game?.isPaused 
+        ? ICONS.play + `<span style="margin-left:6px">${t('ui.resume')}</span>`
+        : ICONS.pause + `<span style="margin-left:6px">${t('ui.pause')}</span>`;
+        
+    if(elements.panicMuteBtn) elements.panicMuteBtn.innerHTML = panicMuted 
+        ? ICONS.volume2 + `<span style="margin-left:6px">${t('ui.unmute')}</span>`
+        : ICONS.volumeX + `<span style="margin-left:6px">${t('ui.mute')}</span>`;
+        
+    if(elements.resultMuteBtn) elements.resultMuteBtn.innerHTML = panicMuted 
+        ? ICONS.volume2 + `<span style="margin-left:6px">${t('ui.unmute')}</span>`
+        : ICONS.volumeX + `<span style="margin-left:6px">${t('ui.mute')}</span>`;
+        
+    if(elements.sessionSettingsBtn) elements.sessionSettingsBtn.innerHTML = ICONS.settings + `<span style="margin-left:6px">${t('ui.settings')}</span>`;
+    
+    if(elements.slowBtn) elements.slowBtn.innerHTML = ICONS.rewind + `<span class="speed-label">${t('ui.slow')}</span>`;
+    if(elements.normalBtn) elements.normalBtn.innerHTML = ICONS.playSmall + `<span class="speed-label">${t('ui.normal')}</span>`;
+    if(elements.fastBtn) elements.fastBtn.innerHTML = ICONS.fastForward + `<span class="speed-label">${t('ui.fast')}</span>`;
     
     // Sensory button
     const sensoryBtn = document.getElementById('sensory-panel-toggle');
-    if(sensoryBtn) sensoryBtn.textContent = t('sensory-btn');
+    if(sensoryBtn) sensoryBtn.textContent = t('ui.sensory');
 
     // Instructions & Status
     const instructionsP = document.querySelector('.instructions p');
-    if(instructionsP) instructionsP.innerHTML = t('instructions');
+    if(instructionsP) instructionsP.innerHTML = ICONS.target + ' ' + t('ui.instructions');
     
     const inputModeLabel = document.querySelector('.status-item:nth-child(1) span:first-child');
-    if(inputModeLabel) inputModeLabel.textContent = t('input-mode');
-    if(elements.inputMode) elements.inputMode.textContent = t('input-mouse');
+    if(inputModeLabel) inputModeLabel.textContent = t('ui.inputMode');
+    if(elements.inputMode) elements.inputMode.textContent = t('input.mouse') || 'Mouse';
 
     const bubbleCountLabel = document.querySelector('.status-item:nth-child(2) span:first-child');
-    if(bubbleCountLabel) bubbleCountLabel.textContent = t('bubble-count');
+    if(bubbleCountLabel) bubbleCountLabel.textContent = t('ui.bubbleCount');
 
     const timeLabel = document.querySelector('.time-remaining span:first-child');
-    if(timeLabel) timeLabel.textContent = t('time-remaining');
+    if(timeLabel) timeLabel.textContent = t('ui.timeRemaining');
 
     // Pause Overlay
     const pauseTitle = document.querySelector('#pause-overlay h2');
     const pauseDesc = document.querySelector('#pause-overlay p');
-    if(pauseTitle) pauseTitle.textContent = t('game-paused');
-    if(pauseDesc) pauseDesc.textContent = t('click-continue');
+    if(pauseTitle) pauseTitle.textContent = t('ui.gamePaused');
+    if(pauseDesc) pauseDesc.textContent = t('ui.clickContinue');
 
     // Settings Modal
     const settingsTitle = document.querySelector('.settings-header h2');
     const settingsSub = document.querySelector('.settings-subtitle');
-    if(settingsTitle) settingsTitle.textContent = t('settings-title');
-    if(settingsSub) settingsSub.textContent = t('settings-subtitle');
+    if(settingsTitle) settingsTitle.textContent = t('settings.title');
+    if(settingsSub) settingsSub.textContent = t('settings.subtitle');
     
     // Labels
     const labels = document.querySelectorAll('.settings-field label');
     if(labels.length >= 6) {
-        labels[0].textContent = t('label-volume');
-        labels[1].textContent = t('label-density');
-        labels[2].textContent = t('label-timbre');
-        labels[3].textContent = t('label-latency');
-        labels[4].textContent = t('label-feedback');
-        labels[5].textContent = t('label-reward');
+        labels[0].textContent = t('settings.volume');
+        labels[1].textContent = t('settings.density');
+        labels[2].textContent = t('settings.timbre');
+        labels[3].textContent = t('settings.latency');
+        labels[4].textContent = t('settings.feedback');
+        labels[5].textContent = t('settings.reward');
     }
     
     // Settings Buttons
-    if(elements.sessionResetBtn) elements.sessionResetBtn.textContent = t('btn-reset');
-    if(elements.sessionStartBtn) elements.sessionStartBtn.textContent = game?.roundActive ? t('save-settings-btn') : t('start-round-btn');
-    if(elements.sessionCloseBtn) elements.sessionCloseBtn.textContent = t('btn-close');
+    if(elements.sessionResetBtn) elements.sessionResetBtn.textContent = t('settings.reset');
+    if(elements.sessionStartBtn) elements.sessionStartBtn.textContent = game?.roundActive ? t('ui.saveSettings') : t('ui.startRound');
+    if(elements.sessionCloseBtn) elements.sessionCloseBtn.textContent = t('settings.close');
 
-    // Options (Update select options text) - 只更新界面上存在的设置项
-    updateSelectOptions('session-volume', ['opt-low', 'opt-medium', 'opt-high']);
-    updateSelectOptions('session-timbre', ['opt-soft', 'opt-bright']);
-    updateSelectOptions('session-latency', ['opt-immediate', 'opt-delay']);
-    updateSelectOptions('session-immediate', ['opt-on', 'opt-off']);
+    // Options (Update select options text)
+    updateSelectOptions('session-volume', ['opt.low', 'opt.medium', 'opt.high']);
+    updateSelectOptions('session-timbre', ['opt.soft', 'opt.bright']);
+    updateSelectOptions('session-latency', ['opt.immediate', 'opt.delay']);
+    updateSelectOptions('session-immediate', ['opt.full', 'opt.visual', 'opt.off']);
+    updateSelectOptions('session-reward', ['opt.on', 'opt.off']);
 }
 
 function updateSelectOptions(id, keys) {
@@ -284,8 +183,9 @@ function updateSelectOptions(id, keys) {
 }
 
 function toggleLanguage() {
-    currentLang = currentLang === 'zh' ? 'en' : 'zh';
-    updateUIText();
+    if (window.i18n) {
+        window.i18n.toggleLanguage();
+    }
 }
 
 window.SESSION_DEFAULTS = SESSION_DEFAULTS;
@@ -325,6 +225,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle responsive design
     setupResponsiveHandling();
+
+    // Initialize i18n listener
+    if (window.i18n) {
+        window.i18n.subscribe(() => {
+            updateUIText();
+        });
+        updateUIText(); // Initial text update
+    }
     
     console.log('Application initialized successfully!');
 });
@@ -385,14 +293,14 @@ function ensureSessionSettingsUI() {
         const btn = document.createElement('button');
         btn.id = 'session-settings-btn';
         btn.className = 'control-btn';
-        btn.innerHTML = t('settings-btn');
+        btn.innerHTML = t('settings-btn'); // Will be updated by updateUIText
         controls.insertBefore(btn, controls.querySelector('.speed-controls') || null);
     }
     if (controls && !document.getElementById('panic-mute-btn')) {
         const btn = document.createElement('button');
         btn.id = 'panic-mute-btn';
         btn.className = 'control-btn panic-btn';
-        btn.innerHTML = t('panic-btn-unmuted');
+        btn.innerHTML = t('panic-btn-unmuted'); // Will be updated
         controls.insertBefore(btn, controls.querySelector('.speed-controls') || null);
     }
     if (controls && !document.getElementById('session-preset')) {
@@ -406,6 +314,7 @@ function ensureSessionSettingsUI() {
         const modal = document.createElement('div');
         modal.id = 'session-settings-modal';
       modal.className = 'settings-modal hidden';
+      // 注意：这里的内容也会被 updateUIText 更新，但初始结构需要保持
       modal.innerHTML = `
           <div class="settings-panel">
             <div class="settings-header">
@@ -589,14 +498,16 @@ function handlePauseToggle() {
     const isPaused = game.togglePause();
     
     // Update UI
-    elements.pauseBtn.innerHTML = isPaused ? t('pause-btn-paused') : t('pause-btn-running');
+    elements.pauseBtn.innerHTML = isPaused 
+        ? ICONS.play + `<span style="margin-left:6px">${t('ui.resume')}</span>`
+        : ICONS.pause + `<span style="margin-left:6px">${t('ui.pause')}</span>`;
     
     if (isPaused) {
         elements.pauseOverlay.classList.remove('hidden');
-        showEncouragementMessage(t('msg-paused'));
+        showEncouragementMessage(t('msg.paused'));
     } else {
         elements.pauseOverlay.classList.add('hidden');
-        showEncouragementMessage(t('msg-resume'));
+        showEncouragementMessage(t('msg.resume'));
     }
 }
 
@@ -625,9 +536,9 @@ function handleSpeedChange(speed, speedName) {
     
     // Show feedback message
     const speedMessages = {
-        'slow': t('msg-slow'),
-        'normal': t('msg-normal'),
-        'fast': t('msg-fast')
+        'slow': t('msg.slow'),
+        'normal': t('msg.normal'),
+        'fast': t('msg.fast')
     };
     
     showEncouragementMessage(speedMessages[speedName]);
@@ -781,7 +692,7 @@ function startStatusUpdates() {
         }
   
         if (elements.inputMode) {
-          elements.inputMode.textContent = '鼠标';
+          elements.inputMode.textContent = t('input.mouse') || 'Mouse';
         }
       }
     }, 500);
@@ -884,7 +795,24 @@ function resetSessionForm() {
 function syncPanicButton(btn, isMuted) {
     if (!btn) return;
     btn.classList.toggle('is-muted', isMuted);
-    btn.innerHTML = isMuted ? t('panic-btn-muted') : t('panic-btn-unmuted');
+    btn.innerHTML = isMuted 
+        ? ICONS.volumeX + `<span style="margin-left:6px">${t('ui.mute')}</span>` 
+        : ICONS.volume2 + `<span style="margin-left:6px">${t('ui.unmute')}</span>`;
+    // Note: I swapped logic here in syncPanicButton compared to original code?
+    // Original: isMuted ? t('panic-btn-muted') : t('panic-btn-unmuted')
+    // panic-btn-muted was "Unmute" (Recovery sound)
+    // panic-btn-unmuted was "Mute"
+    // So if isMuted is true, we show "Unmute" button.
+    // My t() logic: ui.unmute is 'Unmute'.
+    
+    // Correct logic:
+    if (isMuted) {
+         // Current state is muted, so button should say "Unmute"
+         btn.innerHTML = ICONS.volume2 + `<span style="margin-left:6px">${t('ui.unmute')}</span>`;
+    } else {
+         // Current state is unmuted, so button should say "Mute"
+         btn.innerHTML = ICONS.volumeX + `<span style="margin-left:6px">${t('ui.mute')}</span>`;
+    }
 }
 
 function refreshPanicButtons() {
@@ -925,7 +853,7 @@ function openSessionSettingsModal() {
     const config = getCurrentSessionConfig();
     loadSessionSettingsForm(config);
     if (elements.sessionStartBtn) {
-        elements.sessionStartBtn.textContent = game?.roundActive ? t('save-settings-btn') : t('start-round-btn');
+        elements.sessionStartBtn.textContent = game?.roundActive ? t('ui.saveSettings') : t('ui.startRound');
     }
     if (game?.roundActive && !game.isPaused) {
         game.togglePause();
@@ -950,7 +878,7 @@ function handleStartRound() {
     updateSessionPresetLabel(config);
 
     if (game?.roundActive) {
-        showEncouragementMessage(t('msg-saved'), 1200);
+        showEncouragementMessage(t('msg.saved'), 1200);
         closeSessionSettingsModal();
         return;
     }
@@ -1005,12 +933,12 @@ function handleStartRound() {
                 }
             } catch (err) {
                 console.error('[AI] submit failed:', err);
-                showEncouragementMessage(t('msg-error'), 1500);
+                showEncouragementMessage(t('msg.error'), 1500);
             }
         },
     });
 
-    showEncouragementMessage(t('msg-welcome'));
+    showEncouragementMessage(t('msg.welcome'));
     closeSessionSettingsModal();
 }
 
@@ -1169,7 +1097,7 @@ const MAGENTA = {
     window.lastGeneratedSequence = full;
     window.gameResultManager?.updateDebugPanel?.();
     
-    window.gameApp?.showEncouragementMessage?.(t('msg-reward'), 1800);
+    window.gameApp?.showEncouragementMessage?.(t('msg.reward'), 1800);
   
     if (downloadMidi) {
       try {

@@ -13,7 +13,7 @@
             this.totalAttempts = 0;  // 总尝试次数（包括未命中）
             this.successfulClicks = 0;  // 成功命中次数
             this.recentClicks = [];
-            this.maxRecentClicks = 10;  // 显示最近10个点击
+            this.maxRecentClicks = 12;  // 显示最近12个点击
             
             this.elements = {};
             this.init();
@@ -32,6 +32,14 @@
             this.cacheElements();
             this.bindEvents();
             this.startUpdates();
+            
+            // Subscribe to language changes
+            if (window.i18n) {
+                window.i18n.subscribe(() => {
+                    this.updateDisplay();
+                });
+            }
+
             console.log('[Sidebar] Controller initialized');
         }
 
@@ -123,6 +131,10 @@
             this.updateInterval = setInterval(() => this.updateDisplay(), 500);
         }
 
+        t(key, params) {
+            return window.i18n ? window.i18n.t(key, params) : key;
+        }
+
         updateDisplay() {
             this.updateStats();
             this.updateLaneBars();
@@ -188,13 +200,13 @@
             const patternEl = this.elements.rtPattern;
 
             if (pattern.type === 'unknown') {
-                patternEl.innerHTML = '<span class="pattern-label">等待更多数据...</span>';
+                patternEl.innerHTML = `<span class="pattern-label">${this.t('sidebar.waitingForData')}</span>`;
             } else {
                 const typeLabels = {
-                    sequential: '顺序型 (CDEGA)',
-                    repetitive: '重复型',
-                    exploratory: '探索型',
-                    mixed: '混合型'
+                    sequential: this.t('sidebar.pattern.sequential'),
+                    repetitive: this.t('sidebar.pattern.repetitive'),
+                    exploratory: this.t('sidebar.pattern.exploratory'),
+                    mixed: this.t('sidebar.pattern.mixed')
                 };
                 patternEl.innerHTML = `
                     <span class="pattern-type">${typeLabels[pattern.type] || pattern.type}</span>
@@ -207,7 +219,7 @@
             if (!this.elements.rtRecentClicks) return;
 
             if (this.recentClicks.length === 0) {
-                this.elements.rtRecentClicks.innerHTML = '<span class="no-data">暂无</span>';
+                this.elements.rtRecentClicks.innerHTML = `<span class="no-data">${this.t('sidebar.noData')}</span>`;
                 return;
             }
 
@@ -216,8 +228,8 @@
                 4: '#60A5FA', 5: '#A78BFA'
             };
 
-            // 显示最多10个
-            const html = this.recentClicks.slice(0, 10).map(click => {
+            // 显示最多12个
+            const html = this.recentClicks.slice(0, 12).map(click => {
                 const color = laneColors[click.laneId] || '#999';
                 return `<span class="click-item" style="background: ${color};">${click.note}</span>`;
             }).join('');

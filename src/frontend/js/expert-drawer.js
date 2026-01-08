@@ -176,19 +176,51 @@ class ExpertSideDrawer {
         this.bindEvents();
         this.setupKeyboardShortcut();
         this.subscribeToContext();
+
+        // Subscribe to language changes
+        if (window.i18n) {
+            window.i18n.subscribe(() => this.updateTexts());
+        }
+        // Initial text update
+        this.updateTexts();
+    }
+
+    t(key, params) {
+        return window.i18n ? window.i18n.t(key, params) : key;
+    }
+
+    updateTexts() {
+        if (!this.element) return;
+        
+        // Title & Tooltip
+        const handle = this.element.querySelector('.drawer-handle');
+        if (handle) handle.title = this.t('expert.titleTooltip');
+        
+        const title = this.element.querySelector('.drawer-header h3');
+        if (title) title.textContent = this.t('expert.title');
+        
+        const closeBtn = this.element.querySelector('.drawer-close');
+        if (closeBtn) closeBtn.title = this.t('expert.close');
+        
+        // Sections
+        const tempoTitle = this.element.querySelector('.tempo-section h4');
+        if (tempoTitle) tempoTitle.textContent = this.t('expert.tempo');
+        
+        const audioTitle = this.element.querySelectorAll('.drawer-section h4')[1];
+        if (audioTitle) audioTitle.textContent = this.t('expert.audioParams');
+        
+        // Labels
+        // We use IDs or structure. Here using label[for] is robust.
+        const volumeLabel = this.element.querySelector('label[for="param-volume"]');
+        if (volumeLabel) volumeLabel.textContent = this.t('expert.volume');
+        
+        const densityLabel = this.element.querySelector('label[for="param-density"]');
+        if (densityLabel) densityLabel.textContent = this.t('expert.density');
     }
     
     subscribeToContext() {
         this.ctx.subscribe((state, prevState, action) => {
             this.syncUIFromState(state);
-            
-            // Safety Toggle 核心逻辑 (Removed)
-            /*
-            if (action.type === 'SET_TEMPO' && !state.isUnsafeMode && state.tempo > 80) {
-                this.ctx.dispatch({ type: 'CLAMP_VALUE', value: 80 });
-                this.triggerVisualWarning();
-            }
-            */
         });
     }
     
@@ -247,8 +279,9 @@ class ExpertSideDrawer {
         const drawer = document.createElement('div');
         drawer.id = 'expert-drawer';
         drawer.className = 'expert-drawer';
+        // HTML structure with placeholders, text will be populated by updateTexts()
         drawer.innerHTML = `
-            <div class="drawer-handle" title="专家模式 (Ctrl+Shift+E)">
+            <div class="drawer-handle">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 20h9"></path>
                     <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
@@ -256,12 +289,12 @@ class ExpertSideDrawer {
             </div>
             <div class="drawer-content">
                 <div class="drawer-header">
-                    <h3>🎵 音乐参数调整</h3>
-                    <button class="drawer-close" title="关闭">×</button>
+                    <h3></h3>
+                    <button class="drawer-close">×</button>
                 </div>
                 
                 <div class="drawer-section tempo-section">
-                    <h4>Tempo (BPM)</h4>
+                    <h4></h4>
                     <div class="tempo-control">
                         <div class="tempo-display">
                             <span id="param-tempo-value" class="tempo-value">72</span>
@@ -280,16 +313,16 @@ class ExpertSideDrawer {
                 </div>
                 
                 <div class="drawer-section">
-                    <h4>音效参数</h4>
+                    <h4></h4>
                     <div class="param-sliders">
                         <div class="param-row">
-                            <label>音量</label>
+                            <label for="param-volume"></label>
                             <input type="range" id="param-volume" min="0" max="100" value="70">
                             <span id="param-volume-value" class="param-value">70%</span>
                             <span id="param-volume-warning" class="param-warning hidden">⚠️</span>
                         </div>
                         <div class="param-row">
-                            <label>密度</label>
+                            <label for="param-density"></label>
                             <input type="range" id="param-density" min="10" max="500" value="100">
                             <span id="param-density-value" class="param-value">1.0</span>
                             <span id="param-density-warning" class="param-warning hidden">⚠️</span>
@@ -814,7 +847,7 @@ class ExpertSideDrawer {
             // 越界警告：超过 80 显示警告
             const isOverLimit = value > 80;
             if (isOverLimit) {
-                warningEl.textContent = "⚠️ 超出包络，不推荐可部署";
+                warningEl.textContent = this.t('expert.warning.unsafe');
                 warningEl.style.fontSize = "12px";
                 warningEl.style.color = "#EF4444";
                 warningEl.classList.remove('hidden');
