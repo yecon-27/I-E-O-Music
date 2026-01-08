@@ -658,20 +658,11 @@ class GameEngine {
 
         // 重置泡泡并按 lane 生成固定数量
         this.bubbleManager?.clearAllBubbles();
-        // 初始按顺序生成一组 4 个，每个间隔延迟 2000ms，形成明显高度差
-        // 拉大时间间隔，便于玩家学习并遵循
+        // 初始按顺序生成一组 4 个，每个间隔延迟，形成明显高度差
         const initialCount = this.bubbleManager?.targetBubbleCount || 4;
-        const initialInterval = 2000;
-        
         for (let i = 0; i < initialCount; i++) {
-            this.bubbleManager?.scheduleSpawn(null, i * initialInterval);
+            this.bubbleManager?.scheduleSpawn(null, i * 800);
         }
-        
-        // 延后自动生成的开始时间，避免破坏初始的教学序列
-        if (this.bubbleManager) {
-            this.bubbleManager.lastSpawnTime = performance.now() + (initialCount * initialInterval);
-        }
-        
         // 清空点击轨迹
         if (this.clickTrailEl) this.clickTrailEl.innerHTML = '';
 

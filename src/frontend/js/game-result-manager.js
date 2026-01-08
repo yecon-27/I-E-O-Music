@@ -53,34 +53,50 @@ class GameResultManager {
     const finishGameBtn = document.getElementById("finish-game-btn");
     const playMusicBtn = document.getElementById("play-music-btn");
     const postSessionBtn = document.getElementById("post-session-btn");
-    const reportPanel = document.getElementById("report-panel");
-    const reportPanelClose = document.getElementById("report-panel-close");
+    const normalView = document.getElementById("normal-result-view");
+    const expertView = document.getElementById("expert-result-view");
+    const exitExpertBtn = document.getElementById("exit-expert-btn");
 
     // 更新静态文本 (UI初始化时)
     this.updateStaticUIText();
 
-    // Expert Mode按钮 - 切换report panel显示
-    if (postSessionBtn && reportPanel) {
+    // Expert Mode按钮 - 切换到专家视图
+    console.log("[GameResult] postSessionBtn:", !!postSessionBtn);
+    console.log("[GameResult] normalView:", !!normalView);
+    console.log("[GameResult] expertView:", !!expertView);
+    console.log("[GameResult] exitExpertBtn:", !!exitExpertBtn);
+    
+    if (postSessionBtn) {
       postSessionBtn.addEventListener("click", () => {
-        const isHidden = reportPanel.classList.toggle("hidden");
-        postSessionBtn.classList.toggle("active", !isHidden);
+        console.log("[GameResult] 切换到专家模式");
+        console.log("[GameResult] normalView element:", normalView);
+        console.log("[GameResult] expertView element:", expertView);
+        if (normalView) normalView.classList.add("hidden");
+        if (expertView) expertView.classList.remove("hidden");
+        postSessionBtn.classList.add("active");
         
-        if (!isHidden) {
-          this.updateReportPanel();
-        }
+        // 更新专家视图数据
+        this.updateExpertView();
       });
     }
 
-    // 关闭按钮
-    if (reportPanelClose && reportPanel) {
-      reportPanelClose.addEventListener("click", () => {
-        reportPanel.classList.add("hidden");
+    // 退出专家模式按钮 - 回到普通视图
+    if (exitExpertBtn) {
+      exitExpertBtn.addEventListener("click", () => {
+        console.log("[GameResult] 退出专家模式");
+        if (expertView) expertView.classList.add("hidden");
+        if (normalView) normalView.classList.remove("hidden");
         if (postSessionBtn) postSessionBtn.classList.remove("active");
       });
     }
 
     // 绑定报告面板内的音乐参数控件
     this.bindReportMusicParams();
+
+    // 监听泡泡miss事件（飞出屏幕），重置连击
+    window.addEventListener('bubble:missed', () => {
+      this.resetConsecutive();
+    });
 
     if (playAgainBtn) {
       playAgainBtn.addEventListener("click", () => {
@@ -661,10 +677,65 @@ class GameResultManager {
   }
 
   /**
+   * 更新专家视图数据
+   */
+  updateExpertView() {
+    console.log("[GameResult] updateExpertView 被调用");
+    const session = window.game?.getLastSession?.() || {};
+    const notes = session.notes || [];
+    const stats = this.calculateStats();
+    
+    console.log("[GameResult] session:", session);
+    console.log("[GameResult] notes:", notes);
+    console.log("[GameResult] stats:", stats);
+    
+    // 更新游戏统计
+    const bubblesEl = document.getElementById("expert-bubbles");
+    const speedEl = document.getElementById("expert-speed");
+    const comboEl = document.getElementById("expert-combo");
+    
+    if (bubblesEl) bubblesEl.textContent = stats.bubblesPopped;
+    if (speedEl) speedEl.textContent = stats.avgSpeed + "s";
+    if (comboEl) comboEl.textContent = stats.maxConsecutive;
+    
+    // 行为模式分析
+    const patternTypeEl = document.getElementById("expert-pattern-type");
+    const patternDescEl = document.getElementById("expert-pattern-desc");
+    
+    const pattern = this.analyzePattern(notes);
+    console.log("[GameResult] pattern:", pattern);
+    
+    if (patternTypeEl) {
+      patternTypeEl.innerHTML = `<span class="pattern-icon">${pattern.icon}</span><span class="pattern-name">${pattern.name}</span>`;
+    }
+    if (patternDescEl) patternDescEl.textContent = pattern.description;
+    
+    // 更新模式得分比例
+    if (pattern.scores) {
+      const seqBar = document.getElementById("expert-score-seq");
+      const repBar = document.getElementById("expert-score-rep");
+      const expBar = document.getElementById("expert-score-exp");
+      const seqVal = document.getElementById("expert-score-seq-val");
+      const repVal = document.getElementById("expert-score-rep-val");
+      const expVal = document.getElementById("expert-score-exp-val");
+      
+      if (seqBar) seqBar.style.width = pattern.scores.sequential + "%";
+      if (repBar) repBar.style.width = pattern.scores.repetitive + "%";
+      if (expBar) expBar.style.width = pattern.scores.exploratory + "%";
+      if (seqVal) seqVal.textContent = pattern.scores.sequential + "%";
+      if (repVal) repVal.textContent = pattern.scores.repetitive + "%";
+      if (expVal) expVal.textContent = pattern.scores.exploratory + "%";
+    }
+    
+    // 更新时间轴散点图
+    this.updateTimelineScatter(notes, session.durationSec || 60, "expert-timeline-scatter");
+  }
+
+  /**
    * 更新时间轴散点图
    */
-  updateTimelineScatter(notes, durationSec) {
-    const scatterEl = document.getElementById("report-timeline-scatter");
+  updateTimelineScatter(notes, durationSec, containerId = "report-timeline-scatter") {
+    const scatterEl = document.getElementById(containerId);
     if (!scatterEl) return;
     
     const laneColors = {

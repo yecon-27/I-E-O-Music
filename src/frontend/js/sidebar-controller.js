@@ -48,8 +48,7 @@
                 sidebar: document.getElementById('game-sidebar'),
                 toggleBtn: document.getElementById('sidebar-toggle-btn'),
                 rtClicks: document.getElementById('rt-clicks'),
-                rtAccuracy: document.getElementById('rt-accuracy'),
-                rtBpm: document.getElementById('rt-bpm'),
+                // rtAccuracy & rtBpm removed
                 rtDominant: document.getElementById('rt-dominant'),
                 rtLaneBars: document.getElementById('rt-lane-bars'),
                 rtPattern: document.getElementById('rt-pattern'),
@@ -148,21 +147,7 @@
                 this.elements.rtClicks.textContent = this.successfulClicks;
             }
 
-            // 命中率 = 成功命中 / 总尝试
-            if (this.elements.rtAccuracy) {
-                if (this.totalAttempts > 0) {
-                    const accuracy = Math.round((this.successfulClicks / this.totalAttempts) * 100);
-                    this.elements.rtAccuracy.textContent = accuracy + '%';
-                } else {
-                    this.elements.rtAccuracy.textContent = '-';
-                }
-            }
-
-            // BPM 估算
-            if (this.elements.rtBpm) {
-                const bpm = this.estimateBPM();
-                this.elements.rtBpm.textContent = bpm > 0 ? Math.round(bpm) : '-';
-            }
+            // Accuracy and BPM display removed as requested
 
             // 主导 Lane
             if (this.elements.rtDominant) {

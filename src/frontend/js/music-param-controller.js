@@ -181,11 +181,6 @@ class MusicParamController {
         if (previewBtn) {
             previewBtn.addEventListener('click', () => {
                 this.previewMusic();
-                // 显示暂停按钮
-                if (stopBtn) {
-                    stopBtn.classList.remove('hidden');
-                    previewBtn.classList.add('hidden');
-                }
             });
         }
         
@@ -193,11 +188,6 @@ class MusicParamController {
         if (stopBtn) {
             stopBtn.addEventListener('click', () => {
                 this.stopMusic();
-                // 显示预览按钮
-                stopBtn.classList.add('hidden');
-                if (previewBtn) {
-                    previewBtn.classList.remove('hidden');
-                }
             });
         }
         
@@ -430,24 +420,29 @@ class MusicParamController {
      * 提交收敛后的参数到数据库
      */
     async submitConvergedParams() {
-        this.convergedParams = { ...this.currentParams, timestamp: Date.now() };
+        // 收集上下界参数
+        const tempoMin = parseInt(document.getElementById('converge-tempo-min')?.value) || 60;
+        const tempoMax = parseInt(document.getElementById('converge-tempo-max')?.value) || 80;
+        const contrastMin = parseInt(document.getElementById('converge-contrast-min')?.value) || 0;
+        const contrastMax = parseInt(document.getElementById('converge-contrast-max')?.value) || 20;
+        const volumeMin = parseInt(document.getElementById('converge-volume-min')?.value) || 60;
+        const volumeMax = parseInt(document.getElementById('converge-volume-max')?.value) || 80;
+        
+        // 收集安全和声选项
+        const harmonySelect = document.getElementById('converge-harmony-select');
+        const safeHarmonies = harmonySelect 
+            ? Array.from(harmonySelect.selectedOptions).map(opt => opt.value)
+            : ['I-V'];
+        
+        this.convergedParams = {
+            tempo: { min: tempoMin, max: tempoMax },
+            contrast: { min: contrastMin, max: contrastMax },
+            volume: { min: volumeMin, max: volumeMax },
+            safeHarmonies,
+            timestamp: Date.now()
+        };
         
         console.log('[MusicParamController] 提交收敛参数:', this.convergedParams);
-        
-        // 检查是否有任何参数超出安全区间
-        const warnings = [];
-        if (this.isOutOfSafeRange('tempo', this.currentParams.tempo)) {
-            warnings.push(`BPM (${this.currentParams.tempo}) 超出安全区间 60-80`);
-        }
-        if (this.isOutOfSafeRange('contrast', this.currentParams.contrast)) {
-            warnings.push(`动态对比度 (${this.currentParams.contrast}%) 超出安全区间 0-20%`);
-        }
-        if (this.isOutOfSafeRange('volume', this.currentParams.volume)) {
-            warnings.push(`音量 (${this.currentParams.volume}%) 超出安全区间 60-80%`);
-        }
-        if (!this.safeHarmony.includes(this.currentParams.harmony)) {
-            warnings.push(`和声 (${this.currentParams.harmony}) 不在安全选项内`);
-        }
         
         // 显示提交结果
         const submitBtn = document.getElementById('param-submit-btn');
@@ -473,7 +468,7 @@ class MusicParamController {
             }
             
             // 触发回调
-            this.onSubmit?.({ params: this.convergedParams, warnings });
+            this.onSubmit?.({ params: this.convergedParams });
             
             // 3秒后恢复按钮
             setTimeout(() => {

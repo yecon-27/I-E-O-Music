@@ -250,6 +250,8 @@ class BubbleManager {
         this.bubbles.forEach(bubble => {
             const shouldRemove = bubble.y <= -bubble.radius - 10;
             if (shouldRemove) {
+                // 泡泡飞出屏幕 = miss，触发连击重置事件
+                window.dispatchEvent(new CustomEvent('bubble:missed', { detail: bubble }));
                 this.respawnSameLane(bubble);
             } else {
                 remaining.push(bubble);

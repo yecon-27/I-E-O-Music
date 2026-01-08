@@ -41,13 +41,13 @@
 .music-params-grid {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: var(--space-sm);
 }
 
 .param-item {
     background: #fff;
     border-radius: var(--radius-md);
-    padding: var(--space-md);
+    padding: 12px var(--space-md);
     border: 1px solid var(--border-light);
 }
 
@@ -300,7 +300,286 @@
     color: #fff !important;
 }
 
-/* ===== 收敛提交区域 ===== */
+/* ===== 专家模式视图 (稍小于全屏) ===== */
+.expert-view {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+    background: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.expert-view.hidden {
+    display: none !important;
+}
+
+/* 普通结果视图隐藏 */
+#normal-result-view.hidden {
+    display: none !important;
+}
+
+.expert-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: #fff;
+    border-bottom: 1px solid var(--border-light);
+    flex-shrink: 0;
+}
+
+.expert-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.expert-title svg {
+    color: var(--accent-primary);
+}
+
+.expert-exit-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.expert-exit-btn:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.expert-content {
+    display: flex;
+    flex: 1;
+    gap: 20px;
+    padding: 20px;
+    overflow: hidden;
+}
+
+.expert-panel {
+    flex: 1;
+    background: #fff;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.expert-panel-title {
+    margin: 0 0 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.expert-section {
+    margin-bottom: 20px;
+}
+
+.expert-section:last-child {
+    margin-bottom: 0;
+}
+
+.expert-section h4 {
+    margin: 0 0 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* 游戏统计一行显示 */
+.expert-stats-inline {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 0 !important;
+}
+
+.expert-stats-inline h4 {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.stats-inline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.stats-inline strong {
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+.stats-divider {
+    color: var(--border-medium);
+}
+
+.expert-pattern {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 16px;
+}
+
+.expert-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.expert-stat-item {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    text-align: center;
+}
+
+.expert-stat-label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    margin-bottom: 4px;
+}
+
+.expert-stat-value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+}
+
+/* 时间轴散点图 */
+.timeline-scatter {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 12px;
+}
+
+.scatter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.scatter-row:last-child {
+    margin-bottom: 0;
+}
+
+.scatter-label {
+    width: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.scatter-track {
+    flex: 1;
+    height: 16px;
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.scatter-dot {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.scatter-dot.highlight {
+    width: 10px;
+    height: 10px;
+    box-shadow: 0 0 4px currentColor;
+}
+
+/* 模式得分 */
+.pattern-scores {
+    margin-top: 12px;
+}
+
+.score-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.score-item:last-child {
+    margin-bottom: 0;
+}
+
+.score-label {
+    min-width: 80px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.score-bar-bg {
+    flex: 1;
+    height: 8px;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.score-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.score-bar-fill.seq { background: #60A5FA; }
+.score-bar-fill.rep { background: #F59E0B; }
+.score-bar-fill.exp { background: #10B981; }
+
+.score-value {
+    min-width: 36px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: right;
+}
+
+/* 响应式 */
+@media (max-width: 900px) {
+    .expert-content {
+        flex-direction: column;
+    }
+    
+    .expert-stats {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
 .converge-submit-area {
     margin-top: var(--space-md);
     padding: var(--space-md);
@@ -311,6 +590,82 @@
 
 .converge-submit-area.hidden {
     display: none;
+}
+
+.converge-title {
+    margin: 0 0 var(--space-md);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.converge-range-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+}
+
+.converge-range-item {
+    background: #fff;
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    border: 1px solid var(--border-light);
+}
+
+.converge-range-item label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.range-inputs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.range-input {
+    width: 60px;
+    padding: 6px 8px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    text-align: center;
+    color: var(--text-primary);
+}
+
+.range-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+
+.range-separator {
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
+
+.range-unit {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.converge-harmony-select select {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    min-height: 60px;
+}
+
+.converge-actions {
+    margin-top: var(--space-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
 }
 
 .converge-row {
@@ -474,4 +829,30 @@
         flex-direction: column;
         gap: var(--space-xs);
     }
+}
+
+
+/* ===== 普通结果视图 - 一行统计样式 ===== */
+.result-stats-inline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.result-stats-inline strong {
+    color: var(--accent-primary);
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.result-stats-inline .stats-divider {
+    color: var(--border-medium);
+    font-weight: 300;
 }
