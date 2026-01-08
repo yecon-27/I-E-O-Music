@@ -68,11 +68,21 @@ class GameEngine {
         this.sessionConfig = { ...this.sessionConfig, ...cfg };
         // 兼容通过全局配置的用法
         window.sessionConfig = this.sessionConfig;
+        
+        // 应用音量设置
         const vol = this.sessionConfig.volumeLevel;
         const gain =
             vol === 'low' ? 0.4 :
             vol === 'high' ? 1.0 : 0.7;
         window.popSynth?.setVolume?.(gain);
+        
+        // 应用音色设置
+        const timbre = this.sessionConfig.timbre || 'soft';
+        window.popSynth?.setTimbre?.(timbre);
+        
+        // 应用泡泡密度设置
+        const density = this.sessionConfig.rhythmDensity || 'normal';
+        this.bubbleManager?.setDensity?.(density);
     }
     
     /**
@@ -201,20 +211,62 @@ class GameEngine {
             gameMain.appendChild(this.clickTrailEl);
         }
         if (!this.laneLabelsEl || !window.BUBBLE_LANES) return;
+        
         const lanes = window.BUBBLE_LANES;
-        const laneWidth = this.canvas.width / (lanes.length + 1);
         this.laneLabelsEl.innerHTML = '';
-        lanes.forEach((lane, idx) => {
+        this.laneLabelElements = {}; // Store references
+        
+        // Calculate lane width percentage to match BubbleManager logic
+        // x = laneWidth * (laneIndex + 1)
+        // laneWidth = canvasWidth / (lanes.length + 1)
+        const totalSlots = lanes.length + 1;
+
+        lanes.forEach((lane, index) => {
             const div = document.createElement('div');
             div.className = 'lane-label';
-            div.textContent = lane.note.name[0];
-            div.style.background = lane.color;
-            div.style.left = `${laneWidth * (idx + 1)}px`;
-            div.style.transform = 'translateX(-50%)';
+            div.textContent = lane.note.name[0]; // e.g., 'C', 'D'
+            
+            // Position using percentage to match canvas coordinates
+            const leftPercent = ((index + 1) / totalSlots) * 100;
+            div.style.left = `${leftPercent}%`;
+            
+            // Store original color for active state
+            div.dataset.color = lane.color;
+            
             this.laneLabelsEl.appendChild(div);
+            this.laneLabelElements[lane.id] = div;
         });
-        // 初始化点击轨迹为空
-        if (this.clickTrailEl) this.clickTrailEl.innerHTML = '<span class="trail-title">轨迹</span>';
+
+        // Initialize click trail empty
+        if (this.clickTrailEl) this.clickTrailEl.innerHTML = '';
+    }
+
+    /**
+     * Update lane label highlights based on active bubbles
+     */
+    updateLaneHighlights() {
+        if (!this.bubbleManager || !this.laneLabelElements) return;
+        
+        const bubbles = this.bubbleManager.getBubbles();
+        const activeLanes = new Set();
+        
+        // Mark lanes as active if they have any bubble (active or popping)
+        bubbles.forEach(b => activeLanes.add(b.laneId));
+        
+        Object.entries(this.laneLabelElements).forEach(([laneId, el]) => {
+            const isActive = activeLanes.has(parseInt(laneId));
+            if (isActive) {
+                if (!el.classList.contains('active')) {
+                    el.classList.add('active');
+                    el.style.color = el.dataset.color; // Highlight text with lane color
+                }
+            } else {
+                if (el.classList.contains('active')) {
+                    el.classList.remove('active');
+                    el.style.color = ''; // Revert to CSS default
+                }
+            }
+        });
     }
     
     /**
@@ -357,6 +409,9 @@ class GameEngine {
         
         // Render game objects here (will be expanded in later tasks)
         this.renderGameObjects();
+
+        // Update lane indicators
+        this.updateLaneHighlights();
         
         // Draw debug info if needed
         if (this.isPaused) {

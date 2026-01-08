@@ -53,6 +53,26 @@ class BubbleManager {
         this.patternIndex = 0;
         this.initPredictablePattern();
     }
+
+    /**
+     * 设置泡泡密度 (rhythmDensity)
+     * @param {'sparse' | 'normal'} density
+     */
+    setDensity(density) {
+        if (density === 'sparse') {
+            this.minOnScreen = 2;
+            this.maxOnScreen = 3;
+            this.targetBubbleCount = 2;
+            this.baseSpawnInterval = 3000; // 更长的生成间隔
+            console.log('🫧 泡泡密度: 稀疏 (2个)');
+        } else {
+            this.minOnScreen = 3;
+            this.maxOnScreen = 4;
+            this.targetBubbleCount = 4;
+            this.baseSpawnInterval = 2000;
+            console.log('🫧 泡泡密度: 正常 (4个)');
+        }
+    }
     
     /**
      * 初始化可预测的泡泡出现模式

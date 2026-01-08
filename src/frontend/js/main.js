@@ -248,20 +248,38 @@ function updateUIText() {
     if(elements.sessionStartBtn) elements.sessionStartBtn.textContent = game?.roundActive ? t('save-settings-btn') : t('start-round-btn');
     if(elements.sessionCloseBtn) elements.sessionCloseBtn.textContent = t('btn-close');
 
-    // Options (Update select options text)
+    // Options (Update select options text) - 只更新界面上存在的设置项
     updateSelectOptions('session-volume', ['opt-low', 'opt-medium', 'opt-high']);
-    updateSelectOptions('session-density', ['opt-sparse', 'opt-normal']);
     updateSelectOptions('session-timbre', ['opt-soft', 'opt-bright']);
     updateSelectOptions('session-latency', ['opt-immediate', 'opt-delay']);
-    updateSelectOptions('session-immediate', ['opt-full', 'opt-visual', 'opt-off']);
-    updateSelectOptions('session-reward', ['opt-on', 'opt-off']);
+    updateSelectOptions('session-immediate', ['opt-on', 'opt-off']);
 }
 
 function updateSelectOptions(id, keys) {
-    const select = document.getElementById(id);
-    if(!select) return;
-    for(let i=0; i<select.options.length && i<keys.length; i++) {
-        select.options[i].text = t(keys[i]);
+    const element = document.getElementById(id);
+    if(!element) return;
+    
+    // Check if it's a SELECT element (Old UI)
+    if (element.tagName === 'SELECT') {
+        for(let i=0; i<element.options.length && i<keys.length; i++) {
+            element.options[i].text = t(keys[i]);
+        }
+    } 
+    // Otherwise check if there is a corresponding segmented control (New UI)
+    else {
+        const control = document.querySelector(`.segmented-control[data-field="${id}"]`);
+        if (control) {
+            const segments = control.querySelectorAll('.segment');
+            for(let i=0; i<segments.length && i<keys.length; i++) {
+                // Find the span inside the button to update text
+                const span = segments[i].querySelector('span');
+                if (span) {
+                    span.textContent = t(keys[i]);
+                }
+                // Update title attribute for tooltip
+                segments[i].title = t(keys[i]);
+            }
+        }
     }
 }
 
@@ -331,6 +349,9 @@ function initializeUIElements() {
     syncSessionElements();
     refreshPanicButtons();
     
+    // 初始化分段选择器
+    initSegmentedControls();
+    
     // Verify all elements were found
     const missingElements = Object.entries(elements)
         .filter(([key, element]) => !element)
@@ -364,14 +385,14 @@ function ensureSessionSettingsUI() {
         const btn = document.createElement('button');
         btn.id = 'session-settings-btn';
         btn.className = 'control-btn';
-        btn.textContent = '⚙️ 参数';
+        btn.innerHTML = t('settings-btn');
         controls.insertBefore(btn, controls.querySelector('.speed-controls') || null);
     }
     if (controls && !document.getElementById('panic-mute-btn')) {
         const btn = document.createElement('button');
         btn.id = 'panic-mute-btn';
         btn.className = 'control-btn panic-btn';
-        btn.textContent = '🔇 停止/静音';
+        btn.innerHTML = t('panic-btn-unmuted');
         controls.insertBefore(btn, controls.querySelector('.speed-controls') || null);
     }
     if (controls && !document.getElementById('session-preset')) {
@@ -781,9 +802,60 @@ function updateSessionPresetLabel(config) {
     elements.sessionPreset.textContent = `Preset: ${config.volumeLevel} / ${config.rhythmDensity} / ${config.timbre}`;
 }
 
+// 初始化分段选择器
+function initSegmentedControls() {
+    const controls = document.querySelectorAll('.segmented-control');
+    controls.forEach(control => {
+        const fieldId = control.dataset.field;
+        const hiddenInput = document.getElementById(fieldId);
+        const segments = control.querySelectorAll('.segment');
+        
+        segments.forEach(segment => {
+            segment.addEventListener('click', () => {
+                // 移除所有active状态
+                segments.forEach(s => s.classList.remove('active'));
+                // 添加当前active状态
+                segment.classList.add('active');
+                // 更新隐藏input的值
+                if (hiddenInput) {
+                    hiddenInput.value = segment.dataset.value;
+                }
+            });
+        });
+    });
+}
+
+// 更新分段选择器的选中状态
+function updateSegmentedControl(fieldId, value) {
+    const control = document.querySelector(`.segmented-control[data-field="${fieldId}"]`);
+    if (!control) return;
+    
+    const segments = control.querySelectorAll('.segment');
+    segments.forEach(segment => {
+        if (segment.dataset.value === String(value)) {
+            segment.classList.add('active');
+        } else {
+            segment.classList.remove('active');
+        }
+    });
+    
+    const hiddenInput = document.getElementById(fieldId);
+    if (hiddenInput) {
+        hiddenInput.value = value;
+    }
+}
+
 function loadSessionSettingsForm(config) {
     if (!elements.sessionModal) return;
     const normalized = normalizeSessionConfig(config);
+    
+    // 更新分段选择器（只更新界面上存在的设置项）
+    updateSegmentedControl('session-volume', normalized.volumeLevel || 'medium');
+    updateSegmentedControl('session-timbre', normalized.timbre || 'soft');
+    updateSegmentedControl('session-latency', String(normalized.feedbackLatencyMs ?? 0));
+    updateSegmentedControl('session-immediate', normalized.immediateToneMode || 'full');
+    
+    // 同时更新隐藏的input值（兼容旧代码）
     if(elements.sessionVolume) elements.sessionVolume.value = normalized.volumeLevel || 'medium';
     if(elements.sessionDensity) elements.sessionDensity.value = normalized.rhythmDensity || 'normal';
     if(elements.sessionTimbre) elements.sessionTimbre.value = normalized.timbre || 'soft';

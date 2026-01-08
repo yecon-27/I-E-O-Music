@@ -10,23 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
     <style>
-      .lane-labels {
-        position: absolute;
-        left: 0;
-        bottom: 8px;
-        width: 100%;
-        pointer-events: none;
-        z-index: 5;
-      }
-      .lane-labels .lane-label {
-        position: absolute;
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-weight: 700;
-        font-size: 14px;
-        color: #ffffff;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-      }
       .click-trail {
         position: absolute;
         top: 8px;
@@ -39,9 +22,8 @@
         pointer-events: none;
         font-size: 12px;
         font-weight: 700;
-        background: rgba(0,0,0,0.12);
-        border-radius: 14px;
-        z-index: 6;
+        /* click-trail 已禁用，隐藏容器 */
+        display: none;
       }
       .click-trail .trail-dot {
         min-width: 18px;
@@ -57,7 +39,7 @@
         color: #fff;
         opacity: 0.8;
       }
-      .game-main { position: relative; }
+      .game-main { position: relative; overflow: visible; }
     </style>
 </head>
 <body>
@@ -65,8 +47,13 @@
 
     <div class="game-container">
         <div class="game-header">
-            <!-- Left: Settings & Language -->
+            <!-- Left: Mute (Panic) & Settings -->
             <div class="header-section header-left">
+                <button id="panic-mute-btn" class="control-btn panic-btn hero-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+                    <span style="margin-left:6px">静音</span>
+                </button>
+                <div class="divider-vertical"></div>
                 <button id="session-settings-btn" class="control-btn secondary-btn">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> 
                     <span style="margin-left:6px">参数</span>
@@ -93,18 +80,8 @@
                 </div>
             </div>
 
-            <!-- Right: Controls -->
+            <!-- Right: Speed & Pause -->
             <div class="header-section header-right">
-                <div class="play-controls">
-                    <button id="pause-btn" class="control-btn primary-btn">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-                        <span style="margin-left:6px">暂停</span>
-                    </button>
-                    <button id="panic-mute-btn" class="control-btn panic-btn">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
-                        <span style="margin-left:6px">静音</span>
-                    </button>
-                </div>
                 <div class="speed-controls">
                     <button id="slow-btn" class="speed-btn" title="慢速">
                         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></svg>
@@ -119,29 +96,21 @@
                         <span class="speed-label">快速</span>
                     </button>
                 </div>
+                <div class="divider-vertical"></div>
+                <button id="pause-btn" class="control-btn primary-btn hero-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                    <span style="margin-left:6px">暂停</span>
+                </button>
+                <!-- Hidden/Legacy containers to keep JS happy -->
+                <div class="play-controls" style="display:none;"></div>
             </div>
             
-            <!-- Hidden/Legacy containers to keep JS happy if needed, though most use IDs -->
             <div class="controls" style="display:none;"></div>
             <div id="session-preset" class="session-preset" style="display:none;"></div>
         </div>
         
         <div class="game-area">
             <div class="game-main">
-                <!-- 大型进度指示器 - 显示在游戏区域底部 -->
-                <div id="game-progress-indicator" class="game-progress-indicator">
-                    <div class="game-progress-bar">
-                        <div id="game-progress-fill" class="game-progress-fill"></div>
-                    </div>
-                    <div class="game-progress-time">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12 6 12 12 16 14"></polyline>
-                        </svg>
-                        <span id="game-countdown-display">60</span>
-                        <span class="game-progress-unit">秒</span>
-                    </div>
-                </div>
                 <canvas id="game-canvas" width="1024" height="768"></canvas>
                 <div id="click-trail" class="click-trail"></div>
                 <div id="lane-labels" class="lane-labels"></div>
@@ -302,7 +271,7 @@
                                     <circle cx="6" cy="18" r="3"></circle>
                                     <circle cx="18" cy="16" r="3"></circle>
                                 </svg>
-                                播放音乐
+                                播放
                             </button>
                             <button id="result-mute-btn" class="result-btn secondary panic-btn">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -318,7 +287,7 @@
                                     <polyline points="1 20 1 14 7 14"></polyline>
                                     <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
                                 </svg>
-                                再玩一轮
+                                重玩
                             </button>
                             <button id="finish-game-btn" class="result-btn secondary">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -368,53 +337,92 @@
             </div>
             
             <div class="settings-scroll-area">
-                <div class="settings-grid">
-                    <div class="settings-field">
-                        <label for="session-volume">音量大小</label>
-                        <select id="session-volume">
-                            <option value="low">柔和 (Low)</option>
-                            <option value="medium" selected>标准 (Medium)</option>
-                            <option value="high">响亮 (High)</option>
-                        </select>
+                <div class="settings-grid-new">
+                    <!-- 音量大小 -->
+                    <div class="settings-field-new">
+                        <label class="settings-label-with-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                            <span>音量</span>
+                        </label>
+                        <div class="segmented-control" data-field="session-volume">
+                            <button type="button" class="segment" data-value="low" title="柔和">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon></svg>
+                                <span>柔和</span>
+                            </button>
+                            <button type="button" class="segment active" data-value="medium" title="标准">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                                <span>标准</span>
+                            </button>
+                            <button type="button" class="segment" data-value="high" title="响亮">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                                <span>响亮</span>
+                            </button>
+                        </div>
+                        <input type="hidden" id="session-volume" value="medium">
                     </div>
-                    <div class="settings-field">
-                        <label for="session-density">泡泡数量</label>
-                        <select id="session-density">
-                            <option value="sparse">少一点 (Sparse)</option>
-                            <option value="normal" selected>正常 (Normal)</option>
-                        </select>
+
+                    <!-- 乐器音色 -->
+                    <div class="settings-field-new">
+                        <label class="settings-label-with-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                            <span>音色</span>
+                        </label>
+                        <div class="segmented-control" data-field="session-timbre">
+                            <button type="button" class="segment active" data-value="soft" title="柔和钢琴">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+                                <span>柔和</span>
+                            </button>
+                            <button type="button" class="segment" data-value="bright" title="明亮小提琴">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                <span>明亮</span>
+                            </button>
+                        </div>
+                        <input type="hidden" id="session-timbre" value="soft">
                     </div>
-                    <div class="settings-field">
-                        <label for="session-timbre">乐器音色</label>
-                        <select id="session-timbre">
-                            <option value="soft" selected>柔和钢琴 (Soft)</option>
-                            <option value="bright">明亮小提琴 (Bright)</option>
-                        </select>
+
+                    <!-- 声音延迟 -->
+                    <div class="settings-field-new">
+                        <label class="settings-label-with-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <span>延迟</span>
+                        </label>
+                        <div class="segmented-control" data-field="session-latency">
+                            <button type="button" class="segment active" data-value="0" title="即时">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                <span>即时</span>
+                            </button>
+                            <button type="button" class="segment" data-value="500" title="稍慢">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                <span>稍慢</span>
+                            </button>
+                        </div>
+                        <input type="hidden" id="session-latency" value="0">
                     </div>
-                    <div class="settings-field">
-                        <label for="session-latency">声音延迟</label>
-                        <select id="session-latency">
-                            <option value="0" selected>即时 (Immediate)</option>
-                            <option value="500">稍慢 (0.5s Delay)</option>
-                        </select>
-                    </div>
-                    <div class="settings-field">
-                        <label for="session-immediate">点击反馈</label>
-                        <select id="session-immediate">
-                            <option value="full" selected>声音+视觉 (Full)</option>
-                            <option value="visual">仅视觉 (Visual-only)</option>
-                            <option value="off">关闭 (Off)</option>
-                        </select>
-                    </div>
-                    <div class="settings-field">
-                        <label for="session-reward">结束音乐</label>
-                        <select id="session-reward">
-                            <option value="on" selected>开启 (On)</option>
-                            <option value="off">关闭 (Off)</option>
-                        </select>
+
+                    <!-- 点击反馈 -->
+                    <div class="settings-field-new">
+                        <label class="settings-label-with-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            <span>反馈音效</span>
+                        </label>
+                        <div class="segmented-control" data-field="session-immediate">
+                            <button type="button" class="segment active" data-value="full" title="开启">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span>开启</span>
+                            </button>
+                            <button type="button" class="segment" data-value="off" title="关闭">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                                <span>关闭</span>
+                            </button>
+                        </div>
+                        <input type="hidden" id="session-immediate" value="full">
                     </div>
                 </div>
             </div>
+
+            <!-- 隐藏的默认值字段 -->
+            <input type="hidden" id="session-density" value="normal">
+            <input type="hidden" id="session-reward" value="on">
 
             <div class="settings-actions">
                 <button id="session-reset-btn" class="result-btn secondary small">恢复默认</button>
