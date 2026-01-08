@@ -691,14 +691,6 @@ class AdvancedMusicGenerator {
     
     const progression = progressions[harmonyType] || progressions['I-V'];
 
-    // 左手风格：不同和弦类型的力度/时值/微小时间偏移
-    const LH_STYLE = {
-      'I':  { rootVel: 0.95, fifthVel: 0.85, release: 0.92, offset: 0.00 },
-      'IV': { rootVel: 0.90, fifthVel: 0.80, release: 0.88, offset: 0.08 },
-      'V':  { rootVel: 1.00, fifthVel: 0.88, release: 0.94, offset: 0.03 },
-      'vi': { rootVel: 1.05, fifthVel: 0.82, release: 0.90, offset: 0.06 },
-    };
-
     for (let b = 0; b < beatsTotal; b += barBeats) {
       const barIndex = Math.floor(b / barBeats);
       const chordType = progression[barIndex % progression.length];
@@ -710,31 +702,22 @@ class AdvancedMusicGenerator {
       const rootMidi = midiFromNoteName(chordRoot);
       const fifthMidi = rootMidi + 7; // 纯五度
       const startTime = b * secondsPerBeat;
-      const barEnd = Math.min((b + barBeats) * secondsPerBeat, beatsTotal * secondsPerBeat);
-      const style = LH_STYLE[chordType] || LH_STYLE['I'];
-      const endTimeRoot = startTime + (barEnd - startTime) * style.release;
-      const startTimeFifth = startTime + style.offset;
-      const endTimeFifth = startTimeFifth + (barEnd - startTimeFifth) * style.release;
+      const endTime = Math.min((b + barBeats) * secondsPerBeat, beatsTotal * secondsPerBeat);
+      const velScale = 0.7; // 约等于主音量的 70%
 
       chordNotes.push({
-        startTime: startTime,
-        endTime: endTimeRoot,
+        startTime,
+        endTime,
         midi: rootMidi,
         name: chordRoot,
-        chordType,
-        isLeftHand: true,
-        isFifth: false,
-        velocityScale: style.rootVel,
+        velocityScale: velScale,
       });
       chordNotes.push({
-        startTime: startTimeFifth,
-        endTime: endTimeFifth,
+        startTime,
+        endTime,
         midi: fifthMidi,
         name: this.getFifthNote(chordType),
-        chordType,
-        isLeftHand: true,
-        isFifth: true,
-        velocityScale: style.fifthVel,
+        velocityScale: velScale,
       });
     }
 
@@ -787,14 +770,11 @@ class AdvancedMusicGenerator {
 
     // 添加和弦/低音层
     chordNotes.forEach((n, idx) => {
-      const scale = typeof n.velocityScale === 'number' ? n.velocityScale : 0.6;
-      const lhBoost = n.isLeftHand ? 1.3 : 1.0;
-      const velocity = velocityFor(baseVelocity * scale * lhBoost, idx);
       notes.push({
         pitch: n.midi,
         startTime: n.startTime,
         endTime: n.endTime,
-        velocity,
+        velocity: velocityFor(baseVelocity * (n.velocityScale || 0.55), idx),
         program: 0,
         isDrum: false,
       });

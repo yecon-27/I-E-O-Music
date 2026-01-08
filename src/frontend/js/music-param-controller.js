@@ -242,7 +242,7 @@ class MusicParamController {
         sliders.forEach(({ id, param, valueId, warningId }) => {
             const slider = document.getElementById(id);
             const valueEl = document.getElementById(valueId);
-            const warningEl = document.getElementById(warningId);
+            let warningEl = document.getElementById(warningId);
             
             if (!slider) {
                 console.warn(`[MusicParamController] 滑动条 ${id} 不存在`);
@@ -442,7 +442,7 @@ class MusicParamController {
         slider.style.setProperty('--safe-end', safeEndPercent + '%');
         slider.style.setProperty('--current', currentPercent + '%');
         
-        // 添加/移除unsafe类（同时标记父容器以强制显示徽章）
+        // 添加/移除unsafe类
         const isUnsafe = this.isOutOfSafeRange(param, value);
         const item = slider.closest('.param-item');
         if (isUnsafe) {

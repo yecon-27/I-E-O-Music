@@ -3944,9 +3944,9 @@ body.high-animation * {
 }
 
 .harmony-btn.safe {
-    background: #E8F5E9;
-    color: #2E7D32;
-    border-color: #A5D6A7;
+    background: #fff;
+    color: var(--text-primary);
+    border-color: var(--border-light);
 }
 
 .harmony-btn.safe:hover {
@@ -3954,25 +3954,9 @@ body.high-animation * {
 }
 
 .harmony-btn.safe.active {
-    background: var(--accent-primary);
-    color: #fff;
-    border-color: var(--accent-primary);
-}
-
-.harmony-btn.unsafe {
-    background: #FFF8E1;
-    color: #F57C00;
-    border-color: #FFCC80;
-}
-
-.harmony-btn.unsafe:hover {
-    background: #FFECB3;
-}
-
-.harmony-btn.unsafe.active {
-    background: var(--accent-primary);
-    color: #fff;
-    border-color: var(--accent-primary);
+    background: #4CAF50;
+    color: white;
+    border-color: #4CAF50;
 }
 
 .harmony-btn.unsafe {
