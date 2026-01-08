@@ -12,6 +12,7 @@ class MusicParamController {
             tempo: { min: 60, max: 80, absMin: 40, absMax: 120, unit: 'BPM' },
             contrast: { min: 0, max: 20, absMin: 0, absMax: 50, unit: '%' },
             volume: { min: 60, max: 80, absMin: 0, absMax: 100, unit: '%' },
+            density: { min: 30, max: 70, absMin: 0, absMax: 100, unit: '%' },
         };
         
         // 安全和声选项
@@ -118,16 +119,16 @@ class MusicParamController {
                 if (warning) warning.textContent = this.t('expert.warning.unsafe');
             }
 
-            // Harmony
-            const harmonyLabel = labels[3];
-            if (harmonyLabel) {
-                const span = harmonyLabel.querySelector('span:first-child');
-                if (span) {
-                    span.innerHTML = `${this.t('expert.harmony')} <span class="param-safe-range">${this.t('expert.safeRange')}I-V</span>`;
-                }
-                const warning = harmonyLabel.querySelector('.param-warning-badge');
-                if (warning) warning.textContent = this.t('expert.warning.unsafe');
-            }
+         // Harmony
+         const harmonyLabel = labels[3];
+         if (harmonyLabel) {
+             const span = harmonyLabel.querySelector('span:first-child');
+             if (span) {
+                 span.textContent = this.t('expert.harmony');
+             }
+             const warning = harmonyLabel.querySelector('.param-warning-badge');
+             if (warning) warning.textContent = this.t('expert.warning.unsafe');
+         }
         }
 
         // Action Buttons
@@ -234,7 +235,8 @@ class MusicParamController {
         const sliders = [
             { id: 'report-param-tempo', param: 'tempo', valueId: 'report-param-tempo-value', warningId: 'tempo-warning' },
             { id: 'report-param-contrast', param: 'contrast', valueId: 'report-param-contrast-value', warningId: 'contrast-warning' },
-            { id: 'report-param-volume', param: 'volume', valueId: 'report-param-volume-value', warningId: 'volume-warning' }
+            { id: 'report-param-volume', param: 'volume', valueId: 'report-param-volume-value', warningId: 'volume-warning' },
+            { id: 'report-param-density', param: 'density', valueId: 'report-param-density-value', warningId: 'density-warning' }
         ];
         
         sliders.forEach(({ id, param, valueId, warningId }) => {

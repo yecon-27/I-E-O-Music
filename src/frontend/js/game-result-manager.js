@@ -56,6 +56,7 @@ class GameResultManager {
     const normalView = document.getElementById("normal-result-view");
     const expertView = document.getElementById("expert-result-view");
     const exitExpertBtn = document.getElementById("exit-expert-btn");
+    const refreshExpertBtn = document.getElementById("refresh-expert-btn");
 
     // 更新静态文本 (UI初始化时)
     this.updateStaticUIText();
@@ -87,6 +88,20 @@ class GameResultManager {
         if (expertView) expertView.classList.add("hidden");
         if (normalView) normalView.classList.remove("hidden");
         if (postSessionBtn) postSessionBtn.classList.remove("active");
+      });
+    }
+    
+    // 刷新专家模式按钮 - 重新渲染专家视图与参数文本
+    if (refreshExpertBtn) {
+      refreshExpertBtn.addEventListener("click", () => {
+        console.log("[GameResult] 刷新专家模式视图");
+        this.updateExpertView();
+        try {
+          window.musicParamController?.updateTexts?.();
+          window.musicParamController?.updateAllSliderStyles?.();
+        } catch (e) {
+          console.warn("[Expert Refresh] 参数面板刷新失败:", e);
+        }
       });
     }
 
@@ -143,6 +158,8 @@ class GameResultManager {
       if (expertTitleSpan) expertTitleSpan.textContent = this.t('ui.expertMode');
       const exitExpertBtn = document.getElementById('exit-expert-btn');
       if (exitExpertBtn) this.updateWithIcon(exitExpertBtn, this.t('expert.exit'));
+      const refreshExpertBtn = document.getElementById('refresh-expert-btn');
+      if (refreshExpertBtn) this.updateWithIcon(refreshExpertBtn, this.t('expert.refresh'));
       
       const statLabels = document.querySelectorAll('.stat-label');
       if(statLabels.length >= 3) {

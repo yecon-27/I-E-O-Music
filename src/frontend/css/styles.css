@@ -3726,6 +3726,91 @@ body.high-animation * {
     z-index: 100;
 }
 
+.bubble-tooltip-trigger {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: help;
+}
+
+.bubble-tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.bubble-tooltip .bubble-tooltip-content {
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 10px);
+    transform: translateY(-50%);
+    background: #1f2937;
+    color: #fff;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    min-width: 220px;
+    max-width: 320px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    display: none;
+    z-index: 1200;
+}
+
+.bubble-tooltip-right .bubble-tooltip-content {
+    left: auto;
+    right: calc(100% + 10px);
+    transform: translateY(-50%);
+}
+
+.bubble-tooltip .bubble-tooltip-content::after {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 8px solid transparent;
+    border-right-color: #1f2937;
+}
+
+.bubble-tooltip-right .bubble-tooltip-content::after {
+    left: auto;
+    right: -8px;
+    border-right-color: transparent;
+    border-left-color: #1f2937;
+}
+
+.bubble-tooltip-trigger:hover .bubble-tooltip .bubble-tooltip-content,
+.bubble-tooltip-trigger:focus-within .bubble-tooltip .bubble-tooltip-content {
+    display: block;
+}
+
+.tooltip-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px dashed rgba(255,255,255,0.12);
+}
+
+.tooltip-row:last-child {
+    border-bottom: none;
+}
+
+.tooltip-label {
+    color: rgba(255,255,255,0.8);
+    font-weight: 600;
+    font-size: 0.8rem;
+}
+
+.tooltip-threshold {
+    color: #e5e7eb;
+    font-weight: 500;
+    font-size: 0.8rem;
+    text-align: right;
+}
+
 
 /* ========== 音乐参数调整 - Report Panel 内嵌 ========== */
 .music-params-grid {
@@ -3828,6 +3913,19 @@ body.high-animation * {
     margin-top: 4px;
 }
 
+.param-warning-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #D97706;
+    background: #FEF3C7;
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid #FCD34D;
+}
+
 /* 和声选项按钮 */
 .harmony-options {
     display: flex;
@@ -3846,9 +3944,9 @@ body.high-animation * {
 }
 
 .harmony-btn.safe {
-    background: #E8F5E9;
-    color: #2E7D32;
-    border-color: #A5D6A7;
+    background: #fff;
+    color: var(--text-primary);
+    border-color: var(--border-light);
 }
 
 .harmony-btn.safe:hover {
