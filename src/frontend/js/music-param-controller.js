@@ -250,7 +250,16 @@ class MusicParamController {
             }
             
             if (!warningEl) {
-                console.warn(`[MusicParamController] 警告元素 ${warningId} 不存在`);
+                console.warn(`[MusicParamController] 警告元素 ${warningId} 不存在，尝试创建`);
+                const item = slider.closest('.param-item');
+                const labelEl = item?.querySelector('label');
+                if (labelEl) {
+                    warningEl = document.createElement('span');
+                    warningEl.id = warningId;
+                    warningEl.className = 'param-warning-badge hidden';
+                    warningEl.textContent = this.t('expert.warning.unsafe');
+                    labelEl.appendChild(warningEl);
+                }
             }
             
             // 设置滑动条的安全区间数据属性
@@ -433,11 +442,15 @@ class MusicParamController {
         slider.style.setProperty('--safe-end', safeEndPercent + '%');
         slider.style.setProperty('--current', currentPercent + '%');
         
-        // 添加/移除unsafe类
-        if (this.isOutOfSafeRange(param, value)) {
+        // 添加/移除unsafe类（同时标记父容器以强制显示徽章）
+        const isUnsafe = this.isOutOfSafeRange(param, value);
+        const item = slider.closest('.param-item');
+        if (isUnsafe) {
             slider.classList.add('unsafe');
+            if (item) item.classList.add('unsafe');
         } else {
             slider.classList.remove('unsafe');
+            if (item) item.classList.remove('unsafe');
         }
     }
     

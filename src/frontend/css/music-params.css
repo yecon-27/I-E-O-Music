@@ -209,6 +209,11 @@
     display: none;
 }
 
+/* 处于不安全状态时强制显示徽章 */
+.param-item.unsafe .param-warning-badge {
+    display: inline-block !important;
+}
+
 @keyframes badgePulse {
     0% { opacity: 0; transform: scale(0.9); }
     100% { opacity: 1; transform: scale(1); }
@@ -233,14 +238,14 @@
 
 /* 安全选项 - 灰色背景 */
 .harmony-btn.safe {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    border-color: var(--border-light);
+    background: #E8F5E9;
+    color: #2E7D32;
+    border-color: #A5D6A7;
 }
 
 .harmony-btn.safe:hover {
-    background: var(--bg-tertiary);
-    border-color: var(--border-medium);
+    background: #C8E6C9;
+    border-color: #A5D6A7;
 }
 
 .harmony-btn.safe.active {
@@ -251,20 +256,20 @@
 
 /* 非安全选项 - 淡橙色背景 */
 .harmony-btn.unsafe {
-    background: #FED7AA;
-    color: #9A3412;
-    border-color: #FDBA74;
+    background: #FFF8E1;
+    color: #F57C00;
+    border-color: #FFCC80;
 }
 
 .harmony-btn.unsafe:hover {
-    background: #FDBA74;
-    border-color: #FB923C;
+    background: #FFECB3;
+    border-color: #FFCC80;
 }
 
 .harmony-btn.unsafe.active {
-    background: #F97316;
+    background: var(--accent-primary);
     color: #fff;
-    border-color: #EA580C;
+    border-color: var(--accent-primary);
 }
 
 /* ===== 操作按钮 ===== */
