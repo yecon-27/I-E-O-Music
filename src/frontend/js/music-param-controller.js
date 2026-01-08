@@ -53,8 +53,140 @@ class MusicParamController {
         this.bindDawDualSliders();
         this.updateAllSliderStyles();
         
+        // Initial text update
+        this.updateTexts();
+
+        // Subscribe to language changes
+        if (window.i18n) {
+            window.i18n.subscribe(() => {
+                this.updateTexts();
+            });
+        }
+        
         this.initialized = true;
         console.log('[MusicParamController] 初始化完成');
+    }
+
+    t(key) {
+        return window.i18n ? window.i18n.t(key) : key;
+    }
+
+     updateTexts() {
+         // Mode Buttons
+         const testBtn = document.getElementById('param-mode-test');
+         const convergeBtn = document.getElementById('param-mode-converge');
+         if (testBtn) testBtn.textContent = this.t('expert.mode.test');
+         if (convergeBtn) convergeBtn.textContent = this.t('expert.mode.converge');
+ 
+         // Expert Right panel title
+         const rightPanelTitle = document.querySelector('.expert-right .expert-panel-title');
+         if (rightPanelTitle) rightPanelTitle.textContent = window.i18n ? window.i18n.t('report.musicParams') : 'Music Parameters';
+
+        // Labels with Safe Range
+        const labels = document.querySelectorAll('.music-params-grid label');
+        if (labels.length >= 4) {
+            // Tempo
+            const tempoLabel = labels[0];
+            if (tempoLabel) {
+                const span = tempoLabel.querySelector('span:first-child');
+                if (span) {
+                    span.innerHTML = `${this.t('expert.tempo')} <span class="param-safe-range">${this.t('expert.safeRange')}60-80</span>`;
+                }
+                const warning = tempoLabel.querySelector('.param-warning-badge');
+                if (warning) warning.textContent = this.t('expert.warning.unsafe');
+            }
+
+            // Contrast
+            const contrastLabel = labels[1];
+            if (contrastLabel) {
+                const span = contrastLabel.querySelector('span:first-child');
+                if (span) {
+                    span.innerHTML = `${this.t('expert.contrast')} <span class="param-safe-range">${this.t('expert.safeRange')}0-20%</span>`;
+                }
+                const warning = contrastLabel.querySelector('.param-warning-badge');
+                if (warning) warning.textContent = this.t('expert.warning.unsafe');
+            }
+
+            // Volume
+            const volumeLabel = labels[2];
+            if (volumeLabel) {
+                const span = volumeLabel.querySelector('span:first-child');
+                if (span) {
+                    span.innerHTML = `${this.t('expert.volume')} <span class="param-safe-range">${this.t('expert.safeRange')}60-80%</span>`;
+                }
+                const warning = volumeLabel.querySelector('.param-warning-badge');
+                if (warning) warning.textContent = this.t('expert.warning.unsafe');
+            }
+
+            // Harmony
+            const harmonyLabel = labels[3];
+            if (harmonyLabel) {
+                const span = harmonyLabel.querySelector('span:first-child');
+                if (span) {
+                    span.innerHTML = `${this.t('expert.harmony')} <span class="param-safe-range">${this.t('expert.safeRange')}I-V</span>`;
+                }
+                const warning = harmonyLabel.querySelector('.param-warning-badge');
+                if (warning) warning.textContent = this.t('expert.warning.unsafe');
+            }
+        }
+
+        // Action Buttons
+        const previewBtn = document.getElementById('param-preview-btn');
+        if (previewBtn) {
+            const icon = previewBtn.querySelector('svg');
+            previewBtn.innerHTML = '';
+            if (icon) previewBtn.appendChild(icon.cloneNode(true));
+            previewBtn.appendChild(document.createTextNode(' ' + this.t('expert.btn.preview')));
+        }
+
+        const stopBtn = document.getElementById('param-stop-btn');
+        if (stopBtn) {
+            const icon = stopBtn.querySelector('svg');
+            stopBtn.innerHTML = '';
+            if (icon) stopBtn.appendChild(icon.cloneNode(true));
+            stopBtn.appendChild(document.createTextNode(' ' + this.t('expert.btn.stop')));
+        }
+
+        const resetBtn = document.getElementById('param-reset-btn');
+        if (resetBtn) {
+            const icon = resetBtn.querySelector('svg');
+            resetBtn.innerHTML = '';
+            if (icon) resetBtn.appendChild(icon.cloneNode(true));
+            resetBtn.appendChild(document.createTextNode(' ' + this.t('expert.btn.reset')));
+        }
+
+        // Converge Section
+        const convergeTitle = document.querySelector('.converge-title');
+        if (convergeTitle) {
+            const icon = convergeTitle.querySelector('svg');
+            convergeTitle.innerHTML = '';
+            if (icon) convergeTitle.appendChild(icon.cloneNode(true));
+            convergeTitle.appendChild(document.createTextNode(' ' + this.t('expert.setSafeRange')));
+        }
+
+        // Converge Labels
+        const convergeHeaders = document.querySelectorAll('.daw-range-header label');
+        if (convergeHeaders.length >= 4) {
+            convergeHeaders[0].textContent = 'BPM'; // Usually standard
+            convergeHeaders[1].textContent = this.t('expert.contrast').replace('Dynamic ', ''); // Shorten
+            convergeHeaders[2].textContent = this.t('expert.volume');
+            convergeHeaders[3].textContent = this.t('expert.harmony').split(' ')[0]; // Shorten
+        }
+
+        // Save Button (only if not in success/error state)
+        const submitBtn = document.getElementById('param-submit-btn');
+        if (submitBtn && !submitBtn.classList.contains('success') && !submitBtn.classList.contains('error')) {
+            const icon = submitBtn.querySelector('svg');
+            submitBtn.innerHTML = '';
+            if (icon) submitBtn.appendChild(icon.cloneNode(true));
+            submitBtn.appendChild(document.createTextNode('\n                                                    ' + this.t('expert.btn.save') + '\n                                                '));
+        }
+
+        // Submit Note
+        const submitNote = document.querySelector('.submit-note');
+        if (submitNote) {
+            submitNote.textContent = this.t('expert.dbNotConfigured');
+        }
     }
     
     /**
@@ -110,7 +242,14 @@ class MusicParamController {
             const valueEl = document.getElementById(valueId);
             const warningEl = document.getElementById(warningId);
             
-            if (!slider) return;
+            if (!slider) {
+                console.warn(`[MusicParamController] 滑动条 ${id} 不存在`);
+                return;
+            }
+            
+            if (!warningEl) {
+                console.warn(`[MusicParamController] 警告元素 ${warningId} 不存在`);
+            }
             
             // 设置滑动条的安全区间数据属性
             const range = this.safeRanges[param];
@@ -130,6 +269,7 @@ class MusicParamController {
                 
                 // 检查是否超出安全区间
                 const isUnsafe = this.isOutOfSafeRange(param, value);
+                console.log(`[MusicParamController] ${param} = ${value}, 超出安全区间: ${isUnsafe}`);
                 this.updateWarning(warningEl, isUnsafe);
                 this.updateSliderStyle(slider, param, value);
                 
@@ -148,6 +288,7 @@ class MusicParamController {
             const initialValue = parseInt(slider.value);
             const isUnsafe = this.isOutOfSafeRange(param, initialValue);
             this.updateWarning(warningEl, isUnsafe);
+            console.log(`[MusicParamController] 初始化 ${param}: 值=${initialValue}, 超出安全区间=${isUnsafe}, 警告元素存在=${!!warningEl}`);
         });
     }
 
@@ -255,11 +396,17 @@ class MusicParamController {
      * 更新警告显示
      */
     updateWarning(warningEl, show) {
-        if (!warningEl) return;
+        if (!warningEl) {
+            console.warn('[MusicParamController] 警告元素不存在');
+            return;
+        }
         if (show) {
             warningEl.classList.remove('hidden');
+            // 强制显示，使用 cssText 覆盖 !important
+            warningEl.style.cssText = 'display: inline-block !important;';
         } else {
             warningEl.classList.add('hidden');
+            warningEl.style.cssText = '';
         }
     }
     
@@ -428,10 +575,10 @@ class MusicParamController {
             }
         });
         
-        // 隐藏所有警告
+        // 隐藏所有警告（使用 updateWarning 方法确保一致性）
         ['tempo-warning', 'contrast-warning', 'volume-warning', 'harmony-warning'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.classList.add('hidden');
+            this.updateWarning(el, false);
         });
         
         // 更新收敛摘要
@@ -488,7 +635,7 @@ class MusicParamController {
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    已保存（本地）
+                    ${this.t('expert.msg.saved')}
                 `;
                 submitBtn.classList.add('success');
             }
@@ -499,19 +646,33 @@ class MusicParamController {
             // 3秒后恢复按钮
             setTimeout(() => {
                 if (submitBtn) {
-                    submitBtn.innerHTML = originalText;
+                    const icon = submitBtn.querySelector('svg'); // Re-query or reuse? Better to rebuild or use originalText if it was just text.
+                    // But originalText was captured. However, updateTexts might have changed it if language changed.
+                    // Safest is to call updateTexts() or restore a generic state. 
+                    // Let's rely on updateTexts() being called or just restore icon + text.
+                    // Actually originalText might be stale if language changed during the 3s.
+                    // Let's just set the class and let the next updateTexts handle it or manually reset.
                     submitBtn.classList.remove('success');
+                    
+                    // Manually restore to "Save" state
+                    submitBtn.innerHTML = `
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline></svg>
+                        ${this.t('expert.btn.save')}
+                    `;
                 }
             }, 3000);
             
         } catch (error) {
             console.error('[MusicParamController] 提交失败:', error);
             if (submitBtn) {
-                submitBtn.innerHTML = '提交失败';
+                submitBtn.innerHTML = this.t('expert.msg.failed');
                 submitBtn.classList.add('error');
                 setTimeout(() => {
-                    submitBtn.innerHTML = originalText;
                     submitBtn.classList.remove('error');
+                    submitBtn.innerHTML = `
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline></svg>
+                        ${this.t('expert.btn.save')}
+                    `;
                 }, 3000);
             }
         }

@@ -138,6 +138,12 @@ class GameResultManager {
       const expertBtn = document.getElementById('post-session-btn');
       if(expertBtn) this.updateWithIcon(expertBtn, this.t('ui.expertMode'));
       
+      // Expert View header & exit button
+      const expertTitleSpan = document.querySelector('.expert-header .expert-title span');
+      if (expertTitleSpan) expertTitleSpan.textContent = this.t('ui.expertMode');
+      const exitExpertBtn = document.getElementById('exit-expert-btn');
+      if (exitExpertBtn) this.updateWithIcon(exitExpertBtn, this.t('expert.exit'));
+      
       const statLabels = document.querySelectorAll('.stat-label');
       if(statLabels.length >= 3) {
           statLabels[0].textContent = this.t('res.success');
@@ -185,6 +191,55 @@ class GameResultManager {
           reportParamLabels[0].textContent = this.t('expert.tempo');
           reportParamLabels[1].textContent = this.t('expert.volume');
           reportParamLabels[2].textContent = this.t('expert.density');
+      }
+
+      // Expert Left Panel titles
+      const expertLeftTitles = document.querySelectorAll('.expert-left .expert-panel-title');
+      if (expertLeftTitles.length >= 1) {
+          expertLeftTitles[0].textContent = this.t('expert.behavior');
+      }
+      const expertSections = document.querySelectorAll('.expert-left .expert-section h4');
+      if (expertSections.length >= 3) {
+          expertSections[0].textContent = this.t('expert.clickTrail');
+          expertSections[1].textContent = this.t('expert.patternRecognition');
+          expertSections[2].textContent = this.t('expert.gameStats');
+      }
+
+      // Expert score labels
+      const expertScoreLabels = document.querySelectorAll('.expert-left .score-label');
+      if (expertScoreLabels.length >= 3) {
+          this.updateWithIcon(expertScoreLabels[0], this.t('report.score.sequential'));
+          this.updateWithIcon(expertScoreLabels[1], this.t('report.score.repetitive'));
+          this.updateWithIcon(expertScoreLabels[2], this.t('report.score.exploratory'));
+          const tooltips = document.querySelectorAll('.expert-left .score-label .bubble-tooltip .bubble-tooltip-content');
+          if (tooltips.length >= 3) {
+              tooltips[0].textContent = this.t('report.tooltip.sequential');
+              tooltips[1].textContent = this.t('report.tooltip.repetitive');
+              tooltips[2].textContent = this.t('report.tooltip.exploratory');
+          }
+      }
+
+      // Expert inline stats labels and units
+      const statsInline = document.querySelector('.expert-stats-inline .stats-inline');
+      if (statsInline) {
+          const spans = statsInline.querySelectorAll('span:not(.stats-divider)');
+          if (spans.length >= 3) {
+              const bubblesStrong = spans[0].querySelector('strong');
+              const speedStrong = spans[1].querySelector('strong');
+              const comboStrong = spans[2].querySelector('strong');
+              spans[0].textContent = this.t('res.success') + ' ';
+              if (bubblesStrong) spans[0].appendChild(bubblesStrong);
+              const unitBubbles = document.createElement('span');
+              unitBubbles.textContent = ' ' + this.t('res.unitBubbles');
+              spans[0].appendChild(unitBubbles);
+              spans[1].textContent = this.t('res.speed') + ' ';
+              if (speedStrong) spans[1].appendChild(speedStrong);
+              const unitSpeed = document.createElement('span');
+              unitSpeed.textContent = ' ' + this.t('res.unitSpeed');
+              spans[1].appendChild(unitSpeed);
+              spans[2].textContent = this.t('res.combo') + ' ';
+              if (comboStrong) spans[2].appendChild(comboStrong);
+          }
       }
   }
 

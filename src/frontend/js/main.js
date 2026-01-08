@@ -171,9 +171,11 @@ function updateUIText() {
         miniLabels[3].textContent = t('sidebar.dominant');
     }
     
-    // Sidebar Tooltip
-    const patternTooltip = document.querySelector('.sidebar-section .info-icon');
-    if(patternTooltip) patternTooltip.setAttribute('data-tooltip', t('sidebar.tooltip.pattern'));
+    // Sidebar Tooltip (bubble tooltip content within Pattern Predict section)
+    const patternTooltipContent = document.querySelector('.sidebar-section .bubble-tooltip .bubble-tooltip-content');
+    if (patternTooltipContent) {
+        patternTooltipContent.textContent = t('sidebar.tooltip.pattern');
+    }
 
     // 4. Report Panel
     const reportTitle = document.querySelector('.report-panel-header h3');

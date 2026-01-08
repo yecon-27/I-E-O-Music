@@ -253,25 +253,21 @@
                                             <div class="score-item">
                                                 <span class="score-label">
                                                     顺序型
-                                                    <span class="bubble-tooltip-trigger" data-tooltip-id="seq-tooltip">
+                                                    <span class="bubble-tooltip-trigger">
                                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
-                                                    </span>
-                                                    <div class="bubble-tooltip" id="seq-tooltip">
-                                                        <div class="bubble-tooltip-content">
-                                                            <div class="tooltip-row">
-                                                                <span class="tooltip-label">判定条件</span>
-                                                                <span class="tooltip-threshold">顺序命中率 &gt; 40%</span>
-                                                            </div>
-                                                            <div class="tooltip-row">
-                                                                <span class="tooltip-label">且</span>
-                                                                <span class="tooltip-threshold">lane多样性 ≥ 4</span>
-                                                            </div>
-                                                            <div class="tooltip-row tooltip-observed">
-                                                                <span class="tooltip-label">当前值</span>
-                                                                <span class="tooltip-value" id="seq-observed">--</span>
+                                                        <div class="bubble-tooltip">
+                                                            <div class="bubble-tooltip-content">
+                                                                <div class="tooltip-row">
+                                                                    <span class="tooltip-label">判定条件</span>
+                                                                    <span class="tooltip-threshold">顺序命中率 &gt; 40%</span>
+                                                                </div>
+                                                                <div class="tooltip-row">
+                                                                    <span class="tooltip-label">且</span>
+                                                                    <span class="tooltip-threshold">lane多样性 ≥ 4</span>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    </span>
                                                 </span>
                                                 <div class="score-bar-bg"><div class="score-bar-fill seq" id="expert-score-seq"></div></div>
                                                 <span class="score-value" id="expert-score-seq-val">0%</span>
@@ -279,21 +275,17 @@
                                             <div class="score-item">
                                                 <span class="score-label">
                                                     重复型
-                                                    <span class="bubble-tooltip-trigger" data-tooltip-id="rep-tooltip">
+                                                    <span class="bubble-tooltip-trigger">
                                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
-                                                    </span>
-                                                    <div class="bubble-tooltip" id="rep-tooltip">
-                                                        <div class="bubble-tooltip-content">
-                                                            <div class="tooltip-row">
-                                                                <span class="tooltip-label">判定条件</span>
-                                                                <span class="tooltip-threshold">主导lane占比 &gt; 60%</span>
-                                                            </div>
-                                                            <div class="tooltip-row tooltip-observed">
-                                                                <span class="tooltip-label">当前值</span>
-                                                                <span class="tooltip-value" id="rep-observed">--</span>
+                                                        <div class="bubble-tooltip">
+                                                            <div class="bubble-tooltip-content">
+                                                                <div class="tooltip-row">
+                                                                    <span class="tooltip-label">判定条件</span>
+                                                                    <span class="tooltip-threshold">主导lane占比 &gt; 60%</span>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    </span>
                                                 </span>
                                                 <div class="score-bar-bg"><div class="score-bar-fill rep" id="expert-score-rep"></div></div>
                                                 <span class="score-value" id="expert-score-rep-val">0%</span>
@@ -301,25 +293,21 @@
                                             <div class="score-item">
                                                 <span class="score-label">
                                                     探索型
-                                                    <span class="bubble-tooltip-trigger" data-tooltip-id="exp-tooltip">
+                                                    <span class="bubble-tooltip-trigger">
                                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
-                                                    </span>
-                                                    <div class="bubble-tooltip" id="exp-tooltip">
-                                                        <div class="bubble-tooltip-content">
-                                                            <div class="tooltip-row">
-                                                                <span class="tooltip-label">判定条件</span>
-                                                                <span class="tooltip-threshold">lane多样性 ≥ 4</span>
-                                                            </div>
-                                                            <div class="tooltip-row">
-                                                                <span class="tooltip-label">且</span>
-                                                                <span class="tooltip-threshold">主导lane ≤ 60%</span>
-                                                            </div>
-                                                            <div class="tooltip-row tooltip-observed">
-                                                                <span class="tooltip-label">当前值</span>
-                                                                <span class="tooltip-value" id="exp-observed">--</span>
+                                                        <div class="bubble-tooltip">
+                                                            <div class="bubble-tooltip-content">
+                                                                <div class="tooltip-row">
+                                                                    <span class="tooltip-label">判定条件</span>
+                                                                    <span class="tooltip-threshold">lane多样性 ≥ 4</span>
+                                                                </div>
+                                                                <div class="tooltip-row">
+                                                                    <span class="tooltip-label">且</span>
+                                                                    <span class="tooltip-threshold">主导lane ≤ 60%</span>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    </span>
                                                 </span>
                                                 <div class="score-bar-bg"><div class="score-bar-fill exp" id="expert-score-exp"></div></div>
                                                 <span class="score-value" id="expert-score-exp-val">0%</span>
@@ -387,7 +375,7 @@
                                     
                                     <div class="param-item">
                                         <label>
-                                            <span>和声组合 <span class="param-safe-range">安全: I-V</span></span>
+                                            <span>和声组合</span>
                                             <span id="harmony-warning" class="param-warning-badge hidden">可能有感官过载风险</span>
                                         </label>
                                         <div class="harmony-options" id="harmony-options">
@@ -594,8 +582,24 @@
                     <h4 class="section-title">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
                         模式预测
-                        <span class="sidebar-info-trigger" id="pattern-info-trigger">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                        <span class="bubble-tooltip-trigger">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+                            <div class="bubble-tooltip bubble-tooltip-right">
+                                <div class="bubble-tooltip-content">
+                                    <div class="tooltip-row">
+                                        <span class="tooltip-label">顺序型</span>
+                                        <span class="tooltip-threshold">命中率 &gt; 40% 且 lane ≥ 4</span>
+                                    </div>
+                                    <div class="tooltip-row">
+                                        <span class="tooltip-label">重复型</span>
+                                        <span class="tooltip-threshold">主导lane &gt; 60%</span>
+                                    </div>
+                                    <div class="tooltip-row">
+                                        <span class="tooltip-label">探索型</span>
+                                        <span class="tooltip-threshold">lane ≥ 4 且 主导 ≤ 60%</span>
+                                    </div>
+                                </div>
+                            </div>
                         </span>
                     </h4>
                     <div id="rt-pattern" class="rt-pattern">
@@ -775,44 +779,5 @@
 
     <!-- 入口保持 module -->
     <script type="module" src="./js/main.js"></script>
-    
-    <!-- Portal Tooltip 弹窗 -->
-    <div id="sidebar-tooltip-portal" class="sidebar-tooltip-portal hidden">
-        <div class="sidebar-tooltip-content">
-            <div class="tooltip-rule-item">
-                <span class="tooltip-rule-label">顺序型</span>
-                <span class="tooltip-rule-value">顺序命中率 &gt; 40% 且 lane ≥ 4</span>
-            </div>
-            <div class="tooltip-rule-item">
-                <span class="tooltip-rule-label">重复型</span>
-                <span class="tooltip-rule-value">主导lane占比 &gt; 60%</span>
-            </div>
-            <div class="tooltip-rule-item">
-                <span class="tooltip-rule-label">探索型</span>
-                <span class="tooltip-rule-value">lane ≥ 4 且 主导 ≤ 60%</span>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-    // Portal Tooltip 控制
-    (function() {
-        const trigger = document.getElementById('pattern-info-trigger');
-        const portal = document.getElementById('sidebar-tooltip-portal');
-        
-        if (!trigger || !portal) return;
-        
-        trigger.addEventListener('mouseenter', function(e) {
-            const rect = trigger.getBoundingClientRect();
-            portal.style.top = (rect.bottom + 8) + 'px';
-            portal.style.left = (rect.left - 100) + 'px';
-            portal.classList.remove('hidden');
-        });
-        
-        trigger.addEventListener('mouseleave', function() {
-            portal.classList.add('hidden');
-        });
-    })();
-    </script>
 </body>
 </html>

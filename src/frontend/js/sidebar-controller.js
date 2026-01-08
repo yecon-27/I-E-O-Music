@@ -33,10 +33,14 @@
             this.bindEvents();
             this.startUpdates();
             
+            // Initial static text update
+            this.updateStaticTexts();
+
             // Subscribe to language changes
             if (window.i18n) {
                 window.i18n.subscribe(() => {
                     this.updateDisplay();
+                    this.updateStaticTexts();
                 });
             }
 
@@ -53,7 +57,69 @@
                 rtLaneBars: document.getElementById('rt-lane-bars'),
                 rtPattern: document.getElementById('rt-pattern'),
                 rtRecentClicks: document.getElementById('rt-recent-clicks'),
+                
+                // Static label containers (using querySelector within sidebar)
+                sidebarTitle: document.querySelector('.sidebar-title'),
+                // Section titles
+                sectionTitles: document.querySelectorAll('.section-title'),
+                // Mini stat labels
+                miniLabels: document.querySelectorAll('.mini-stat .mini-label')
             };
+        }
+
+        updateStaticTexts() {
+            if (!this.elements.sidebar) return;
+
+            // Sidebar Title
+            if (this.elements.sidebarTitle) {
+                this.elements.sidebarTitle.textContent = this.t('sidebar.title');
+            }
+
+            // Section Titles (Need to preserve SVG icons)
+            // 1. Real-time Data
+            const rtDataTitle = this.elements.sectionTitles[0];
+            if (rtDataTitle) {
+                const icon = rtDataTitle.querySelector('svg');
+                rtDataTitle.innerHTML = '';
+                if (icon) rtDataTitle.appendChild(icon.cloneNode(true));
+                rtDataTitle.appendChild(document.createTextNode(' ' + this.t('sidebar.realtimeData')));
+            }
+
+            // 2. Lane Dist
+            const laneDistTitle = this.elements.sectionTitles[1];
+            if (laneDistTitle) {
+                const icon = laneDistTitle.querySelector('svg');
+                laneDistTitle.innerHTML = '';
+                if (icon) laneDistTitle.appendChild(icon.cloneNode(true));
+                laneDistTitle.appendChild(document.createTextNode(' ' + this.t('sidebar.laneDist')));
+            }
+
+            // 3. Pattern Predict
+            const patternTitle = this.elements.sectionTitles[2];
+            if (patternTitle) {
+                const icon = patternTitle.querySelector('svg');
+                const tooltipTrigger = patternTitle.querySelector('.bubble-tooltip-trigger');
+                patternTitle.innerHTML = '';
+                if (icon) patternTitle.appendChild(icon.cloneNode(true));
+                patternTitle.appendChild(document.createTextNode(' ' + this.t('sidebar.patternPredict') + ' '));
+                if (tooltipTrigger) patternTitle.appendChild(tooltipTrigger.cloneNode(true));
+            }
+
+            // 4. Recent Clicks
+            const recentClicksTitle = this.elements.sectionTitles[3];
+            if (recentClicksTitle) {
+                const icon = recentClicksTitle.querySelector('svg');
+                recentClicksTitle.innerHTML = '';
+                if (icon) recentClicksTitle.appendChild(icon.cloneNode(true));
+                recentClicksTitle.appendChild(document.createTextNode(' ' + this.t('sidebar.recentClicks')));
+            }
+
+            // Mini Stat Labels
+            const miniLabels = this.elements.miniLabels;
+            if (miniLabels && miniLabels.length >= 2) {
+                miniLabels[0].textContent = this.t('sidebar.clickCount');
+                miniLabels[1].textContent = this.t('sidebar.dominant');
+            }
         }
 
         bindEvents() {
