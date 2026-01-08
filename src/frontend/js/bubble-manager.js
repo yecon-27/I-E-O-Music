@@ -468,6 +468,11 @@ class BubbleManager {
         // 取消未执行的定时生成
         this.spawnTimers.forEach(t => clearTimeout(t));
         this.spawnTimers = [];
+        
+        // 重置生成计时和序列，防止自动生成逻辑立即触发，导致与 startRound 的手动生成重叠
+        this.lastSpawnTime = performance.now();
+        this.spawnSequenceIndex = 0;
+        
         console.log(`Cleared ${count} bubbles`);
     }
     

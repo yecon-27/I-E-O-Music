@@ -65,9 +65,9 @@ const TRANSLATIONS = {
         'report.behaviorPattern': '行为模式',
         'report.clickTrail': '点击轨迹与 Lane 分布',
         'report.musicParams': '音乐参数调整',
-        'report.score.sequential': '🎹 顺序型',
-        'report.score.repetitive': '🔁 重复型',
-        'report.score.exploratory': '🌈 探索型',
+        'report.score.sequential': '顺序型',
+        'report.score.repetitive': '重复型',
+        'report.score.exploratory': '探索型',
         'report.tooltip.sequential': '顺序命中率 > 40% 且 lane覆盖 ≥ 4\n按 C→D→E→G→A 顺序点击的比例',
         'report.tooltip.repetitive': '主导lane占比 > 60%\n偏好重复点击同一个音符',
         'report.tooltip.exploratory': 'lane覆盖 ≥ 4 且 主导占比 ≤ 60%\n积极探索不同音符，分布均匀',
@@ -202,12 +202,6 @@ const TRANSLATIONS = {
         'pat.rule.exploratory': 'lane覆盖 {diversity} ≥ 4 且 主导占比 {ratio}% ≤ 60%',
         'pat.rule.mixed': '未满足任何主导模式特征',
 
-        // Pattern Rules (Dynamic)
-        'pat.rule.sequential': 'Seq Ratio {ratio}% > 40% & Coverage {diversity} ≥ 4',
-        'pat.rule.repetitive': 'Dominant Lane {ratio}% > 60% ({lane})',
-        'pat.rule.exploratory': 'Coverage {diversity} ≥ 4 & Dominant {ratio}% ≤ 60%',
-        'pat.rule.mixed': 'Does not meet dominant pattern criteria',
-
         // Hand Preference
         'hand.left': '你更喜欢用左手！下次试试右手，平衡使用双手更有益。',
         'hand.right': '你更喜欢用右手！下次试试左手，平衡使用双手更有益。',
@@ -313,9 +307,9 @@ const TRANSLATIONS = {
         'report.behaviorPattern': 'Behavior Pattern',
         'report.clickTrail': 'Click Trail & Lane Dist',
         'report.musicParams': 'Music Parameters',
-        'report.score.sequential': '🎹 Sequential',
-        'report.score.repetitive': '🔁 Repetitive',
-        'report.score.exploratory': '🌈 Exploratory',
+        'report.score.sequential': 'Sequential',
+        'report.score.repetitive': 'Repetitive',
+        'report.score.exploratory': 'Exploratory',
         'report.tooltip.sequential': 'Seq Ratio > 40% & Lane Coverage ≥ 4\nProportion of C→D→E→G→A sequences',
         'report.tooltip.repetitive': 'Dominant Lane Ratio > 60%\nPreference for repeating same note',
         'report.tooltip.exploratory': 'Lane Coverage ≥ 4 & Dominant Ratio ≤ 60%\nActive exploration of different notes',

@@ -2,6 +2,15 @@
  * 游戏结果管理器
  * 负责收集游戏数据并在60秒结束时显示结果窗口
  */
+
+const PATTERN_ICONS = {
+    sequential: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="14" width="4" height="7"></rect><rect x="10" y="10" width="4" height="11"></rect><rect x="17" y="6" width="4" height="15"></rect></svg>',
+    repetitive: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 2.1l4 4-4 4"></path><path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8M7 21.9l-4-4 4-4"></path><path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"></path></svg>',
+    exploratory: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>',
+    mixed: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+    analyzing: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>'
+};
+
 class GameResultManager {
   constructor() {
     this.gameData = {
@@ -710,7 +719,7 @@ class GameResultManager {
   analyzePattern(notes) {
     if (!notes || notes.length < 3) {
       return { 
-        icon: "🎯", 
+        icon: PATTERN_ICONS.analyzing, 
         name: this.t('ui.analyzing'), 
         description: this.t('ui.waitingData'),
         scores: null,
@@ -764,22 +773,22 @@ class GameResultManager {
     
     if (sequentialRatio > 0.4 && laneDiversity >= 4) {
       patternType = "sequential";
-      icon = "🎹";
+      icon = PATTERN_ICONS.sequential;
       name = this.t('pat.sequential');
       rule = this.t('pat.rule.sequential', { ratio: Math.round(sequentialRatio * 100), diversity: laneDiversity });
     } else if (dominantRatio > 0.6) {
       patternType = "repetitive";
-      icon = "🔁";
+      icon = PATTERN_ICONS.repetitive;
       name = this.t('pat.repetitive');
       rule = this.t('pat.rule.repetitive', { ratio: Math.round(dominantRatio * 100), lane: dominantLane });
     } else if (laneDiversity >= 4) {
       patternType = "exploratory";
-      icon = "🌈";
+      icon = PATTERN_ICONS.exploratory;
       name = this.t('pat.exploratory');
       rule = this.t('pat.rule.exploratory', { diversity: laneDiversity, ratio: Math.round(dominantRatio * 100) });
     } else {
       patternType = "mixed";
-      icon = "🎯";
+      icon = PATTERN_ICONS.mixed;
       name = this.t('pat.mixed');
       rule = this.t('pat.rule.mixed');
     }
