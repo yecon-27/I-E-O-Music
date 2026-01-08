@@ -51,7 +51,7 @@ const TRANSLATIONS = {
         'sidebar.clickCount': '点击数',
         'sidebar.hitRate': '命中率',
         'sidebar.dominant': '主导Lane',
-        'sidebar.tooltip.pattern': '🎹 顺序型: 顺序命中率>40% 且 lane≥4\n🔁 重复型: 主导lane占比>60%\n🌈 探索型: lane≥4 且 主导≤60%',
+        'sidebar.tooltip.pattern': '顺序型: 顺序命中率>40% 且 lane≥4\n重复型: 主导lane占比>60%\n探索型: lane≥4 且 主导≤60%',
 
         'sidebar.waitingForData': '等待更多数据...',
         'sidebar.noData': '暂无',
@@ -79,8 +79,9 @@ const TRANSLATIONS = {
         'expert.tempo': 'Tempo (BPM)',
         'expert.audioParams': '音效参数',
         'expert.volume': '音量',
+        'expert.contrast': '动态对比度',
         'expert.density': '密度',
-        'expert.warning.unsafe': '⚠️ 超出包络，不推荐可部署',
+        'expert.warning.unsafe': '可能有感官过载风险',
         
         // Report
         'report.behaviorPattern': '行为模式',
@@ -162,7 +163,7 @@ const TRANSLATIONS = {
         'ach.total25': '进步神速！戳中25个泡泡！',
         'ach.total50': '协调大师！戳中50个泡泡！',
         'ach.total100': '传奇玩家！戳中100个泡泡！',
-        'af.predictableMode': '🔄 规律模式：泡泡按固定位置出现',
+        'af.predictableMode': '规律模式：泡泡按固定位置出现',
 
         // Game Results & Stats
         'res.success': '成功击破',
@@ -293,7 +294,7 @@ const TRANSLATIONS = {
         'sidebar.clickCount': 'Clicks',
         'sidebar.hitRate': 'Accuracy',
         'sidebar.dominant': 'Dominant',
-        'sidebar.tooltip.pattern': '🎹 Sequential: Seq Ratio > 40% & Lane ≥ 4\n🔁 Repetitive: Dominant Lane > 60%\n🌈 Exploratory: Lane ≥ 4 & Dominant ≤ 60%',
+        'sidebar.tooltip.pattern': 'Sequential: Seq Ratio > 40% & Lane ≥ 4\nRepetitive: Dominant Lane > 60%\nExploratory: Lane ≥ 4 & Dominant ≤ 60%',
 
         'sidebar.waitingForData': 'Waiting for data...',
         'sidebar.noData': 'No Data',
@@ -321,8 +322,9 @@ const TRANSLATIONS = {
         'expert.tempo': 'Tempo (BPM)',
         'expert.audioParams': 'Audio Parameters',
         'expert.volume': 'Volume',
+        'expert.contrast': 'Dynamic Contrast',
         'expert.density': 'Density',
-        'expert.warning.unsafe': '⚠️ Unsafe Envelope, Not Recommended',
+        'expert.warning.unsafe': 'Risk of sensory overload',
 
         // Game Engine
         'game.ready': 'Game Ready!',
@@ -353,7 +355,7 @@ const TRANSLATIONS = {
         'ach.total25': 'Rapid Progress! 25 bubbles popped!',
         'ach.total50': 'Coordination Master! 50 bubbles popped!',
         'ach.total100': 'Legendary Player! 100 bubbles popped!',
-        'af.predictableMode': '🔄 Predictable Mode: Bubbles appear in fixed spots',
+        'af.predictableMode': 'Predictable Mode: Bubbles appear in fixed spots',
 
         // Game Results & Stats
         'res.success': 'Bubbles Popped',

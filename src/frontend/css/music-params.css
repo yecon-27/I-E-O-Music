@@ -403,7 +403,7 @@
     border-radius: var(--radius-lg);
     border: 1px solid var(--border-light);
     padding: 20px;
-    overflow: hidden;
+    overflow: visible;
     display: flex;
     flex-direction: column;
 }
@@ -466,6 +466,7 @@
     background: var(--bg-secondary);
     border-radius: var(--radius-md);
     padding: 16px;
+    overflow: visible;
 }
 
 .expert-stats {
@@ -567,6 +568,7 @@
     display: flex;
     align-items: center;
     gap: 4px;
+    position: relative;
 }
 
 .score-info {
@@ -978,4 +980,540 @@
 .stat-unit {
     font-size: 0.8rem;
     color: var(--text-tertiary);
+}
+
+
+/* ===== 临床风格双滑块区间选择器 ===== */
+
+.converge-submit-area {
+    padding: var(--space-lg);
+    background: rgba(248, 250, 252, 0.95);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+}
+
+.converge-title {
+    margin: 0 0 var(--space-lg);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.converge-title svg {
+    color: var(--accent-primary);
+}
+
+.daw-range-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.daw-range-item {
+    padding: 0;
+    background: transparent;
+}
+
+.daw-range-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.daw-range-header label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.daw-range-values {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.daw-value {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    min-width: 28px;
+    text-align: center;
+}
+
+.daw-separator {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.daw-unit {
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+    margin-left: 2px;
+}
+
+/* 双滑块容器 */
+.daw-dual-slider {
+    position: relative;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    padding-bottom: 16px;
+}
+
+/* 轨道背景 */
+.daw-track {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 8px;
+    height: 4px;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 2px;
+    overflow: visible;
+}
+
+/* 选中区间填充 - 主题色 */
+.daw-track-fill {
+    position: absolute;
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+    border-radius: 2px;
+    transition: left 0.15s ease, right 0.15s ease;
+}
+
+/* 锁头图标 */
+.daw-lock-icon {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent-primary);
+    opacity: 0.6;
+    z-index: 5;
+}
+
+.daw-lock-left {
+    left: -2px;
+}
+
+.daw-lock-right {
+    right: -2px;
+}
+
+/* 刻度系统 */
+.daw-scale {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 18px;
+    height: 12px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+}
+
+.daw-scale-mark {
+    position: absolute;
+    left: var(--pos);
+    transform: translateX(-50%);
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: var(--text-tertiary);
+}
+
+.daw-scale-mark::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 4px;
+    background: var(--border-medium);
+}
+
+/* 滑块输入 - 隐藏原生样式 */
+.daw-thumb {
+    position: absolute;
+    width: 100%;
+    height: 24px;
+    top: 0;
+    background: transparent;
+    pointer-events: none;
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+    padding: 0;
+}
+
+.daw-thumb::-webkit-slider-runnable-track {
+    height: 4px;
+    background: transparent;
+}
+
+.daw-thumb::-moz-range-track {
+    height: 4px;
+    background: transparent;
+}
+
+/* 滑块圆环 - 匹配测试模式风格 */
+.daw-thumb::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    border: 3px solid #fff;
+    cursor: pointer;
+    pointer-events: auto;
+    margin-top: -6px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.daw-thumb::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+}
+
+/* 收敛模式下滑块变实心 - 已统一，无需特殊处理 */
+.converge-submit-area:not(.hidden) .daw-thumb::-webkit-slider-thumb {
+    background: var(--accent-primary);
+    border-color: #fff;
+}
+
+.daw-thumb::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    border: 3px solid #fff;
+    cursor: pointer;
+    pointer-events: auto;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.converge-submit-area:not(.hidden) .daw-thumb::-moz-range-thumb {
+    background: var(--accent-primary);
+    border-color: #fff;
+}
+
+/* 和声按钮 - 主题风格 */
+.daw-harmony-item {
+    margin-top: 8px;
+}
+
+/* 和声行 - 左右布局 */
+.daw-harmony-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    margin-top: 8px;
+}
+
+.daw-harmony-section {
+    flex: 1;
+}
+
+.daw-submit-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.daw-submit-section .param-btn.primary {
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.daw-submit-section .submit-note {
+    font-size: 0.65rem;
+    margin: 0;
+}
+
+.daw-harmony-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.daw-harmony-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid var(--border-light);
+    background: #fff;
+    color: var(--text-secondary);
+}
+
+.daw-harmony-btn:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.daw-harmony-btn.selected {
+    background: var(--accent-primary);
+    color: #fff;
+    border-color: var(--accent-primary);
+}
+
+/* 收敛动画 */
+@keyframes dawConverge {
+    0% {
+        left: 0%;
+        right: 0%;
+    }
+    100% {
+        left: var(--converge-left, 25%);
+        right: var(--converge-right, 25%);
+    }
+}
+
+.daw-track-fill.animating {
+    animation: dawConverge 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* 提交按钮 - 主题风格 */
+.converge-actions {
+    display: none;
+}
+
+.daw-submit-section .param-btn.primary {
+    background: var(--accent-primary);
+    border: none;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.daw-submit-section .param-btn.primary:hover {
+    background: var(--button-primary-hover);
+}
+
+.submit-note {
+    font-size: 0.7rem;
+    color: var(--text-tertiary);
+}
+
+
+/* ===== MusiBubbles 气泡化 Tooltip ===== */
+.bubble-tooltip-trigger {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    transition: all 0.2s ease;
+}
+
+.bubble-tooltip-trigger svg {
+    opacity: 0.5;
+    transition: all 0.2s ease;
+}
+
+.bubble-tooltip-trigger:hover svg {
+    opacity: 1;
+    color: var(--accent-primary);
+    filter: drop-shadow(0 0 4px rgba(139, 92, 246, 0.5));
+}
+
+/* 气泡弹窗 */
+.bubble-tooltip {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%) scale(0.5);
+    opacity: 0;
+    visibility: hidden;
+    z-index: 1000;
+    pointer-events: none;
+    
+    /* 毛玻璃视觉 - 浅色风格 */
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 14px 18px;
+    min-width: 200px;
+    
+    /* 弹簧动画 */
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+                opacity 0.2s ease,
+                visibility 0.2s ease;
+    
+    /* 阴影 */
+    box-shadow: 
+        0 10px 40px rgba(0, 0, 0, 0.12),
+        0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+/* 气泡箭头 */
+.bubble-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%) rotate(45deg);
+    width: 12px;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.95);
+    border-right: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
+}
+
+/* 悬停显示 - 弹簧效果 */
+.bubble-tooltip-trigger:hover .bubble-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) scale(1);
+    pointer-events: auto;
+}
+
+/* Tooltip 内容 */
+.bubble-tooltip-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.tooltip-label {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* 判定条件 - JetBrains Mono 加粗 */
+.tooltip-threshold {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(217, 70, 239, 0.3));
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+/* 观察值行 */
+.tooltip-observed {
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tooltip-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #10B981;
+}
+
+/* ===== 侧边栏 Info 触发器 ===== */
+.sidebar-info-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 6px;
+    color: var(--text-tertiary);
+    cursor: help;
+    opacity: 0.5;
+    transition: all 0.2s ease;
+}
+
+.sidebar-info-trigger:hover {
+    opacity: 1;
+    color: var(--slate-purple);
+}
+
+.sidebar-info-trigger svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* ===== Portal Tooltip 弹窗 ===== */
+.sidebar-tooltip-portal {
+    position: fixed;
+    z-index: 10000;
+    
+    /* 毛玻璃效果 */
+    background: rgba(248, 250, 252, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 16px;
+    min-width: 220px;
+    
+    /* 阴影 */
+    box-shadow: 
+        0 10px 40px rgba(0, 0, 0, 0.12),
+        0 2px 10px rgba(0, 0, 0, 0.08);
+    
+    /* 动画 */
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.sidebar-tooltip-portal.hidden {
+    opacity: 0;
+    transform: scale(0.9);
+    pointer-events: none;
+}
+
+.sidebar-tooltip-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tooltip-rule-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 10px;
+    background: rgba(99, 102, 241, 0.06);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-primary);
+}
+
+.tooltip-rule-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.tooltip-rule-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* 删除旧的 score-info 样式 */
+.score-info {
+    display: none;
 }

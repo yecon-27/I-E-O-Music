@@ -204,9 +204,11 @@ function updateUIText() {
     // Report Params
     const reportParamLabels = document.querySelectorAll('.music-params-grid label');
     if(reportParamLabels.length >= 3) {
-        reportParamLabels[0].textContent = t('expert.tempo');
-        reportParamLabels[1].textContent = t('expert.volume');
-        reportParamLabels[2].textContent = t('expert.density');
+        // Use helper to preserve the warning badge (which is a child of the label)
+        // Structure: <label> <span> Title <span class="safe"></span> </span> <span class="warning"></span> </label>
+        updateParamLabel(reportParamLabels[0], t('expert.tempo'));
+        updateParamLabel(reportParamLabels[1], t('expert.contrast'));
+        updateParamLabel(reportParamLabels[2], t('expert.volume'));
     }
 
     // 5. Result Overlay
@@ -263,6 +265,37 @@ function updateTextWithIcon(element, text) {
     // If no text node was found (e.g. only icon), append text
     if (!textNodeUpdated) {
         element.appendChild(document.createTextNode(' ' + text));
+    }
+}
+
+function updateParamLabel(label, text) {
+    if (!label) return;
+    
+    // Find the title span, explicitly excluding the warning badge
+    // We look for a direct child span that is NOT the warning badge
+    let titleSpan = null;
+    for (let i = 0; i < label.children.length; i++) {
+        const child = label.children[i];
+        if (child.tagName === 'SPAN' && !child.classList.contains('param-warning-badge')) {
+            titleSpan = child;
+            break;
+        }
+    }
+
+    if (titleSpan) {
+        // Update the text inside this span (before the nested safe-range span)
+        let textUpdated = false;
+        for (let i = 0; i < titleSpan.childNodes.length; i++) {
+            const node = titleSpan.childNodes[i];
+            if (node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0) {
+                node.textContent = text + ' ';
+                textUpdated = true;
+                break;
+            }
+        }
+        if (!textUpdated) {
+            titleSpan.prepend(document.createTextNode(text + ' '));
+        }
     }
 }
 

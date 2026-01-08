@@ -7,7 +7,7 @@
     <!-- Preload Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/music-params.css">
     <style>
@@ -253,9 +253,25 @@
                                             <div class="score-item">
                                                 <span class="score-label">
                                                     顺序型
-                                                    <span class="score-info" title="顺序命中率>40% 且 lane多样性≥4">
-                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                                                    <span class="bubble-tooltip-trigger" data-tooltip-id="seq-tooltip">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
                                                     </span>
+                                                    <div class="bubble-tooltip" id="seq-tooltip">
+                                                        <div class="bubble-tooltip-content">
+                                                            <div class="tooltip-row">
+                                                                <span class="tooltip-label">判定条件</span>
+                                                                <span class="tooltip-threshold">顺序命中率 &gt; 40%</span>
+                                                            </div>
+                                                            <div class="tooltip-row">
+                                                                <span class="tooltip-label">且</span>
+                                                                <span class="tooltip-threshold">lane多样性 ≥ 4</span>
+                                                            </div>
+                                                            <div class="tooltip-row tooltip-observed">
+                                                                <span class="tooltip-label">当前值</span>
+                                                                <span class="tooltip-value" id="seq-observed">--</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </span>
                                                 <div class="score-bar-bg"><div class="score-bar-fill seq" id="expert-score-seq"></div></div>
                                                 <span class="score-value" id="expert-score-seq-val">0%</span>
@@ -263,9 +279,21 @@
                                             <div class="score-item">
                                                 <span class="score-label">
                                                     重复型
-                                                    <span class="score-info" title="主导lane占比>60%">
-                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                                                    <span class="bubble-tooltip-trigger" data-tooltip-id="rep-tooltip">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
                                                     </span>
+                                                    <div class="bubble-tooltip" id="rep-tooltip">
+                                                        <div class="bubble-tooltip-content">
+                                                            <div class="tooltip-row">
+                                                                <span class="tooltip-label">判定条件</span>
+                                                                <span class="tooltip-threshold">主导lane占比 &gt; 60%</span>
+                                                            </div>
+                                                            <div class="tooltip-row tooltip-observed">
+                                                                <span class="tooltip-label">当前值</span>
+                                                                <span class="tooltip-value" id="rep-observed">--</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </span>
                                                 <div class="score-bar-bg"><div class="score-bar-fill rep" id="expert-score-rep"></div></div>
                                                 <span class="score-value" id="expert-score-rep-val">0%</span>
@@ -273,9 +301,25 @@
                                             <div class="score-item">
                                                 <span class="score-label">
                                                     探索型
-                                                    <span class="score-info" title="lane多样性≥4 且 主导lane≤60%">
-                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                                                    <span class="bubble-tooltip-trigger" data-tooltip-id="exp-tooltip">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
                                                     </span>
+                                                    <div class="bubble-tooltip" id="exp-tooltip">
+                                                        <div class="bubble-tooltip-content">
+                                                            <div class="tooltip-row">
+                                                                <span class="tooltip-label">判定条件</span>
+                                                                <span class="tooltip-threshold">lane多样性 ≥ 4</span>
+                                                            </div>
+                                                            <div class="tooltip-row">
+                                                                <span class="tooltip-label">且</span>
+                                                                <span class="tooltip-threshold">主导lane ≤ 60%</span>
+                                                            </div>
+                                                            <div class="tooltip-row tooltip-observed">
+                                                                <span class="tooltip-label">当前值</span>
+                                                                <span class="tooltip-value" id="exp-observed">--</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </span>
                                                 <div class="score-bar-bg"><div class="score-bar-fill exp" id="expert-score-exp"></div></div>
                                                 <span class="score-value" id="expert-score-exp-val">0%</span>
@@ -311,7 +355,7 @@
                                     <div class="param-item">
                                         <label>
                                             <span>节奏 (BPM) <span class="param-safe-range">安全: 60-80</span></span>
-                                            <span id="tempo-warning" class="param-warning-badge hidden">不建议部署</span>
+                                            <span id="tempo-warning" class="param-warning-badge hidden">可能有感官过载风险</span>
                                         </label>
                                         <div class="param-control">
                                             <input type="range" id="report-param-tempo" min="40" max="120" value="72" class="safe-range-slider">
@@ -322,7 +366,7 @@
                                     <div class="param-item">
                                         <label>
                                             <span>动态对比度 <span class="param-safe-range">安全: 0-20%</span></span>
-                                            <span id="contrast-warning" class="param-warning-badge hidden">不建议部署</span>
+                                            <span id="contrast-warning" class="param-warning-badge hidden">可能有感官过载风险</span>
                                         </label>
                                         <div class="param-control">
                                             <input type="range" id="report-param-contrast" min="0" max="50" value="10" class="safe-range-slider">
@@ -333,7 +377,7 @@
                                     <div class="param-item">
                                         <label>
                                             <span>音量 <span class="param-safe-range">安全: 60-80%</span></span>
-                                            <span id="volume-warning" class="param-warning-badge hidden">不建议部署</span>
+                                            <span id="volume-warning" class="param-warning-badge hidden">可能有感官过载风险</span>
                                         </label>
                                         <div class="param-control">
                                             <input type="range" id="report-param-volume" min="0" max="100" value="70" class="safe-range-slider">
@@ -344,14 +388,14 @@
                                     <div class="param-item">
                                         <label>
                                             <span>和声组合 <span class="param-safe-range">安全: I-V</span></span>
-                                            <span id="harmony-warning" class="param-warning-badge hidden">不建议部署</span>
+                                            <span id="harmony-warning" class="param-warning-badge hidden">可能有感官过载风险</span>
                                         </label>
                                         <div class="harmony-options" id="harmony-options">
                                             <button class="harmony-btn safe active" data-value="I-V">I-V</button>
                                             <button class="harmony-btn unsafe" data-value="I-IV">I-IV</button>
-                                            <button class="harmony-btn unsafe" data-value="I-vi">I-vi</button>
+                                            <button class="harmony-btn unsafe" data-value="I-VI">I-VI</button>
                                             <button class="harmony-btn unsafe" data-value="I-IV-V">I-IV-V</button>
-                                            <button class="harmony-btn unsafe" data-value="I-vi-IV-V">I-vi-IV-V</button>
+                                            <button class="harmony-btn unsafe" data-value="I-VI-IV-V">I-VI-IV-V</button>
                                         </div>
                                     </div>
                                 </div>
@@ -372,53 +416,127 @@
                                     </button>
                                 </div>
                                 
-                                <!-- 收敛模式提交区域 (上下界选择) -->
+                                <!-- 收敛模式提交区域 (临床风格双滑块) -->
                                 <div id="converge-submit-area" class="converge-submit-area hidden">
-                                    <h4 class="converge-title">设定安全区间</h4>
-                                    <div class="converge-range-grid">
-                                        <div class="converge-range-item">
-                                            <label>BPM</label>
-                                            <div class="range-inputs">
-                                                <input type="number" id="converge-tempo-min" value="60" min="40" max="120" class="range-input">
-                                                <span class="range-separator">~</span>
-                                                <input type="number" id="converge-tempo-max" value="80" min="40" max="120" class="range-input">
+                                    <h4 class="converge-title">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                        设定安全区间
+                                    </h4>
+                                    <div class="daw-range-grid">
+                                        <div class="daw-range-item">
+                                            <div class="daw-range-header">
+                                                <label>BPM</label>
+                                                <span class="daw-range-values">
+                                                    <span id="converge-tempo-min-val" class="daw-value">60</span>
+                                                    <span class="daw-separator">-</span>
+                                                    <span id="converge-tempo-max-val" class="daw-value">80</span>
+                                                </span>
+                                            </div>
+                                            <div class="daw-dual-slider" data-param="tempo" data-min="40" data-max="120">
+                                                <div class="daw-track">
+                                                    <div class="daw-track-fill"></div>
+                                                    <div class="daw-lock-icon daw-lock-left">
+                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                                    </div>
+                                                    <div class="daw-lock-icon daw-lock-right">
+                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                                    </div>
+                                                </div>
+                                                <div class="daw-scale" data-min="40" data-max="120">
+                                                    <span class="daw-scale-mark" style="--pos: 0%">40</span>
+                                                    <span class="daw-scale-mark" style="--pos: 25%">60</span>
+                                                    <span class="daw-scale-mark" style="--pos: 50%">80</span>
+                                                    <span class="daw-scale-mark" style="--pos: 75%">100</span>
+                                                    <span class="daw-scale-mark" style="--pos: 100%">120</span>
+                                                </div>
+                                                <input type="range" class="daw-thumb daw-thumb-min" id="converge-tempo-min" min="40" max="120" value="60">
+                                                <input type="range" class="daw-thumb daw-thumb-max" id="converge-tempo-max" min="40" max="120" value="80">
                                             </div>
                                         </div>
-                                        <div class="converge-range-item">
-                                            <label>对比度</label>
-                                            <div class="range-inputs">
-                                                <input type="number" id="converge-contrast-min" value="0" min="0" max="50" class="range-input">
-                                                <span class="range-separator">~</span>
-                                                <input type="number" id="converge-contrast-max" value="20" min="0" max="50" class="range-input">
-                                                <span class="range-unit">%</span>
+                                        
+                                        <div class="daw-range-item">
+                                            <div class="daw-range-header">
+                                                <label>对比度</label>
+                                                <span class="daw-range-values">
+                                                    <span id="converge-contrast-min-val" class="daw-value">0</span>
+                                                    <span class="daw-separator">-</span>
+                                                    <span id="converge-contrast-max-val" class="daw-value">20</span>
+                                                    <span class="daw-unit">%</span>
+                                                </span>
+                                            </div>
+                                            <div class="daw-dual-slider" data-param="contrast" data-min="0" data-max="50">
+                                                <div class="daw-track">
+                                                    <div class="daw-track-fill"></div>
+                                                    <div class="daw-lock-icon daw-lock-left">
+                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                                    </div>
+                                                    <div class="daw-lock-icon daw-lock-right">
+                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                                    </div>
+                                                </div>
+                                                <div class="daw-scale" data-min="0" data-max="50">
+                                                    <span class="daw-scale-mark" style="--pos: 0%">0</span>
+                                                    <span class="daw-scale-mark" style="--pos: 40%">20</span>
+                                                    <span class="daw-scale-mark" style="--pos: 100%">50</span>
+                                                </div>
+                                                <input type="range" class="daw-thumb daw-thumb-min" id="converge-contrast-min" min="0" max="50" value="0">
+                                                <input type="range" class="daw-thumb daw-thumb-max" id="converge-contrast-max" min="0" max="50" value="20">
                                             </div>
                                         </div>
-                                        <div class="converge-range-item">
-                                            <label>音量</label>
-                                            <div class="range-inputs">
-                                                <input type="number" id="converge-volume-min" value="60" min="0" max="100" class="range-input">
-                                                <span class="range-separator">~</span>
-                                                <input type="number" id="converge-volume-max" value="80" min="0" max="100" class="range-input">
-                                                <span class="range-unit">%</span>
+                                        
+                                        <div class="daw-range-item">
+                                            <div class="daw-range-header">
+                                                <label>音量</label>
+                                                <span class="daw-range-values">
+                                                    <span id="converge-volume-min-val" class="daw-value">60</span>
+                                                    <span class="daw-separator">-</span>
+                                                    <span id="converge-volume-max-val" class="daw-value">80</span>
+                                                    <span class="daw-unit">%</span>
+                                                </span>
+                                            </div>
+                                            <div class="daw-dual-slider" data-param="volume" data-min="0" data-max="100">
+                                                <div class="daw-track">
+                                                    <div class="daw-track-fill"></div>
+                                                    <div class="daw-lock-icon daw-lock-left">
+                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                                    </div>
+                                                    <div class="daw-lock-icon daw-lock-right">
+                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                                    </div>
+                                                </div>
+                                                <div class="daw-scale" data-min="0" data-max="100">
+                                                    <span class="daw-scale-mark" style="--pos: 0%">0</span>
+                                                    <span class="daw-scale-mark" style="--pos: 25%">25</span>
+                                                    <span class="daw-scale-mark" style="--pos: 50%">50</span>
+                                                    <span class="daw-scale-mark" style="--pos: 75%">75</span>
+                                                    <span class="daw-scale-mark" style="--pos: 100%">100</span>
+                                                </div>
+                                                <input type="range" class="daw-thumb daw-thumb-min" id="converge-volume-min" min="0" max="100" value="60">
+                                                <input type="range" class="daw-thumb daw-thumb-max" id="converge-volume-max" min="0" max="100" value="80">
                                             </div>
                                         </div>
-                                        <div class="converge-range-item">
-                                            <label>和声</label>
-                                            <div class="converge-harmony-btns" id="converge-harmony-btns">
-                                                <button class="converge-harmony-btn selected" data-value="I-V">I-V</button>
-                                                <button class="converge-harmony-btn" data-value="I-IV">I-IV</button>
-                                                <button class="converge-harmony-btn" data-value="I-vi">I-vi</button>
-                                                <button class="converge-harmony-btn" data-value="I-IV-V">I-IV-V</button>
-                                                <button class="converge-harmony-btn" data-value="I-vi-IV-V">I-vi-IV-V</button>
+                                        
+                                        <div class="daw-range-item daw-harmony-row">
+                                            <div class="daw-harmony-section">
+                                                <div class="daw-range-header">
+                                                    <label>和声</label>
+                                                </div>
+                                                <div class="daw-harmony-btns" id="converge-harmony-btns">
+                                                <button class="daw-harmony-btn selected" data-value="I-V">I-V</button>
+                                                <button class="daw-harmony-btn" data-value="I-IV">I-IV</button>
+                                                <button class="daw-harmony-btn" data-value="I-VI">I-VI</button>
+                                                <button class="daw-harmony-btn" data-value="I-IV-V">I-IV-V</button>
+                                                <button class="daw-harmony-btn" data-value="I-VI-IV-V">I-VI-IV-V</button>
+                                            </div>
+                                            </div>
+                                            <div class="daw-submit-section">
+                                                <button id="param-submit-btn" class="param-btn primary">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline></svg>
+                                                    保存
+                                                </button>
+                                                <p class="submit-note">数据库未配置</p>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div class="converge-actions">
-                                        <button id="param-submit-btn" class="param-btn primary">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline></svg>
-                                            保存到数据库
-                                        </button>
-                                        <p class="submit-note">数据库连接尚未配置</p>
                                     </div>
                                 </div>
                             </div>
@@ -476,7 +594,9 @@
                     <h4 class="section-title">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
                         模式预测
-                        <span class="info-icon" data-tooltip="🎹 顺序型: 顺序命中率>40% 且 lane≥4&#10;🔁 重复型: 主导lane占比>60%&#10;🌈 探索型: lane≥4 且 主导≤60%">ⓘ</span>
+                        <span class="sidebar-info-trigger" id="pattern-info-trigger">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                        </span>
                     </h4>
                     <div id="rt-pattern" class="rt-pattern">
                         <span class="pattern-label">等待更多数据...</span>
@@ -655,5 +775,44 @@
 
     <!-- 入口保持 module -->
     <script type="module" src="./js/main.js"></script>
+    
+    <!-- Portal Tooltip 弹窗 -->
+    <div id="sidebar-tooltip-portal" class="sidebar-tooltip-portal hidden">
+        <div class="sidebar-tooltip-content">
+            <div class="tooltip-rule-item">
+                <span class="tooltip-rule-label">顺序型</span>
+                <span class="tooltip-rule-value">顺序命中率 &gt; 40% 且 lane ≥ 4</span>
+            </div>
+            <div class="tooltip-rule-item">
+                <span class="tooltip-rule-label">重复型</span>
+                <span class="tooltip-rule-value">主导lane占比 &gt; 60%</span>
+            </div>
+            <div class="tooltip-rule-item">
+                <span class="tooltip-rule-label">探索型</span>
+                <span class="tooltip-rule-value">lane ≥ 4 且 主导 ≤ 60%</span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    // Portal Tooltip 控制
+    (function() {
+        const trigger = document.getElementById('pattern-info-trigger');
+        const portal = document.getElementById('sidebar-tooltip-portal');
+        
+        if (!trigger || !portal) return;
+        
+        trigger.addEventListener('mouseenter', function(e) {
+            const rect = trigger.getBoundingClientRect();
+            portal.style.top = (rect.bottom + 8) + 'px';
+            portal.style.left = (rect.left - 100) + 'px';
+            portal.classList.remove('hidden');
+        });
+        
+        trigger.addEventListener('mouseleave', function() {
+            portal.classList.add('hidden');
+        });
+    })();
+    </script>
 </body>
 </html>

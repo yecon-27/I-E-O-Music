@@ -16,7 +16,7 @@ class MusicParamController {
         
         // 安全和声选项
         this.safeHarmony = ['I-V'];
-        this.allHarmonyOptions = ['I-V', 'I-IV', 'I-vi', 'I-IV-V', 'I-vi-IV-V'];
+        this.allHarmonyOptions = ['I-V', 'I-IV', 'I-VI', 'I-IV-V', 'I-VI-IV-V'];
         
         // 当前参数值
         this.currentParams = {
@@ -50,6 +50,7 @@ class MusicParamController {
         this.bindSliders();
         this.bindHarmonyOptions();
         this.bindActionButtons();
+        this.bindDawDualSliders();
         this.updateAllSliderStyles();
         
         this.initialized = true;
@@ -88,6 +89,8 @@ class MusicParamController {
                 paramsGrid?.classList.add('hidden');
                 paramActions?.classList.add('hidden');
                 this.updateConvergeSummary();
+                // 播放收敛动画
+                setTimeout(() => this.playConvergeAnimation(), 50);
             });
         }
     }
@@ -141,6 +144,10 @@ class MusicParamController {
             
             // 初始化样式
             this.updateSliderStyle(slider, param, parseInt(slider.value));
+            // 初始化警告状态
+            const initialValue = parseInt(slider.value);
+            const isUnsafe = this.isOutOfSafeRange(param, initialValue);
+            this.updateWarning(warningEl, isUnsafe);
         });
     }
 
@@ -522,6 +529,126 @@ class MusicParamController {
      */
     getConvergedParams() {
         return this.convergedParams ? { ...this.convergedParams } : null;
+    }
+    
+    /**
+     * 绑定DAW风格双滑块
+     */
+    bindDawDualSliders() {
+        const sliders = document.querySelectorAll('.daw-dual-slider');
+        
+        sliders.forEach(container => {
+            const minSlider = container.querySelector('.daw-thumb-min');
+            const maxSlider = container.querySelector('.daw-thumb-max');
+            const trackFill = container.querySelector('.daw-track-fill');
+            const param = container.dataset.param;
+            const rangeMin = parseInt(container.dataset.min);
+            const rangeMax = parseInt(container.dataset.max);
+            
+            if (!minSlider || !maxSlider || !trackFill) return;
+            
+            const minValEl = document.getElementById(`converge-${param}-min-val`);
+            const maxValEl = document.getElementById(`converge-${param}-max-val`);
+            
+            const updateTrackFill = () => {
+                const minVal = parseInt(minSlider.value);
+                const maxVal = parseInt(maxSlider.value);
+                const range = rangeMax - rangeMin;
+                
+                const leftPercent = ((minVal - rangeMin) / range) * 100;
+                const rightPercent = 100 - ((maxVal - rangeMin) / range) * 100;
+                
+                trackFill.style.left = leftPercent + '%';
+                trackFill.style.right = rightPercent + '%';
+                
+                // 更新数值显示
+                if (minValEl) minValEl.textContent = minVal;
+                if (maxValEl) maxValEl.textContent = maxVal;
+            };
+            
+            // 确保min不超过max
+            minSlider.addEventListener('input', () => {
+                const minVal = parseInt(minSlider.value);
+                const maxVal = parseInt(maxSlider.value);
+                if (minVal > maxVal) {
+                    minSlider.value = maxVal;
+                }
+                updateTrackFill();
+            });
+            
+            // 确保max不小于min
+            maxSlider.addEventListener('input', () => {
+                const minVal = parseInt(minSlider.value);
+                const maxVal = parseInt(maxSlider.value);
+                if (maxVal < minVal) {
+                    maxSlider.value = minVal;
+                }
+                updateTrackFill();
+            });
+            
+            // 初始化
+            updateTrackFill();
+        });
+        
+        // 绑定DAW和声按钮
+        const harmonyBtns = document.querySelectorAll('.daw-harmony-btn');
+        harmonyBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('selected');
+            });
+        });
+    }
+    
+    /**
+     * 播放收敛动画
+     */
+    playConvergeAnimation() {
+        const sliders = document.querySelectorAll('.daw-dual-slider');
+        
+        sliders.forEach(container => {
+            const trackFill = container.querySelector('.daw-track-fill');
+            const minSlider = container.querySelector('.daw-thumb-min');
+            const maxSlider = container.querySelector('.daw-thumb-max');
+            const param = container.dataset.param;
+            const rangeMin = parseInt(container.dataset.min);
+            const rangeMax = parseInt(container.dataset.max);
+            
+            if (!trackFill || !minSlider || !maxSlider) return;
+            
+            // 获取安全区间
+            const safeRange = this.safeRanges[param];
+            if (!safeRange) return;
+            
+            const range = rangeMax - rangeMin;
+            const targetLeft = ((safeRange.min - rangeMin) / range) * 100;
+            const targetRight = 100 - ((safeRange.max - rangeMin) / range) * 100;
+            
+            // 设置CSS变量用于动画
+            trackFill.style.setProperty('--converge-left', targetLeft + '%');
+            trackFill.style.setProperty('--converge-right', targetRight + '%');
+            
+            // 先设置为全开状态
+            trackFill.style.left = '0%';
+            trackFill.style.right = '0%';
+            
+            // 触发动画
+            trackFill.classList.add('animating');
+            
+            // 动画结束后更新滑块位置
+            setTimeout(() => {
+                trackFill.classList.remove('animating');
+                minSlider.value = safeRange.min;
+                maxSlider.value = safeRange.max;
+                trackFill.style.left = targetLeft + '%';
+                trackFill.style.right = targetRight + '%';
+                
+                // 更新数值显示
+                const minValEl = document.getElementById(`converge-${param}-min-val`);
+                const maxValEl = document.getElementById(`converge-${param}-max-val`);
+                if (minValEl) minValEl.textContent = safeRange.min;
+                if (maxValEl) maxValEl.textContent = safeRange.max;
+            }, 400);
+        });
     }
 }
 
