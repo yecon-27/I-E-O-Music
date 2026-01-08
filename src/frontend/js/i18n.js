@@ -92,6 +92,25 @@ const TRANSLATIONS = {
         'game.samplingStarted': '开始采样：{seconds}s',
         'game.samplingCompleted': '采样完成，共 {count} 个音符',
 
+        // UI Labels
+        'ui.realtimeData': '实时数据',
+        'ui.laneDist': 'Lane 分布',
+        'ui.patternPredict': '模式预测',
+        'ui.recentClicks': '最近点击',
+        'ui.expertMode': '专家模式',
+        'ui.gameOver': '游戏结束',
+        'ui.play': '播放',
+        'ui.playAgain': '重玩',
+        'ui.finish': '结束',
+        'ui.report': '游戏报告',
+        'ui.inputMode': '输入方式: ',
+        'ui.bubbleCount': '泡泡数: ',
+        'ui.timeRemaining': '时间: ',
+        'ui.gamePaused': '游戏暂停',
+        'ui.clickContinue': '点击恢复按钮继续',
+        'ui.analyzing': '分析中...',
+        'ui.waitingData': '等待数据...',
+
         // Settings Modal
         'settings.title': '游戏设置',
         'settings.subtitle': '调整感官体验，让游戏更适合你',
@@ -215,6 +234,25 @@ const TRANSLATIONS = {
         'music.playerNotReady': '音乐播放器未准备好，请稍后再试'
     },
     en: {
+        // Main UI (Restored)
+        'ui.expertMode': 'Expert Mode',
+        'ui.gameOver': 'Game Over',
+        'ui.play': 'Play',
+        'ui.playAgain': 'Play Again',
+        'ui.finish': 'Finish',
+        'ui.report': 'Game Report',
+        'ui.analyzing': 'Analyzing...',
+        'ui.waitingData': 'Waiting for data...',
+        'ui.realtimeData': 'Real-time',
+        'ui.laneDist': 'Lane Dist',
+        'ui.patternPredict': 'Prediction',
+        'ui.recentClicks': 'Recent Clicks',
+        'ui.inputMode': 'Input: ',
+        'ui.bubbleCount': 'Bubbles: ',
+        'ui.timeRemaining': 'Time: ',
+        'ui.gamePaused': 'Game Paused',
+        'ui.clickContinue': 'Click resume button to continue',
+
         // Header & Footer
         'header.mute': 'Mute',
         'header.unmute': 'Unmute',

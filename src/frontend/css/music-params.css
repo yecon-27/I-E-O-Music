@@ -1,0 +1,477 @@
+/**
+ * 音乐参数调整面板样式
+ * 包含滑动条安全区间显示、和声选项、警告提示等
+ */
+
+/* ===== 模式切换按钮 ===== */
+.param-mode-toggle {
+    display: flex;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.04);
+    padding: 4px;
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-md);
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 8px 16px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mode-btn:hover {
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--text-primary);
+}
+
+.mode-btn.active {
+    background: #fff;
+    color: var(--accent-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== 参数网格布局 ===== */
+.music-params-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.param-item {
+    background: #fff;
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    border: 1px solid var(--border-light);
+}
+
+.param-item label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: var(--space-sm);
+}
+
+.param-safe-range {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--text-tertiary);
+    background: rgba(16, 185, 129, 0.1);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+/* ===== 滑动条控件 ===== */
+.param-control {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.param-value {
+    min-width: 50px;
+    text-align: right;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* 安全区间滑动条样式 */
+.safe-range-slider {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    
+    /* 默认背景：淡橙色（非安全区域） */
+    background: linear-gradient(
+        to right,
+        #FED7AA 0%,                           /* 非安全区（左） - 淡橙色 */
+        #FED7AA var(--safe-start, 25%),       /* 非安全区结束 */
+        #D1FAE5 var(--safe-start, 25%),       /* 安全区开始 - 淡绿色 */
+        #D1FAE5 var(--safe-end, 75%),         /* 安全区结束 */
+        #FED7AA var(--safe-end, 75%),         /* 非安全区（右）开始 */
+        #FED7AA 100%                          /* 非安全区结束 */
+    );
+}
+
+/* Webkit 滑块样式 */
+.safe-range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    cursor: pointer;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.safe-range-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+}
+
+.safe-range-slider::-webkit-slider-thumb:active {
+    transform: scale(0.95);
+}
+
+/* 超出安全区间时的滑块样式 */
+.safe-range-slider.unsafe::-webkit-slider-thumb {
+    background: var(--accent-warning);
+    border-color: #fff;
+}
+
+/* Firefox 滑块样式 */
+.safe-range-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    cursor: pointer;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.safe-range-slider.unsafe::-moz-range-thumb {
+    background: var(--accent-warning);
+}
+
+/* Firefox 轨道样式 */
+.safe-range-slider::-moz-range-track {
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(
+        to right,
+        #FED7AA 0%,
+        #FED7AA var(--safe-start, 25%),
+        #D1FAE5 var(--safe-start, 25%),
+        #D1FAE5 var(--safe-end, 75%),
+        #FED7AA var(--safe-end, 75%),
+        #FED7AA 100%
+    );
+}
+
+/* ===== 警告消息 ===== */
+.param-warning-msg {
+    margin-top: var(--space-sm);
+    padding: 8px 12px;
+    background: #FEF3C7;
+    border: 1px solid #FCD34D;
+    border-radius: var(--radius-sm);
+    color: #92400E;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: warningPulse 0.3s ease-out;
+}
+
+@keyframes warningPulse {
+    0% { opacity: 0; transform: translateY(-5px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.param-warning-msg.hidden {
+    display: none;
+}
+
+/* ===== 和声选项按钮 ===== */
+.harmony-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.harmony-btn {
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+/* 安全选项 - 灰色背景 */
+.harmony-btn.safe {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-light);
+}
+
+.harmony-btn.safe:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-medium);
+}
+
+.harmony-btn.safe.active {
+    background: var(--accent-primary);
+    color: #fff;
+    border-color: var(--accent-primary);
+}
+
+/* 非安全选项 - 淡橙色背景 */
+.harmony-btn.unsafe {
+    background: #FED7AA;
+    color: #9A3412;
+    border-color: #FDBA74;
+}
+
+.harmony-btn.unsafe:hover {
+    background: #FDBA74;
+    border-color: #FB923C;
+}
+
+.harmony-btn.unsafe.active {
+    background: #F97316;
+    color: #fff;
+    border-color: #EA580C;
+}
+
+/* ===== 操作按钮 ===== */
+.param-actions {
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border-light);
+}
+
+.param-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.param-btn.secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+}
+
+.param-btn.secondary:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-medium);
+}
+
+.param-btn.primary {
+    background: var(--accent-primary);
+    color: #fff;
+}
+
+.param-btn.primary:hover {
+    background: var(--button-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.param-btn.success {
+    background: var(--accent-success) !important;
+    color: #fff !important;
+}
+
+.param-btn.error {
+    background: var(--accent-danger) !important;
+    color: #fff !important;
+}
+
+/* ===== 收敛提交区域 ===== */
+.converge-submit-area {
+    margin-top: var(--space-md);
+    padding: var(--space-md);
+    background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+    border-radius: var(--radius-md);
+    border: 1px solid #C7D2FE;
+}
+
+.converge-submit-area.hidden {
+    display: none;
+}
+
+.converge-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.converge-summary {
+    flex: 1;
+    background: #fff;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    border: 1px solid var(--border-light);
+}
+
+.converge-summary h5 {
+    margin: 0 0 var(--space-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.converge-params {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm) var(--space-md);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.converge-params strong {
+    color: var(--accent-primary);
+    font-weight: 600;
+}
+
+.submit-note {
+    margin-top: var(--space-sm);
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-style: italic;
+}
+
+/* ===== Report Panel 样式增强 ===== */
+.report-panel {
+    margin-top: var(--space-lg);
+    padding: var(--space-md);
+    background: #f8fafc;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.report-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.report-panel-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.report-close-btn {
+    background: transparent;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--text-tertiary);
+    border-radius: var(--radius-sm);
+    transition: all 0.15s ease;
+}
+
+.report-close-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.report-section {
+    margin-bottom: var(--space-md);
+}
+
+.report-section:last-child {
+    margin-bottom: 0;
+}
+
+.report-section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 var(--space-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* ===== 专家模式按钮位置 ===== */
+.expert-mode-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(243, 244, 246, 0.8);
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.expert-mode-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.expert-mode-btn.active {
+    background: var(--accent-primary);
+    color: #fff;
+    border-color: var(--accent-primary);
+}
+
+/* ===== 响应式调整 ===== */
+@media (max-width: 600px) {
+    .param-mode-toggle {
+        flex-direction: column;
+    }
+    
+    .harmony-options {
+        flex-direction: column;
+    }
+    
+    .harmony-btn {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .param-actions {
+        flex-direction: column;
+    }
+    
+    .param-btn {
+        width: 100%;
+    }
+    
+    .converge-params {
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+}

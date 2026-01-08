@@ -149,10 +149,9 @@ class GameResultManager {
       if(reportTitle) this.updateWithIcon(reportTitle, this.t('report.title')); // Was ui.report
       
       const reportSections = document.querySelectorAll('.report-section-title');
-      if(reportSections.length >= 2) {
+      if(reportSections.length >= 1) {
           this.updateWithIcon(reportSections[0], this.t('report.behaviorPattern'));
-          this.updateWithIcon(reportSections[1], this.t('report.clickTrail'));
-          if (reportSections[2]) this.updateWithIcon(reportSections[2], this.t('report.musicParams'));
+          if (reportSections[1]) this.updateWithIcon(reportSections[1], this.t('report.musicParams'));
       }
 
       // Report Params
@@ -650,7 +649,6 @@ class GameResultManager {
     }
     
     this.updateTimelineScatter(notes, session.durationSec || 60);
-    this.updateLaneChart(notes);
   }
 
   /**
@@ -801,31 +799,10 @@ class GameResultManager {
   }
 
   /**
-   * 更新 Lane 分布图表
+   * 更新 Lane 分布图表 (已移除)
    */
   updateLaneChart(notes) {
-    const chartEl = document.getElementById("report-lane-chart");
-    if (!chartEl) return;
-    
-    const laneCounts = { C: 0, D: 0, E: 0, G: 0, A: 0 };
-    notes.forEach(n => {
-      const noteName = n.name?.[0] || "";
-      if (laneCounts.hasOwnProperty(noteName)) {
-        laneCounts[noteName]++;
-      }
-    });
-    
-    const maxCount = Math.max(...Object.values(laneCounts), 1);
-    
-    Object.entries(laneCounts).forEach(([lane, count]) => {
-      const item = chartEl.querySelector(`[data-lane="${lane}"]`);
-      if (item) {
-        const fill = item.querySelector(".lane-bar-fill");
-        const countEl = item.querySelector(".lane-count");
-        if (fill) fill.style.width = (count / maxCount * 100) + "%";
-        if (countEl) countEl.textContent = count;
-      }
-    });
+    // Feature removed as requested
   }
 
   /**

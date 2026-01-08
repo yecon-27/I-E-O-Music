@@ -21,6 +21,9 @@ const DEFAULT_SESSION_CONFIG = {
   rewardBpm: 72,
   rewardDurationSec: 20,
   expertMode: false,
+  // 新增参数
+  dynamicContrast: 0.1, // 0-0.5, 动态对比度
+  harmonyType: 'I-V', // 和声组合: 'I-V', 'I-IV', 'I-vi', 'I-IV-V', 'I-vi-IV-V'
 };
 
 const REWARD_SETTINGS = {
@@ -453,7 +456,8 @@ class AdvancedMusicGenerator {
       beatsTotal,
       secondsPerBeat,
       phraseNotes[0]?.notes || [],
-      styleType
+      styleType,
+      config.harmonyType || 'I-V'
     );
 
     const melodySpec = {
@@ -660,30 +664,43 @@ class AdvancedMusicGenerator {
   }
 
   /**
-   * 简单和弦/低音层：只用 I 或 V，低音区，长音铺底
+   * 简单和弦/低音层：支持多种和声组合
+   * @param {string} harmonyType - 和声类型: 'I-V', 'I-IV', 'I-vi', 'I-IV-V', 'I-vi-IV-V'
    */
-  generateSimpleChords(beatsTotal, secondsPerBeat, melodyNotes, styleType) {
+  generateSimpleChords(beatsTotal, secondsPerBeat, melodyNotes, styleType, harmonyType = 'I-V') {
     const chords = [];
     const chordNotes = [];
     const barBeats = 4;
+    
+    // 和弦根音映射
+    const chordRoots = {
+      'I': 'C3',
+      'IV': 'F2',
+      'V': 'G2',
+      'vi': 'A2'
+    };
+    
+    // 和弦进行模式
+    const progressions = {
+      'I-V': ['I', 'V'],
+      'I-IV': ['I', 'IV'],
+      'I-vi': ['I', 'vi'],
+      'I-IV-V': ['I', 'IV', 'V', 'I'],
+      'I-vi-IV-V': ['I', 'vi', 'IV', 'V']
+    };
+    
+    const progression = progressions[harmonyType] || progressions['I-V'];
 
     for (let b = 0; b < beatsTotal; b += barBeats) {
-      let chordType = "I";
+      const barIndex = Math.floor(b / barBeats);
+      const chordType = progression[barIndex % progression.length];
+      
       const barStart = b * secondsPerBeat;
-      const leadNote = melodyNotes.find((n) => n.startTime >= barStart && n.startTime < barStart + secondsPerBeat);
-      const leadChar = leadNote?.name?.charAt(0);
-      if (styleType === "sequential") {
-        chordType = Math.floor(b / barBeats) % 2 === 1 ? "V" : "I";
-      } else if (styleType === "exploratory") {
-        chordType = Math.floor(b / barBeats) % 3 === 2 ? "V" : "I";
-      } else {
-        chordType = leadChar === "G" || leadChar === "A" ? "V" : "I";
-      }
-      const chordRoot = chordType === "I" ? "C3" : "G2";
+      const chordRoot = chordRoots[chordType] || 'C3';
       chords.push({ beatIndex: b, chordRoot, chordType });
 
       const rootMidi = midiFromNoteName(chordRoot);
-      const fifthMidi = rootMidi + 7; // 不用三音，避免张力
+      const fifthMidi = rootMidi + 7; // 纯五度
       const startTime = b * secondsPerBeat;
       const endTime = Math.min((b + barBeats) * secondsPerBeat, beatsTotal * secondsPerBeat);
       const velScale = 0.7; // 约等于主音量的 70%
@@ -699,12 +716,25 @@ class AdvancedMusicGenerator {
         startTime,
         endTime,
         midi: fifthMidi,
-        name: chordType === "I" ? "G3" : "D3",
+        name: this.getFifthNote(chordType),
         velocityScale: velScale,
       });
     }
 
     return { chordTrack: chords, chordNotes };
+  }
+  
+  /**
+   * 获取和弦的五度音名
+   */
+  getFifthNote(chordType) {
+    const fifths = {
+      'I': 'G3',
+      'IV': 'C3',
+      'V': 'D3',
+      'vi': 'E3'
+    };
+    return fifths[chordType] || 'G3';
   }
 
   toMagentaSequence(phrases, chordNotes = [], bpm, config) {
@@ -712,7 +742,18 @@ class AdvancedMusicGenerator {
     const baseVelocity =
       config.volumeLevel === "low" ? 50 : config.volumeLevel === "high" ? 95 : 75;
     const timbreScale = config.timbre === "bright" ? 1.1 : 0.85;
-    const velocityFor = (vel) => clamp(Math.round(vel * timbreScale), 30, 110);
+    
+    // 动态对比度：控制音符力度的变化范围
+    const dynamicContrast = config.dynamicContrast || 0.1;
+    const contrastRange = baseVelocity * dynamicContrast;
+    
+    const velocityFor = (vel, noteIndex = 0) => {
+      // 根据动态对比度添加力度变化
+      const variation = Math.sin(noteIndex * 0.5) * contrastRange;
+      return clamp(Math.round((vel + variation) * timbreScale), 30, 110);
+    };
+    
+    let noteIndex = 0;
     phrases.forEach((phrase) => {
       phrase.notes.forEach((n) => {
         // program 0 = Acoustic Grand Piano，统一用钢琴避免亮色小提琴
@@ -720,7 +761,7 @@ class AdvancedMusicGenerator {
           pitch: n.midi,
           startTime: n.startTime,
           endTime: n.endTime,
-          velocity: velocityFor(baseVelocity),
+          velocity: velocityFor(baseVelocity, noteIndex++),
           program: 0,
           isDrum: false,
         });
@@ -728,12 +769,12 @@ class AdvancedMusicGenerator {
     });
 
     // 添加和弦/低音层
-    chordNotes.forEach((n) => {
+    chordNotes.forEach((n, idx) => {
       notes.push({
         pitch: n.midi,
         startTime: n.startTime,
         endTime: n.endTime,
-        velocity: velocityFor(baseVelocity * (n.velocityScale || 0.55)),
+        velocity: velocityFor(baseVelocity * (n.velocityScale || 0.55), idx),
         program: 0,
         isDrum: false,
       });

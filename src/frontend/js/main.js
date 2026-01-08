@@ -180,10 +180,9 @@ function updateUIText() {
     if (reportTitle) updateTextWithIcon(reportTitle, t('report.title'));
 
     const reportSections = document.querySelectorAll('.report-section-title');
-    if (reportSections.length >= 3) {
+    if (reportSections.length >= 1) {
         updateTextWithIcon(reportSections[0], t('report.behaviorPattern'));
-        updateTextWithIcon(reportSections[1], t('report.clickTrail'));
-        updateTextWithIcon(reportSections[2], t('report.musicParams'));
+        if (reportSections[1]) updateTextWithIcon(reportSections[1], t('report.musicParams'));
     }
     
     // Report Score Labels
