@@ -274,6 +274,34 @@ class AutismFriendlyFeatures {
     showAchievement(message, type = 'success') {
         // 用户已禁用成就弹窗，直接返回
         return;
+        /* 
+        // 禁用原有弹窗逻辑，由 showSimpleFeedback 接管或彻底禁用
+        const popup = document.createElement('div');
+        popup.className = 'achievement-popup';
+        popup.textContent = message;
+        
+        // 不同类型的样式差异
+        if (type === 'milestone') {
+            popup.style.background = '#FFD700'; // 金色
+            popup.style.color = '#000';
+            popup.style.border = '2px solid #FFA500';
+        }
+        
+        document.body.appendChild(popup);
+        
+        // 3秒后消失
+        setTimeout(() => {
+            popup.style.opacity = '0';
+            popup.style.transform = 'translate(-50%, -20px)';
+            popup.style.transition = 'all 0.5s ease';
+            
+            setTimeout(() => {
+                if (popup.parentNode) {
+                    popup.parentNode.removeChild(popup);
+                }
+            }, 500);
+        }, 3000);
+        */
     }
     
     /**

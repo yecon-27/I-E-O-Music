@@ -39,6 +39,39 @@ class GameResultManager {
     const openRewardControlsBtn = document.getElementById("open-reward-controls-btn");
     const debugHelpToggleBtn = document.getElementById("debug-help-toggle");
     const debugHelp = document.getElementById("debug-help");
+    const postSessionBtn = document.getElementById("post-session-btn");
+    const debugPanel = document.getElementById("debug-panel");
+    const expertModeCheckbox = document.getElementById("expert-mode-checkbox");
+
+    if (postSessionBtn && debugPanel) {
+      console.log("✅ Post Session Button & Debug Panel found");
+      postSessionBtn.addEventListener("click", () => {
+        console.log("🖱️ Post Session Button clicked");
+        const isHidden = debugPanel.classList.toggle("hidden");
+        console.log("Debug Panel hidden:", isHidden);
+        // 如果展开了面板，强制刷新一次数据以确保显示最新状态
+        if (!isHidden) {
+          this.updateDebugPanel();
+        }
+      });
+    } else {
+      console.error("❌ Post Session Button or Debug Panel not found in DOM");
+    }
+
+    if (expertModeCheckbox) {
+      expertModeCheckbox.addEventListener("change", (e) => {
+        console.log("🎛️ Expert Mode toggled:", e.target.checked);
+        // 更新全局配置或当前会话配置
+        if (window.lastGeneratedSequence && window.lastGeneratedSequence.debugPayload) {
+          if (!window.lastGeneratedSequence.debugPayload.sessionConfig) {
+            window.lastGeneratedSequence.debugPayload.sessionConfig = {};
+          }
+          window.lastGeneratedSequence.debugPayload.sessionConfig.expertMode = e.target.checked;
+          // 刷新面板显示
+          this.updateDebugPanel();
+        }
+      });
+    }
 
     if (playAgainBtn) {
       playAgainBtn.addEventListener("click", () => {
@@ -342,45 +375,17 @@ class GameResultManager {
       bubbles: document.getElementById("result-bubbles"),
       speed: document.getElementById("result-speed"),
       combo: document.getElementById("result-combo"),
-      handPreference: document.getElementById("result-hand-preference"),
       encouragement: document.getElementById("result-encouragement"),
     };
 
     if (elements.bubbles) elements.bubbles.textContent = stats.bubblesPopped;
     if (elements.speed) elements.speed.textContent = stats.avgSpeed;
     if (elements.combo) elements.combo.textContent = stats.maxConsecutive;
-    if (elements.handPreference) {
-      // 显示手部偏好 - 只显示偏好类型，不包含"偏好"等词汇
-      const handPref = stats.handPreference;
-      console.log("🖥️ 更新手部偏好显示:", handPref);
 
-      if (handPref.preferredHand === "left") {
-        elements.handPreference.textContent = "左手";
-      } else if (handPref.preferredHand === "right") {
-        elements.handPreference.textContent = "右手";
-      } else if (handPref.preferredHand === "balanced") {
-        elements.handPreference.textContent = "双手";
-      } else if (handPref.preferredHand === "none") {
-        // 改为更直观的文本
-        elements.handPreference.textContent = "未检测";
-      } else {
-        elements.handPreference.textContent = "未知";
-      }
-    }
     if (elements.encouragement) {
-      // 组合原有鼓励消息和手部建议
-      const encouragementText = stats.encouragement;
-      const handSuggestion = stats.handPreference.suggestion;
-
-      // 如果有手部建议，显示更简洁的格式
-      if (
-        handSuggestion &&
-        handSuggestion !== "开始戳破泡泡来看看你更喜欢用哪只手！"
-      ) {
-        elements.encouragement.innerHTML = `${encouragementText}<br>💡 ${handSuggestion}`;
-      } else {
-        elements.encouragement.textContent = encouragementText;
-      }
+      // 强制清空旧的 HTML 内容，避免遗留的手部建议
+      elements.encouragement.innerHTML = "";
+      elements.encouragement.textContent = stats.encouragement;
     }
 
     // 添加数字动画效果
@@ -435,6 +440,7 @@ class GameResultManager {
   }
 
   updateDebugPanel() {
+    console.log("📊 updateDebugPanel called");
     const decisionEl = document.getElementById("debug-summary-decision");
     const confidenceEl = document.getElementById("debug-summary-confidence");
     const safetyEl = document.getElementById("debug-summary-safety");
@@ -452,6 +458,15 @@ class GameResultManager {
     const laneBars = document.getElementById("debug-lane-bars");
 
     if (!decisionEl || !confidenceEl || !safetyEl || !rewardEl || !whatList || !whyList || !signalList) {
+      console.error("❌ Critical debug elements missing:", {
+        decisionEl: !!decisionEl,
+        confidenceEl: !!confidenceEl,
+        safetyEl: !!safetyEl,
+        rewardEl: !!rewardEl,
+        whatList: !!whatList,
+        whyList: !!whyList,
+        signalList: !!signalList
+      });
       return;
     }
 

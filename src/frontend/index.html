@@ -110,7 +110,10 @@
                 
                 <!-- 游戏结果窗口 -->
                 <div id="game-result-overlay" class="game-result-overlay hidden">
-                    <div class="result-content">
+                    <div class="result-content" style="position: relative;">
+                        <button id="post-session-btn" class="result-btn small secondary" style="position: absolute; top: 20px; right: 20px; z-index: 2005;">
+                            Post Session View
+                        </button>
                         <h2>🎉 游戏结束！</h2>
                         <div class="result-stats">
                             <div class="stat-item">
@@ -131,20 +134,17 @@
                                 <span id="result-combo" class="stat-value">0</span>
                                 <span class="stat-unit">连续</span>
                             </div>
-                            <div class="stat-item">
-                                <span class="stat-icon">🤚</span>
-                                <span class="stat-label">手部偏好</span>
-                                <span id="result-hand-preference" class="stat-value">平衡</span>
-                                <span class="stat-unit">使用</span>
-                            </div>
                         </div>
                         <div class="result-message">
                             <p id="result-encouragement">太棒了！你的表现很出色！</p>
                         </div>
-                        <div id="debug-panel" class="debug-panel">
+                        <div id="debug-panel" class="debug-panel hidden">
                             <div class="debug-header">
                                 <h3>Post-Session Review</h3>
                                 <div class="debug-header-actions">
+                                    <label style="font-size: 0.85rem; display: flex; align-items: center; gap: 4px; color: var(--text-secondary);">
+                                        <input type="checkbox" id="expert-mode-checkbox"> 专家模式
+                                    </label>
                                     <button id="debug-help-toggle" class="result-btn secondary small">How to read</button>
                                     <button id="open-reward-controls-btn" class="result-btn secondary small">Open Reward Controls</button>
                                 </div>
