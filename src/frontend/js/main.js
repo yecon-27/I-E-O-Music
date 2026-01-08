@@ -81,77 +81,190 @@ const ICONS = {
 };
 
 function updateUIText() {
-    // Buttons - 使用innerHTML来支持SVG图标
+    // 1. Header & Footer
     if(elements.pauseBtn) elements.pauseBtn.innerHTML = game?.isPaused 
         ? ICONS.play + `<span style="margin-left:6px">${t('ui.resume')}</span>`
-        : ICONS.pause + `<span style="margin-left:6px">${t('ui.pause')}</span>`;
+        : ICONS.pause + `<span style="margin-left:6px">${t('header.pause')}</span>`;
         
-    if(elements.panicMuteBtn) elements.panicMuteBtn.innerHTML = panicMuted 
-        ? ICONS.volume2 + `<span style="margin-left:6px">${t('ui.unmute')}</span>`
-        : ICONS.volumeX + `<span style="margin-left:6px">${t('ui.mute')}</span>`;
-        
-    if(elements.resultMuteBtn) elements.resultMuteBtn.innerHTML = panicMuted 
-        ? ICONS.volume2 + `<span style="margin-left:6px">${t('ui.unmute')}</span>`
-        : ICONS.volumeX + `<span style="margin-left:6px">${t('ui.mute')}</span>`;
-        
-    if(elements.sessionSettingsBtn) elements.sessionSettingsBtn.innerHTML = ICONS.settings + `<span style="margin-left:6px">${t('ui.settings')}</span>`;
-    
-    if(elements.slowBtn) elements.slowBtn.innerHTML = ICONS.rewind + `<span class="speed-label">${t('ui.slow')}</span>`;
-    if(elements.normalBtn) elements.normalBtn.innerHTML = ICONS.playSmall + `<span class="speed-label">${t('ui.normal')}</span>`;
-    if(elements.fastBtn) elements.fastBtn.innerHTML = ICONS.fastForward + `<span class="speed-label">${t('ui.fast')}</span>`;
-    
-    // Sensory button
-    const sensoryBtn = document.getElementById('sensory-panel-toggle');
-    if(sensoryBtn) sensoryBtn.textContent = t('ui.sensory');
+    refreshPanicButtons();
 
-    // Instructions & Status
+    if(elements.sessionSettingsBtn) elements.sessionSettingsBtn.innerHTML = ICONS.settings + `<span style="margin-left:6px">${t('header.settings')}</span>`;
+    
+    // Speed buttons
+    if(elements.slowBtn) elements.slowBtn.innerHTML = ICONS.rewind + `<span class="speed-label">${t('speed.slow')}</span>`;
+    if(elements.normalBtn) elements.normalBtn.innerHTML = ICONS.playSmall + `<span class="speed-label">${t('speed.normal')}</span>`;
+    if(elements.fastBtn) elements.fastBtn.innerHTML = ICONS.fastForward + `<span class="speed-label">${t('speed.fast')}</span>`;
+
+    // Footer
     const instructionsP = document.querySelector('.instructions p');
-    if(instructionsP) instructionsP.innerHTML = ICONS.target + ' ' + t('ui.instructions');
+    if(instructionsP) instructionsP.innerHTML = ICONS.target + ' ' + t('footer.instruction');
     
     const inputModeLabel = document.querySelector('.status-item:nth-child(1) span:first-child');
-    if(inputModeLabel) inputModeLabel.textContent = t('ui.inputMode');
-    if(elements.inputMode) elements.inputMode.textContent = t('input.mouse') || 'Mouse';
+    if(inputModeLabel) inputModeLabel.textContent = t('footer.inputMode');
+    if(elements.inputMode) elements.inputMode.textContent = t('input.mouse');
 
     const bubbleCountLabel = document.querySelector('.status-item:nth-child(2) span:first-child');
-    if(bubbleCountLabel) bubbleCountLabel.textContent = t('ui.bubbleCount');
+    if(bubbleCountLabel) bubbleCountLabel.textContent = t('footer.bubbleCount');
 
     const timeLabel = document.querySelector('.time-remaining span:first-child');
     if(timeLabel) timeLabel.textContent = t('ui.timeRemaining');
+
+    // 2. Settings Modal
+    const settingsTitle = document.querySelector('.settings-header h2');
+    if(settingsTitle) settingsTitle.textContent = t('set.title');
+    
+    const settingsSub = document.querySelector('.settings-subtitle');
+    if(settingsSub) settingsSub.textContent = t('set.subtitle');
+
+    // New Settings Grid (using .settings-label-with-icon)
+    const newLabels = document.querySelectorAll('.settings-label-with-icon span');
+    if(newLabels.length >= 4) {
+        newLabels[0].textContent = t('set.volume');
+        newLabels[1].textContent = t('set.timbre');
+        newLabels[2].textContent = t('set.latency');
+        newLabels[3].textContent = t('set.feedback');
+    }
+    
+    // Fallback for old settings grid if needed
+    const oldLabels = document.querySelectorAll('.settings-field label');
+    if(oldLabels.length > 0 && newLabels.length === 0) {
+        if(oldLabels.length >= 6) {
+            oldLabels[0].textContent = t('set.volume');
+            oldLabels[1].textContent = t('set.density');
+            oldLabels[2].textContent = t('set.timbre');
+            oldLabels[3].textContent = t('set.latency');
+            oldLabels[4].textContent = t('set.feedback');
+            oldLabels[5].textContent = t('set.reward');
+        }
+    }
+
+    // Settings Action Buttons
+    if(elements.sessionResetBtn) elements.sessionResetBtn.textContent = t('set.reset');
+    if(elements.sessionStartBtn) elements.sessionStartBtn.textContent = game?.roundActive ? t('ui.saveSettings') : t('set.start');
+    if(elements.sessionCloseBtn) elements.sessionCloseBtn.textContent = t('set.close');
+
+    // Update Segmented Controls
+    updateSelectOptions('session-volume', ['opt.low', 'opt.medium', 'opt.high']);
+    updateSelectOptions('session-timbre', ['opt.soft', 'opt.bright']);
+    updateSelectOptions('session-latency', ['opt.immediate', 'opt.delay']);
+    updateSelectOptions('session-immediate', ['opt.full', 'opt.visual', 'opt.off']);
+    updateSelectOptions('session-reward', ['opt.on', 'opt.off']);
+
+    // 3. Sidebar
+    const sidebarTitle = document.querySelector('.sidebar-title');
+    if (sidebarTitle) sidebarTitle.textContent = t('sidebar.title');
+
+    const sectionTitles = document.querySelectorAll('.sidebar-section .section-title');
+    if (sectionTitles.length >= 4) {
+        updateTextWithIcon(sectionTitles[0], t('sidebar.realtimeData'));
+        updateTextWithIcon(sectionTitles[1], t('sidebar.laneDist'));
+        updateTextWithIcon(sectionTitles[2], t('sidebar.patternPredict'));
+        updateTextWithIcon(sectionTitles[3], t('sidebar.recentClicks'));
+    }
+
+    // Sidebar Mini Labels
+    const miniLabels = document.querySelectorAll('.mini-label');
+    if(miniLabels.length >= 4) {
+        miniLabels[0].textContent = t('sidebar.clickCount');
+        miniLabels[1].textContent = t('sidebar.hitRate');
+        miniLabels[2].textContent = 'BPM';
+        miniLabels[3].textContent = t('sidebar.dominant');
+    }
+    
+    // Sidebar Tooltip
+    const patternTooltip = document.querySelector('.sidebar-section .info-icon');
+    if(patternTooltip) patternTooltip.setAttribute('data-tooltip', t('sidebar.tooltip.pattern'));
+
+    // 4. Report Panel
+    const reportTitle = document.querySelector('.report-panel-header h3');
+    if (reportTitle) updateTextWithIcon(reportTitle, t('report.title'));
+
+    const reportSections = document.querySelectorAll('.report-section-title');
+    if (reportSections.length >= 3) {
+        updateTextWithIcon(reportSections[0], t('report.behaviorPattern'));
+        updateTextWithIcon(reportSections[1], t('report.clickTrail'));
+        updateTextWithIcon(reportSections[2], t('report.musicParams'));
+    }
+    
+    // Report Score Labels
+    const scoreLabels = document.querySelectorAll('.score-label');
+    if(scoreLabels.length >= 3) {
+        updateTextWithIcon(scoreLabels[0], t('report.score.sequential'));
+        updateTextWithIcon(scoreLabels[1], t('report.score.repetitive'));
+        updateTextWithIcon(scoreLabels[2], t('report.score.exploratory'));
+        
+        // Update tooltips inside these labels
+        const tooltips = document.querySelectorAll('.score-label .info-icon');
+        if(tooltips.length >= 3) {
+            tooltips[0].setAttribute('data-tooltip', t('report.tooltip.sequential'));
+            tooltips[1].setAttribute('data-tooltip', t('report.tooltip.repetitive'));
+            tooltips[2].setAttribute('data-tooltip', t('report.tooltip.exploratory'));
+        }
+    }
+    
+    // Report Params
+    const reportParamLabels = document.querySelectorAll('.music-params-grid label');
+    if(reportParamLabels.length >= 3) {
+        reportParamLabels[0].textContent = t('expert.tempo');
+        reportParamLabels[1].textContent = t('expert.volume');
+        reportParamLabels[2].textContent = t('expert.density');
+    }
+
+    // 5. Result Overlay
+    const resultTitle = document.querySelector('.game-result-overlay h2');
+    if (resultTitle) updateTextWithIcon(resultTitle, t('ui.gameOver'));
+
+    const statLabels = document.querySelectorAll('.stat-item .stat-label');
+    if (statLabels.length >= 3) {
+        statLabels[0].textContent = t('res.success');
+        statLabels[1].textContent = t('res.speed');
+        statLabels[2].textContent = t('res.combo');
+    }
+
+    const statUnits = document.querySelectorAll('.stat-item .stat-unit');
+    if (statUnits.length >= 3) {
+        statUnits[0].textContent = t('res.unitBubbles');
+        statUnits[1].textContent = t('res.unitSpeed');
+        statUnits[2].textContent = t('res.unitCombo');
+    }
+
+    // Result Buttons
+    const playMusicBtn = document.getElementById('play-music-btn');
+    if (playMusicBtn) updateTextWithIcon(playMusicBtn, t('ui.play'));
+    
+    const playAgainBtn = document.getElementById('play-again-btn');
+    if (playAgainBtn) updateTextWithIcon(playAgainBtn, t('ui.playAgain'));
+    
+    const finishBtn = document.getElementById('finish-game-btn');
+    if (finishBtn) updateTextWithIcon(finishBtn, t('ui.finish'));
+    
+    // Expert Button
+    const expertBtn = document.getElementById('post-session-btn');
+    if (expertBtn) updateTextWithIcon(expertBtn, t('ui.expertMode'));
 
     // Pause Overlay
     const pauseTitle = document.querySelector('#pause-overlay h2');
     const pauseDesc = document.querySelector('#pause-overlay p');
     if(pauseTitle) pauseTitle.textContent = t('ui.gamePaused');
     if(pauseDesc) pauseDesc.textContent = t('ui.clickContinue');
+}
 
-    // Settings Modal
-    const settingsTitle = document.querySelector('.settings-header h2');
-    const settingsSub = document.querySelector('.settings-subtitle');
-    if(settingsTitle) settingsTitle.textContent = t('settings.title');
-    if(settingsSub) settingsSub.textContent = t('settings.subtitle');
-    
-    // Labels
-    const labels = document.querySelectorAll('.settings-field label');
-    if(labels.length >= 6) {
-        labels[0].textContent = t('settings.volume');
-        labels[1].textContent = t('settings.density');
-        labels[2].textContent = t('settings.timbre');
-        labels[3].textContent = t('settings.latency');
-        labels[4].textContent = t('settings.feedback');
-        labels[5].textContent = t('settings.reward');
+function updateTextWithIcon(element, text) {
+    if (!element) return;
+    // Update the first text node found that is not empty
+    let textNodeUpdated = false;
+    for (let i = 0; i < element.childNodes.length; i++) {
+        const node = element.childNodes[i];
+        if (node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0) {
+            node.textContent = ' ' + text + ' ';
+            textNodeUpdated = true;
+            break;
+        }
     }
-    
-    // Settings Buttons
-    if(elements.sessionResetBtn) elements.sessionResetBtn.textContent = t('settings.reset');
-    if(elements.sessionStartBtn) elements.sessionStartBtn.textContent = game?.roundActive ? t('ui.saveSettings') : t('ui.startRound');
-    if(elements.sessionCloseBtn) elements.sessionCloseBtn.textContent = t('settings.close');
-
-    // Options (Update select options text)
-    updateSelectOptions('session-volume', ['opt.low', 'opt.medium', 'opt.high']);
-    updateSelectOptions('session-timbre', ['opt.soft', 'opt.bright']);
-    updateSelectOptions('session-latency', ['opt.immediate', 'opt.delay']);
-    updateSelectOptions('session-immediate', ['opt.full', 'opt.visual', 'opt.off']);
-    updateSelectOptions('session-reward', ['opt.on', 'opt.off']);
+    // If no text node was found (e.g. only icon), append text
+    if (!textNodeUpdated) {
+        element.appendChild(document.createTextNode(' ' + text));
+    }
 }
 
 function updateSelectOptions(id, keys) {
@@ -500,7 +613,7 @@ function handlePauseToggle() {
     // Update UI
     elements.pauseBtn.innerHTML = isPaused 
         ? ICONS.play + `<span style="margin-left:6px">${t('ui.resume')}</span>`
-        : ICONS.pause + `<span style="margin-left:6px">${t('ui.pause')}</span>`;
+        : ICONS.pause + `<span style="margin-left:6px">${t('header.pause')}</span>`;
     
     if (isPaused) {
         elements.pauseOverlay.classList.remove('hidden');
@@ -796,23 +909,8 @@ function syncPanicButton(btn, isMuted) {
     if (!btn) return;
     btn.classList.toggle('is-muted', isMuted);
     btn.innerHTML = isMuted 
-        ? ICONS.volumeX + `<span style="margin-left:6px">${t('ui.mute')}</span>` 
-        : ICONS.volume2 + `<span style="margin-left:6px">${t('ui.unmute')}</span>`;
-    // Note: I swapped logic here in syncPanicButton compared to original code?
-    // Original: isMuted ? t('panic-btn-muted') : t('panic-btn-unmuted')
-    // panic-btn-muted was "Unmute" (Recovery sound)
-    // panic-btn-unmuted was "Mute"
-    // So if isMuted is true, we show "Unmute" button.
-    // My t() logic: ui.unmute is 'Unmute'.
-    
-    // Correct logic:
-    if (isMuted) {
-         // Current state is muted, so button should say "Unmute"
-         btn.innerHTML = ICONS.volume2 + `<span style="margin-left:6px">${t('ui.unmute')}</span>`;
-    } else {
-         // Current state is unmuted, so button should say "Mute"
-         btn.innerHTML = ICONS.volumeX + `<span style="margin-left:6px">${t('ui.mute')}</span>`;
-    }
+        ? ICONS.volume2 + `<span style="margin-left:6px">${t('header.unmute')}</span>`
+        : ICONS.volumeX + `<span style="margin-left:6px">${t('header.mute')}</span>`;
 }
 
 function refreshPanicButtons() {
@@ -853,7 +951,7 @@ function openSessionSettingsModal() {
     const config = getCurrentSessionConfig();
     loadSessionSettingsForm(config);
     if (elements.sessionStartBtn) {
-        elements.sessionStartBtn.textContent = game?.roundActive ? t('ui.saveSettings') : t('ui.startRound');
+        elements.sessionStartBtn.textContent = game?.roundActive ? t('ui.saveSettings') : t('set.start');
     }
     if (game?.roundActive && !game.isPaused) {
         game.togglePause();

@@ -62,6 +62,25 @@ class GameEngine {
         this.gameLoop = this.gameLoop.bind(this);
         this.update = this.update.bind(this);
         this.render = this.render.bind(this);
+
+        // Subscribe to language changes
+        if (window.i18n) {
+            window.i18n.subscribe(() => this.onLanguageChanged());
+        }
+    }
+
+    t(key, params) {
+        return window.i18n ? window.i18n.t(key, params) : key;
+    }
+
+    onLanguageChanged() {
+        if (!this.isRunning) {
+            this.clearCanvas();
+            this.drawBackground();
+            this.drawCenteredMessage(this.t('game.ready'), '#95C3D8');
+        } else if (this.isPaused) {
+            this.render(); // Will call drawCenteredMessage with 'game.paused'
+        }
     }
 
     setSessionConfig(cfg = {}) {
@@ -168,7 +187,7 @@ class GameEngine {
         // 背景/文案/分数
         this.clearCanvas();
         this.drawBackground();
-        this.drawCenteredMessage('游戏准备就绪！', '#95C3D8');
+        this.drawCenteredMessage(this.t('game.ready'), '#95C3D8');
         this.score = 0;
         this.handPositions = {
           leftHand:  { x: 0, y: 0, visible: false },
@@ -440,7 +459,7 @@ class GameEngine {
         
         // Draw debug info if needed
         if (this.isPaused) {
-            this.drawCenteredMessage('已暂停', '#6C757D');
+            this.drawCenteredMessage(this.t('game.paused'), '#6C757D');
         }
     }
     
@@ -642,7 +661,7 @@ class GameEngine {
         // 初始按顺序生成一组 4 个，每个间隔延迟，形成明显高度差
         const initialCount = this.bubbleManager?.targetBubbleCount || 4;
         for (let i = 0; i < initialCount; i++) {
-            this.bubbleManager?.scheduleSpawn(null, i * 1200);
+            this.bubbleManager?.scheduleSpawn(null, i * 800);
         }
         // 清空点击轨迹
         if (this.clickTrailEl) this.clickTrailEl.innerHTML = '';
@@ -654,7 +673,7 @@ class GameEngine {
         this.roundPausedAt = 0;
 
         // 移除开始提示，避免干扰
-        // window.gameApp?.showEncouragementMessage?.(`开始采样：${seconds}s`, 1000);
+        // window.gameApp?.showEncouragementMessage?.(this.t('game.samplingStarted', { seconds }), 1000);
 
         // 用“剩余毫秒数”启动计时器
         this.roundTimer = setTimeout(() => this.stopRound({ save: true }),
@@ -687,7 +706,7 @@ class GameEngine {
         window.dispatchEvent(new CustomEvent('round:ended', { detail: session }));
         
         // 移除结束提示
-        // window.gameApp?.showEncouragementMessage?.(`采样完成，共 ${session.notes.length} 个音符`, 1200);
+        // window.gameApp?.showEncouragementMessage?.(this.t('game.samplingCompleted', { count: session.notes.length }), 1200);
       
         // 清理
         this.onRoundEnd = null;

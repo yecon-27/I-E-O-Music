@@ -70,6 +70,9 @@ class GameResultManager {
       });
     }
 
+    // 绑定报告面板内的音乐参数控件
+    this.bindReportMusicParams();
+
     if (playAgainBtn) {
       playAgainBtn.addEventListener("click", () => {
         this.startNewGame();
@@ -105,10 +108,10 @@ class GameResultManager {
   updateStaticUIText() {
       // Update result overlay static texts
       const title = document.querySelector('.result-content h2');
-      if(title) title.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg> ${this.t('ui.gameOver')}`;
+      if(title) this.updateWithIcon(title, this.t('ui.gameOver'));
       
       const expertBtn = document.getElementById('post-session-btn');
-      if(expertBtn) expertBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg> ${this.t('ui.expertMode')}`;
+      if(expertBtn) this.updateWithIcon(expertBtn, this.t('ui.expertMode'));
       
       const statLabels = document.querySelectorAll('.stat-label');
       if(statLabels.length >= 3) {
@@ -125,41 +128,124 @@ class GameResultManager {
       }
       
       const playBtn = document.getElementById('play-music-btn');
-      // 注意：playBtn的文本会根据状态变化，这里只更新初始状态，或者在状态更新时处理
-      if(playBtn && !playBtn.disabled) {
-           // 只在未播放时重置文本
-           if (!playBtn.innerHTML.includes('正在播放') && !playBtn.innerHTML.includes('Playing')) {
-               playBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg> ${this.t('ui.play')}`;
-           }
+      if(playBtn && !playBtn.disabled && !playBtn.textContent.includes('...')) {
+           this.updateWithIcon(playBtn, this.t('ui.play'));
       }
       
       const muteBtn = document.getElementById('result-mute-btn');
       if(muteBtn) {
           const isMuted = window.__panicMute;
-          muteBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg> ${isMuted ? this.t('ui.unmute') : this.t('ui.mute')}`;
+          this.updateWithIcon(muteBtn, isMuted ? this.t('ui.unmute') : this.t('ui.mute'));
       }
       
       const playAgainBtn = document.getElementById('play-again-btn');
-      if(playAgainBtn) playAgainBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg> ${this.t('ui.playAgain')}`;
+      if(playAgainBtn) this.updateWithIcon(playAgainBtn, this.t('ui.playAgain'));
       
       const finishBtn = document.getElementById('finish-game-btn');
-      if(finishBtn) finishBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg> ${this.t('ui.finish')}`;
+      if(finishBtn) this.updateWithIcon(finishBtn, this.t('ui.finish'));
       
       // Report Panel
       const reportTitle = document.querySelector('.report-panel-header h3');
-      if(reportTitle) reportTitle.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg> ${this.t('ui.report')}`;
+      if(reportTitle) this.updateWithIcon(reportTitle, this.t('report.title')); // Was ui.report
       
-      // Realtime Panel (Sidebar)
-      const rtTitle = document.querySelector('.sidebar-title');
-      if(rtTitle) rtTitle.textContent = this.t('ui.realtimeData');
-      
-      const rtSections = document.querySelectorAll('.sidebar-section .section-title');
-      if(rtSections.length >= 4) {
-          // Keep icons, update text
-          // Note: This is fragile if HTML structure changes. Better to wrap text in span.
-          // Assuming structure is SVG + Text (node)
-          // Let's use simpler approach if possible or just update the text node
+      const reportSections = document.querySelectorAll('.report-section-title');
+      if(reportSections.length >= 2) {
+          this.updateWithIcon(reportSections[0], this.t('report.behaviorPattern'));
+          this.updateWithIcon(reportSections[1], this.t('report.clickTrail'));
+          if (reportSections[2]) this.updateWithIcon(reportSections[2], this.t('report.musicParams'));
       }
+
+      // Report Params
+      const reportParamLabels = document.querySelectorAll('.music-params-grid label');
+      if(reportParamLabels.length >= 3) {
+          reportParamLabels[0].textContent = this.t('expert.tempo');
+          reportParamLabels[1].textContent = this.t('expert.volume');
+          reportParamLabels[2].textContent = this.t('expert.density');
+      }
+  }
+
+  updateWithIcon(element, text) {
+      if (!element) return;
+      let textNode = null;
+      for (let i = 0; i < element.childNodes.length; i++) {
+          const node = element.childNodes[i];
+          if (node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0) {
+              textNode = node;
+              break;
+          }
+      }
+      if (textNode) {
+          textNode.textContent = ' ' + text + ' ';
+      } else {
+          // Fallback: preserve SVG if it's the first child
+          const svg = element.querySelector('svg');
+          if (svg) {
+              // Only clear if we are sure we are appending correctly
+              // But simpler is to just append text node if none exists
+              element.appendChild(document.createTextNode(' ' + text));
+          } else {
+              element.textContent = text;
+          }
+      }
+  }
+
+  /**
+   * 绑定报告面板内的音乐参数控件
+   */
+  bindReportMusicParams() {
+    // Tempo 滑块
+    const tempoSlider = document.getElementById("report-param-tempo");
+    const tempoValue = document.getElementById("report-param-tempo-value");
+    if (tempoSlider && tempoValue) {
+      tempoSlider.addEventListener("input", (e) => {
+        const value = parseInt(e.target.value);
+        tempoValue.textContent = value;
+        // 应用到音乐生成配置
+        if (window.sessionConfig) {
+          window.sessionConfig.rewardBpm = value;
+        }
+        // 同步到 ExpertSettingsContext
+        if (window.useExpertSettings) {
+          window.useExpertSettings().dispatch({ type: 'SET_TEMPO', value });
+        }
+      });
+    }
+
+    // 音量滑块
+    const volumeSlider = document.getElementById("report-param-volume");
+    const volumeValue = document.getElementById("report-param-volume-value");
+    if (volumeSlider && volumeValue) {
+      volumeSlider.addEventListener("input", (e) => {
+        const value = parseInt(e.target.value);
+        volumeValue.textContent = value + "%";
+        // 应用音量
+        if (window.popSynth) {
+          window.popSynth.setVolume(value / 100);
+        }
+        // 同步到 ExpertSettingsContext
+        if (window.useExpertSettings) {
+          window.useExpertSettings().dispatch({ type: 'SET_VOLUME', value: value / 100 });
+        }
+      });
+    }
+
+    // 密度滑块
+    const densitySlider = document.getElementById("report-param-density");
+    const densityValue = document.getElementById("report-param-density-value");
+    if (densitySlider && densityValue) {
+      densitySlider.addEventListener("input", (e) => {
+        const value = parseInt(e.target.value) / 100;
+        densityValue.textContent = value.toFixed(1);
+        // 应用密度
+        if (window.game?.bubbleManager) {
+          window.game.bubbleManager.setDensity(value);
+        }
+        // 同步到 ExpertSettingsContext
+        if (window.useExpertSettings) {
+          window.useExpertSettings().dispatch({ type: 'SET_DENSITY', value });
+        }
+      });
+    }
   }
 
   /**

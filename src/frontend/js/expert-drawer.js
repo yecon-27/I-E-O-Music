@@ -956,9 +956,19 @@ class ExpertSideDrawer {
     }
 }
 
-// 初始化
+// 初始化 - 默认隐藏抽屉（音乐参数已整合到报告面板）
 document.addEventListener('DOMContentLoaded', () => {
-    window.expertDrawer = new ExpertSideDrawer();
+    // 不再自动创建 expert-drawer，音乐参数控件已移至报告面板
+    // window.expertDrawer = new ExpertSideDrawer();
+    
+    // 仅保留 Context 供其他模块使用
+    window.ExpertSettingsContext = ExpertSettingsContext;
+    
+    // 移除可能已存在的 expert-drawer 元素
+    const existingDrawer = document.getElementById('expert-drawer');
+    if (existingDrawer) {
+        existingDrawer.remove();
+    }
 });
 
 window.ExpertSideDrawer = ExpertSideDrawer;

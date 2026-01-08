@@ -298,6 +298,115 @@
                                     </div>
                                 </div>
                             </div>
+                            
+                            <!-- 音乐参数调整 -->
+                            <div class="report-section">
+                                <h4 class="report-section-title">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                    音乐参数调整
+                                </h4>
+                                
+                                <!-- 模式切换 -->
+                                <div class="param-mode-toggle">
+                                    <button id="param-mode-test" class="mode-btn active">测试模式</button>
+                                    <button id="param-mode-converge" class="mode-btn">收敛模式</button>
+                                </div>
+                                
+                                <div class="music-params-grid">
+                                    <!-- Tempo (BPM) -->
+                                    <div class="param-item">
+                                        <label>
+                                            节奏 (BPM)
+                                            <span class="param-safe-range">安全区间: 60-80</span>
+                                        </label>
+                                        <div class="param-control">
+                                            <input type="range" id="report-param-tempo" min="40" max="120" value="72" class="safe-range-slider" data-safe-min="60" data-safe-max="80">
+                                            <span id="report-param-tempo-value" class="param-value">72</span>
+                                        </div>
+                                        <div id="tempo-warning" class="param-warning-msg hidden">
+                                            ⚠️ 超出安全区间，有感官过载风险，不建议部署
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Dynamic Contrast -->
+                                    <div class="param-item">
+                                        <label>
+                                            动态对比度
+                                            <span class="param-safe-range">安全区间: 0-20%</span>
+                                        </label>
+                                        <div class="param-control">
+                                            <input type="range" id="report-param-contrast" min="0" max="50" value="10" class="safe-range-slider" data-safe-min="0" data-safe-max="20">
+                                            <span id="report-param-contrast-value" class="param-value">10%</span>
+                                        </div>
+                                        <div id="contrast-warning" class="param-warning-msg hidden">
+                                            ⚠️ 超出安全区间，有感官过载风险，不建议部署
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Volume -->
+                                    <div class="param-item">
+                                        <label>
+                                            音量
+                                            <span class="param-safe-range">安全区间: 60-80%</span>
+                                        </label>
+                                        <div class="param-control">
+                                            <input type="range" id="report-param-volume" min="0" max="100" value="70" class="safe-range-slider" data-safe-min="60" data-safe-max="80">
+                                            <span id="report-param-volume-value" class="param-value">70%</span>
+                                        </div>
+                                        <div id="volume-warning" class="param-warning-msg hidden">
+                                            ⚠️ 超出安全区间，有感官过载风险，不建议部署
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Harmony (离散选择) -->
+                                    <div class="param-item">
+                                        <label>
+                                            和声组合
+                                            <span class="param-safe-range">安全选项: I-V</span>
+                                        </label>
+                                        <div class="harmony-options" id="harmony-options">
+                                            <button class="harmony-btn safe active" data-value="I-V">I-V</button>
+                                            <button class="harmony-btn unsafe" data-value="I-IV">I-IV</button>
+                                            <button class="harmony-btn unsafe" data-value="I-vi">I-vi</button>
+                                            <button class="harmony-btn unsafe" data-value="I-IV-V">I-IV-V</button>
+                                            <button class="harmony-btn unsafe" data-value="I-vi-IV-V">I-vi-IV-V</button>
+                                        </div>
+                                        <div id="harmony-warning" class="param-warning-msg hidden">
+                                            ⚠️ 非默认和声，有感官过载风险，不建议部署
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 操作按钮 -->
+                                <div class="param-actions">
+                                    <button id="param-preview-btn" class="param-btn secondary">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                        预览音乐
+                                    </button>
+                                    <button id="param-reset-btn" class="param-btn secondary">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                                        重置默认
+                                    </button>
+                                </div>
+                                
+                                <!-- 收敛模式下的提交区域 -->
+                                <div id="converge-submit-area" class="converge-submit-area hidden">
+                                    <div class="converge-summary">
+                                        <h5>收敛参数确认</h5>
+                                        <div class="converge-params">
+                                            <span>BPM: <strong id="converge-tempo">72</strong></span>
+                                            <span>对比度: <strong id="converge-contrast">10%</strong></span>
+                                            <span>音量: <strong id="converge-volume">70%</strong></span>
+                                            <span>和声: <strong id="converge-harmony">I-V</strong></span>
+                                        </div>
+                                    </div>
+                                    <button id="param-submit-btn" class="param-btn primary">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                                        提交到数据库
+                                    </button>
+                                    <p class="submit-note">* 数据库连接尚未配置</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -5,46 +5,72 @@
 
 const TRANSLATIONS = {
     zh: {
-        // Main UI
-        'ui.pause': '暂停',
-        'ui.resume': '继续',
+        // Header & Footer
+        'header.mute': '静音',
+        'header.unmute': '取消静音',
+        'header.settings': '参数',
+        'header.pause': '暂停',
         'ui.mute': '静音',
-        'ui.unmute': '恢复声音',
-        'ui.settings': '参数',
-        'ui.sensory': '感官设置',
-        'ui.slow': '慢速',
-        'ui.normal': '正常',
-        'ui.fast': '快速',
-        'ui.startRound': '开始本轮',
-        'ui.saveSettings': '保存设置',
-        'ui.instructions': '移动光标戳泡泡',
-        'ui.inputMode': '输入方式: ',
-        'input.mouse': '鼠标',
-        'ui.bubbleCount': '泡泡数: ',
-        'ui.timeRemaining': '剩余: ',
-        'ui.gamePaused': '游戏已暂停',
-        'ui.clickContinue': '点击继续按钮恢复游戏',
-        'ui.expertMode': '专家模式',
-        'ui.gameOver': '游戏结束',
-        'ui.play': '播放',
-        'ui.playAgain': '重玩',
-        'ui.finish': '结束',
-        'ui.report': '游戏报告',
-        'ui.analyzing': '分析中...',
-        'ui.waitingData': '等待游戏数据...',
-        'ui.realtimeData': '实时数据',
-        'ui.recentClicks': '最近点击',
-        'ui.noData': '暂无',
-        'ui.patternPredict': '模式预测',
-        'ui.laneDist': 'Lane 分布',
+        'ui.unmute': '取消静音',
+        'speed.slow': '慢速',
+        'speed.normal': '正常',
+        'speed.fast': '快速',
+        'footer.instruction': '移动光标戳泡泡',
+        'footer.inputMode': '输入方式: ',
+        'footer.bubbleCount': '泡泡数: ',
+
+        // Settings Modal
+        'set.title': '游戏设置',
+        'set.subtitle': '调整感官体验，让游戏更适合你',
+        'set.volume': '音量',
+        'set.timbre': '音色',
+        'set.latency': '延迟',
+        'set.feedback': '反馈音效',
+        'set.reset': '恢复默认',
+        'set.start': '开始游戏',
+        'set.close': '关闭',
+        
+        'opt.low': '柔和',
+        'opt.medium': '标准',
+        'opt.high': '响亮',
+        'opt.soft': '柔和',
+        'opt.bright': '明亮',
+        'opt.immediate': '即时',
+        'opt.delay': '稍慢',
+        'opt.full': '开启',
+        'opt.visual': '仅视觉',
+        'opt.off': '关闭',
+        'opt.on': '开启',
 
         // Sidebar
+        'sidebar.title': '实时监控',
+        'sidebar.realtimeData': '实时数据',
+        'sidebar.laneDist': 'Lane 分布',
+        'sidebar.patternPredict': '模式预测',
+        'sidebar.recentClicks': '最近点击',
+        'sidebar.clickCount': '点击数',
+        'sidebar.hitRate': '命中率',
+        'sidebar.dominant': '主导Lane',
+        'sidebar.tooltip.pattern': '🎹 顺序型: 顺序命中率>40% 且 lane≥4\n🔁 重复型: 主导lane占比>60%\n🌈 探索型: lane≥4 且 主导≤60%',
+
         'sidebar.waitingForData': '等待更多数据...',
         'sidebar.noData': '暂无',
         'sidebar.pattern.sequential': '顺序型 (CDEGA)',
         'sidebar.pattern.repetitive': '重复型',
         'sidebar.pattern.exploratory': '探索型',
         'sidebar.pattern.mixed': '混合型',
+
+        // Report
+        'report.title': '游戏报告',
+        'report.behaviorPattern': '行为模式',
+        'report.clickTrail': '点击轨迹与 Lane 分布',
+        'report.musicParams': '音乐参数调整',
+        'report.score.sequential': '🎹 顺序型',
+        'report.score.repetitive': '🔁 重复型',
+        'report.score.exploratory': '🌈 探索型',
+        'report.tooltip.sequential': '顺序命中率 > 40% 且 lane覆盖 ≥ 4\n按 C→D→E→G→A 顺序点击的比例',
+        'report.tooltip.repetitive': '主导lane占比 > 60%\n偏好重复点击同一个音符',
+        'report.tooltip.exploratory': 'lane覆盖 ≥ 4 且 主导占比 ≤ 60%\n积极探索不同音符，分布均匀',
 
         // Expert Drawer
         'expert.titleTooltip': '专家模式 (Ctrl+Shift+E)',
@@ -56,35 +82,15 @@ const TRANSLATIONS = {
         'expert.density': '密度',
         'expert.warning.unsafe': '⚠️ 超出包络，不推荐可部署',
         
+        // Report
+        'report.behaviorPattern': '行为模式',
+        'report.clickTrail': '点击轨迹与 Lane 分布',
+
         // Game Engine
         'game.ready': '游戏准备就绪！',
         'game.paused': '已暂停',
         'game.samplingStarted': '开始采样：{seconds}s',
         'game.samplingCompleted': '采样完成，共 {count} 个音符',
-
-        // Sidebar
-        'sidebar.waitingForData': 'Waiting for more data...',
-        'sidebar.noData': 'No Data',
-        'sidebar.pattern.sequential': 'Sequential (CDEGA)',
-        'sidebar.pattern.repetitive': 'Repetitive',
-        'sidebar.pattern.exploratory': 'Exploratory',
-        'sidebar.pattern.mixed': 'Mixed',
-
-        // Expert Drawer
-        'expert.titleTooltip': 'Expert Mode (Ctrl+Shift+E)',
-        'expert.title': '🎵 Music Parameters',
-        'expert.close': 'Close',
-        'expert.tempo': 'Tempo (BPM)',
-        'expert.audioParams': 'Audio Parameters',
-        'expert.volume': 'Volume',
-        'expert.density': 'Density',
-        'expert.warning.unsafe': '⚠️ Unsafe Envelope, Not Recommended',
-        
-        // Game Engine
-        'game.ready': 'Game Ready!',
-        'game.paused': 'Paused',
-        'game.samplingStarted': 'Sampling Started: {seconds}s',
-        'game.samplingCompleted': 'Sampling Completed, {count} notes',
 
         // Settings Modal
         'settings.title': '游戏设置',
@@ -171,6 +177,18 @@ const TRANSLATIONS = {
         'pat.rule.exploratory': 'lane覆盖 {diversity} ≥ 4 且 主导占比 {ratio}% ≤ 60%',
         'pat.rule.mixed': '未满足任一主导模式条件',
 
+        // Pattern Rules (Dynamic)
+        'pat.rule.sequential': '顺序命中率 {ratio}% > 40% 且 lane覆盖 {diversity} ≥ 4',
+        'pat.rule.repetitive': '主导lane占比 {ratio}% > 60% ({lane})',
+        'pat.rule.exploratory': 'lane覆盖 {diversity} ≥ 4 且 主导占比 {ratio}% ≤ 60%',
+        'pat.rule.mixed': '未满足任何主导模式特征',
+
+        // Pattern Rules (Dynamic)
+        'pat.rule.sequential': 'Seq Ratio {ratio}% > 40% & Coverage {diversity} ≥ 4',
+        'pat.rule.repetitive': 'Dominant Lane {ratio}% > 60% ({lane})',
+        'pat.rule.exploratory': 'Coverage {diversity} ≥ 4 & Dominant {ratio}% ≤ 60%',
+        'pat.rule.mixed': 'Does not meet dominant pattern criteria',
+
         // Hand Preference
         'hand.left': '你更喜欢用左手！下次试试右手，平衡使用双手更有益。',
         'hand.right': '你更喜欢用右手！下次试试左手，平衡使用双手更有益。',
@@ -197,66 +215,88 @@ const TRANSLATIONS = {
         'music.playerNotReady': '音乐播放器未准备好，请稍后再试'
     },
     en: {
-        // Main UI
-        'ui.pause': 'Pause',
-        'ui.resume': 'Resume',
+        // Header & Footer
+        'header.mute': 'Mute',
+        'header.unmute': 'Unmute',
+        'header.settings': 'Params',
+        'header.pause': 'Pause',
         'ui.mute': 'Mute',
         'ui.unmute': 'Unmute',
-        'ui.settings': 'Settings',
-        'ui.sensory': 'Sensory',
-        'ui.slow': 'Slow',
-        'ui.normal': 'Normal',
-        'ui.fast': 'Fast',
-        'ui.startRound': 'Start Round',
-        'ui.saveSettings': 'Save Settings',
-        'ui.instructions': 'Move cursor to pop bubbles!',
-        'ui.inputMode': 'Input: ',
-        'input.mouse': 'Mouse',
-        'ui.bubbleCount': 'Bubbles: ',
-        'ui.timeRemaining': 'Time: ',
-        'ui.gamePaused': 'Game Paused',
-        'ui.clickContinue': 'Click resume button to continue',
-        'ui.expertMode': 'Expert Mode',
-        'ui.gameOver': 'Game Over',
-        'ui.play': 'Play',
-        'ui.playAgain': 'Play Again',
-        'ui.finish': 'Finish',
-        'ui.report': 'Game Report',
-        'ui.analyzing': 'Analyzing...',
-        'ui.waitingData': 'Waiting for data...',
-        'ui.realtimeData': 'Real-time',
-        'ui.recentClicks': 'Recent Clicks',
-        'ui.noData': 'No Data',
-        'ui.patternPredict': 'Pattern Prediction',
-        'ui.laneDist': 'Lane Distribution',
+        'speed.slow': 'Slow',
+        'speed.normal': 'Normal',
+        'speed.fast': 'Fast',
+        'footer.instruction': 'Move cursor to pop bubbles!',
+        'footer.inputMode': 'Input: ',
+        'footer.bubbleCount': 'Bubbles: ',
 
         // Settings Modal
-        'settings.title': 'Game Settings',
-        'settings.subtitle': 'Adjust sensory experience',
-        'settings.volume': 'Volume',
-        'settings.density': 'Density',
-        'settings.timbre': 'Timbre',
-        'settings.latency': 'Latency',
-        'settings.feedback': 'Feedback',
-        'settings.reward': 'End Music',
-        'settings.reset': 'Reset',
-        'settings.start': 'Start Game',
-        'settings.close': 'Close',
+        'set.title': 'Game Settings',
+        'set.subtitle': 'Adjust sensory experience for your comfort',
+        'set.volume': 'Volume',
+        'set.timbre': 'Timbre',
+        'set.latency': 'Latency',
+        'set.feedback': 'Feedback',
+        'set.reset': 'Reset',
+        'set.start': 'Start Game',
+        'set.close': 'Close',
 
-        // Options
-        'opt.low': 'Low',
-        'opt.medium': 'Medium',
-        'opt.high': 'High',
-        'opt.sparse': 'Sparse',
-        'opt.normal': 'Normal',
-        'opt.soft': 'Soft Piano',
-        'opt.bright': 'Bright Violin',
+        'opt.low': 'Soft',
+        'opt.medium': 'Standard',
+        'opt.high': 'Loud',
+        'opt.soft': 'Soft',
+        'opt.bright': 'Bright',
         'opt.immediate': 'Immediate',
-        'opt.delay': '0.5s Delay',
-        'opt.full': 'Audio+Visual',
+        'opt.delay': 'Slow',
+        'opt.full': 'On',
         'opt.visual': 'Visual Only',
         'opt.off': 'Off',
         'opt.on': 'On',
+
+        // Sidebar
+        'sidebar.title': 'Real-time Monitor',
+        'sidebar.realtimeData': 'Real-time',
+        'sidebar.laneDist': 'Lane Dist',
+        'sidebar.patternPredict': 'Prediction',
+        'sidebar.recentClicks': 'Recent Clicks',
+        'sidebar.clickCount': 'Clicks',
+        'sidebar.hitRate': 'Accuracy',
+        'sidebar.dominant': 'Dominant',
+        'sidebar.tooltip.pattern': '🎹 Sequential: Seq Ratio > 40% & Lane ≥ 4\n🔁 Repetitive: Dominant Lane > 60%\n🌈 Exploratory: Lane ≥ 4 & Dominant ≤ 60%',
+
+        'sidebar.waitingForData': 'Waiting for data...',
+        'sidebar.noData': 'No Data',
+        'sidebar.pattern.sequential': 'Sequential (CDEGA)',
+        'sidebar.pattern.repetitive': 'Repetitive',
+        'sidebar.pattern.exploratory': 'Exploratory',
+        'sidebar.pattern.mixed': 'Mixed',
+
+        // Report
+        'report.title': 'Game Report',
+        'report.behaviorPattern': 'Behavior Pattern',
+        'report.clickTrail': 'Click Trail & Lane Dist',
+        'report.musicParams': 'Music Parameters',
+        'report.score.sequential': '🎹 Sequential',
+        'report.score.repetitive': '🔁 Repetitive',
+        'report.score.exploratory': '🌈 Exploratory',
+        'report.tooltip.sequential': 'Seq Ratio > 40% & Lane Coverage ≥ 4\nProportion of C→D→E→G→A sequences',
+        'report.tooltip.repetitive': 'Dominant Lane Ratio > 60%\nPreference for repeating same note',
+        'report.tooltip.exploratory': 'Lane Coverage ≥ 4 & Dominant Ratio ≤ 60%\nActive exploration of different notes',
+
+        // Expert Drawer
+        'expert.titleTooltip': 'Expert Mode (Ctrl+Shift+E)',
+        'expert.title': '🎵 Music Parameters',
+        'expert.close': 'Close',
+        'expert.tempo': 'Tempo (BPM)',
+        'expert.audioParams': 'Audio Parameters',
+        'expert.volume': 'Volume',
+        'expert.density': 'Density',
+        'expert.warning.unsafe': '⚠️ Unsafe Envelope, Not Recommended',
+
+        // Game Engine
+        'game.ready': 'Game Ready!',
+        'game.paused': 'Paused',
+        'game.samplingStarted': 'Sampling Started: {seconds}s',
+        'game.samplingCompleted': 'Sampling Completed, {count} notes',
 
         // Messages
         'msg.paused': 'Take a break!',
@@ -273,7 +313,7 @@ const TRANSLATIONS = {
         'msg.downloadMidi': 'MIDI file downloaded!',
         'msg.downloadJson': 'Music data downloaded (JSON)!',
 
-        // Achievements & Autism Friendly
+        // Achievements
         'ach.consecutive5': 'Great job! 5 bubbles in a row!',
         'ach.consecutive10': 'Combo Master! 10 bubbles in a row!',
         'ach.consecutive15': 'Super Combo! 15 bubbles in a row!',
@@ -290,31 +330,23 @@ const TRANSLATIONS = {
         'res.unitBubbles': 'bubbles',
         'res.unitSpeed': 'sec/bubble',
         'res.unitCombo': 'streak',
-
+        
         // Encouragement
         'enc.excellent': ['Amazing! You are a true Bubble Master!', 'Perfect performance! Your coordination is incredible!', 'Outstanding! You mastered the game!'],
         'enc.great': ['Great job! Keep up the good rhythm!', 'Well done! Your skills are improving!', 'Excellent! Great focus!'],
         'enc.good': ['Good start! Practice makes perfect!', 'Good job! Every attempt counts!', 'Keep going! You are improving steadily!'],
         'enc.encouraging': ['Nice try! Enjoy the process!', 'Relax and have fun!', 'Keep trying! Everyone has their own pace!'],
 
-        // Patterns & Analysis
+        // Patterns & Analysis (Legacy keys if needed, or update usage)
         'pat.sequential': 'Sequential',
         'pat.repetitive': 'Repetitive',
         'pat.exploratory': 'Exploratory',
         'pat.mixed': 'Mixed',
-        'pat.sparse': 'Sparse',
-        'pat.dense': 'Dense',
         'pat.desc.sequential': 'Sequential (CDEGA Asc/Desc)',
         'pat.desc.repetitive': 'Repetitive (High Repetition)',
         'pat.desc.exploratory': 'Exploratory (High Diversity)',
-        'pat.desc.sparse': 'Sparse (Low Density)',
-        'pat.desc.dense': 'Dense (High Density)',
         'pat.desc.mixed': 'Mixed Type',
-        'pat.rule.sequential': 'Seq Ratio {ratio}% > 40% & Coverage {diversity} ≥ 4',
-        'pat.rule.repetitive': 'Dominant Lane {ratio}% > 60% ({lane})',
-        'pat.rule.exploratory': 'Coverage {diversity} ≥ 4 & Dominant {ratio}% ≤ 60%',
-        'pat.rule.mixed': 'Does not meet dominant pattern criteria',
-
+        
         // Hand Preference
         'hand.left': 'You prefer your left hand! Try using your right hand next time for balance.',
         'hand.right': 'You prefer your right hand! Try using your left hand next time for balance.',
@@ -332,7 +364,7 @@ const TRANSLATIONS = {
         'debug.rewardOff': 'Reward Off (Instant feedback only)',
         'debug.noData': 'Complete a round to see analysis',
         'debug.waiting': 'Waiting for reward generation',
-
+        
         // Music Player
         'music.playing': ' Playing...',
         'music.download': ' Download MIDI',
