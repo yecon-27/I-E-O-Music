@@ -63,6 +63,8 @@ class MusicParamController {
         const testBtn = document.getElementById('param-mode-test');
         const convergeBtn = document.getElementById('param-mode-converge');
         const convergeArea = document.getElementById('converge-submit-area');
+        const paramsGrid = document.querySelector('.music-params-grid');
+        const paramActions = document.querySelector('.param-actions');
         
         if (testBtn) {
             testBtn.addEventListener('click', () => {
@@ -70,6 +72,9 @@ class MusicParamController {
                 testBtn.classList.add('active');
                 convergeBtn?.classList.remove('active');
                 convergeArea?.classList.add('hidden');
+                // 显示测试模式的滑动条和操作按钮
+                paramsGrid?.classList.remove('hidden');
+                paramActions?.classList.remove('hidden');
             });
         }
         
@@ -79,6 +84,9 @@ class MusicParamController {
                 convergeBtn.classList.add('active');
                 testBtn?.classList.remove('active');
                 convergeArea?.classList.remove('hidden');
+                // 隐藏测试模式的滑动条和操作按钮
+                paramsGrid?.classList.add('hidden');
+                paramActions?.classList.add('hidden');
                 this.updateConvergeSummary();
             });
         }
@@ -204,6 +212,17 @@ class MusicParamController {
         if (submitBtn) {
             submitBtn.addEventListener('click', () => {
                 this.submitConvergedParams();
+            });
+        }
+        
+        // 收敛模式和声按钮组
+        const harmonyBtnsContainer = document.getElementById('converge-harmony-btns');
+        if (harmonyBtnsContainer) {
+            const btns = harmonyBtnsContainer.querySelectorAll('.converge-harmony-btn');
+            btns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    btn.classList.toggle('selected');
+                });
             });
         }
     }
@@ -428,10 +447,10 @@ class MusicParamController {
         const volumeMin = parseInt(document.getElementById('converge-volume-min')?.value) || 60;
         const volumeMax = parseInt(document.getElementById('converge-volume-max')?.value) || 80;
         
-        // 收集安全和声选项
-        const harmonySelect = document.getElementById('converge-harmony-select');
-        const safeHarmonies = harmonySelect 
-            ? Array.from(harmonySelect.selectedOptions).map(opt => opt.value)
+        // 收集安全和声选项（从按钮组）
+        const harmonyBtnsContainer = document.getElementById('converge-harmony-btns');
+        const safeHarmonies = harmonyBtnsContainer 
+            ? Array.from(harmonyBtnsContainer.querySelectorAll('.converge-harmony-btn.selected')).map(btn => btn.dataset.value)
             : ['I-V'];
         
         this.convergedParams = {
