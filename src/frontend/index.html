@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bubble Popping Game</title>
+    <!-- Preload Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
     <style>
       .lane-labels {
@@ -63,18 +67,28 @@
         <div class="game-header">
             <!-- Left: Settings & Language -->
             <div class="header-section header-left">
-                <button id="session-settings-btn" class="control-btn secondary-btn">⚙️ 参数</button>
-                <button id="lang-toggle-btn" class="control-btn secondary-btn">🌐 中/EN</button>
+                <button id="session-settings-btn" class="control-btn secondary-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> 
+                    <span style="margin-left:6px">参数</span>
+                </button>
+                <button id="lang-toggle-btn" class="control-btn secondary-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg> 
+                    <span style="margin-left:6px">中/EN</span>
+                </button>
             </div>
 
             <!-- Center: Progress -->
             <div class="header-section header-center">
                 <div class="progress-indicator">
-                    <div class="time-remaining">
-                        <span id="countdown-display">60s</span>
-                    </div>
                     <div class="progress-bar">
                         <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                    <div class="time-remaining">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.6;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span id="countdown-display">60s</span>
                     </div>
                 </div>
             </div>
@@ -82,13 +96,28 @@
             <!-- Right: Controls -->
             <div class="header-section header-right">
                 <div class="play-controls">
-                    <button id="pause-btn" class="control-btn primary-btn">⏸️ 暂停</button>
-                    <button id="panic-mute-btn" class="control-btn panic-btn">🔇 静音</button>
+                    <button id="pause-btn" class="control-btn primary-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                        <span style="margin-left:6px">暂停</span>
+                    </button>
+                    <button id="panic-mute-btn" class="control-btn panic-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+                        <span style="margin-left:6px">静音</span>
+                    </button>
                 </div>
                 <div class="speed-controls">
-                    <button id="slow-btn" class="speed-btn">🐌</button>
-                    <button id="normal-btn" class="speed-btn active">🚶</button>
-                    <button id="fast-btn" class="speed-btn">🏃</button>
+                    <button id="slow-btn" class="speed-btn" title="慢速">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></svg>
+                        <span class="speed-label">慢速</span>
+                    </button>
+                    <button id="normal-btn" class="speed-btn active" title="正常">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        <span class="speed-label">正常</span>
+                    </button>
+                    <button id="fast-btn" class="speed-btn" title="快速">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 19 22 12 13 5 13 19"></polygon><polygon points="2 19 11 12 2 5 2 19"></polygon></svg>
+                        <span class="speed-label">快速</span>
+                    </button>
                 </div>
             </div>
             
@@ -99,6 +128,20 @@
         
         <div class="game-area">
             <div class="game-main">
+                <!-- 大型进度指示器 - 显示在游戏区域底部 -->
+                <div id="game-progress-indicator" class="game-progress-indicator">
+                    <div class="game-progress-bar">
+                        <div id="game-progress-fill" class="game-progress-fill"></div>
+                    </div>
+                    <div class="game-progress-time">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span id="game-countdown-display">60</span>
+                        <span class="game-progress-unit">秒</span>
+                    </div>
+                </div>
                 <canvas id="game-canvas" width="1024" height="768"></canvas>
                 <div id="click-trail" class="click-trail"></div>
                 <div id="lane-labels" class="lane-labels"></div>
@@ -110,26 +153,43 @@
                 
                 <!-- 游戏结果窗口 -->
                 <div id="game-result-overlay" class="game-result-overlay hidden">
-                    <div class="result-content" style="position: relative;">
-                        <button id="post-session-btn" class="result-btn small secondary" style="position: absolute; top: 20px; right: 20px; z-index: 2005;">
-                            Post Session View
-                        </button>
-                        <h2>🎉 游戏结束！</h2>
+                    <div class="result-content glass-panel">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h2 style="margin: 0; display: flex; align-items: center; gap: 12px;">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                                    <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                                    <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                                </svg>
+                                游戏结束
+                            </h2>
+                            <button id="post-session-btn" class="result-btn secondary small">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                <span style="margin-left:4px">专家模式</span>
+                            </button>
+                        </div>
                         <div class="result-stats">
                             <div class="stat-item">
-                                <span class="stat-icon">🎯</span>
+                                <span class="stat-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                                </span>
                                 <span class="stat-label">成功击破</span>
                                 <span id="result-bubbles" class="stat-value">0</span>
                                 <span class="stat-unit">个泡泡</span>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-icon">⚡</span>
+                                <span class="stat-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                </span>
                                 <span class="stat-label">平均速度</span>
                                 <span id="result-speed" class="stat-value">0</span>
                                 <span class="stat-unit">秒/个</span>
                             </div>
                             <div class="stat-item">
-                                <span class="stat-icon">🏆</span>
+                                <span class="stat-icon">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 1 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>
+                                </span>
                                 <span class="stat-label">最高连击</span>
                                 <span id="result-combo" class="stat-value">0</span>
                                 <span class="stat-unit">连续</span>
@@ -138,13 +198,14 @@
                         <div class="result-message">
                             <p id="result-encouragement">太棒了！你的表现很出色！</p>
                         </div>
-                        <div id="debug-panel" class="debug-panel hidden">
+                        <div id="debug-panel" class="debug-panel">
                             <div class="debug-header">
                                 <h3>Post-Session Review</h3>
                                 <div class="debug-header-actions">
-                                    <label style="font-size: 0.85rem; display: flex; align-items: center; gap: 4px; color: var(--text-secondary);">
-                                        <input type="checkbox" id="expert-mode-checkbox"> 专家模式
-                                    </label>
+                                    <button id="debug-refresh-btn" class="result-btn secondary small">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                                        Refresh
+                                    </button>
                                     <button id="debug-help-toggle" class="result-btn secondary small">How to read</button>
                                     <button id="open-reward-controls-btn" class="result-btn secondary small">Open Reward Controls</button>
                                 </div>
@@ -235,10 +296,37 @@
                             </div>
                         </div>
                         <div class="result-actions">
-                            <button id="play-music-btn" class="result-btn music">🎵 享受你创作的音乐</button>
-                            <button id="result-mute-btn" class="result-btn secondary panic-btn">🔇 停止/静音</button>
-                            <button id="play-again-btn" class="result-btn primary">🎮 再玩一轮</button>
-                            <button id="finish-game-btn" class="result-btn secondary">✨ 结束游戏</button>
+                            <button id="play-music-btn" class="result-btn music">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M9 18V5l12-2v13"></path>
+                                    <circle cx="6" cy="18" r="3"></circle>
+                                    <circle cx="18" cy="16" r="3"></circle>
+                                </svg>
+                                播放音乐
+                            </button>
+                            <button id="result-mute-btn" class="result-btn secondary panic-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                    <line x1="23" y1="9" x2="17" y2="15"></line>
+                                    <line x1="17" y1="9" x2="23" y2="15"></line>
+                                </svg>
+                                静音
+                            </button>
+                            <button id="play-again-btn" class="result-btn primary">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <polyline points="1 20 1 14 7 14"></polyline>
+                                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                                </svg>
+                                再玩一轮
+                            </button>
+                            <button id="finish-game-btn" class="result-btn secondary">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="9 11 12 14 22 4"></polyline>
+                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                                </svg>
+                                结束
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -248,18 +336,25 @@
         
         <div class="game-footer">
             <div class="instructions">
-                <p>🎯 移动光标戳泡泡！</p>
+                <p style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="12" r="6"></circle>
+                        <circle cx="12" cy="12" r="2"></circle>
+                    </svg>
+                    移动光标戳泡泡
+                </p>
                 <div class="status-display" style="display: flex; gap: 20px; justify-content: center; margin: 10px 0;">
                     <div class="status-item">
                         <span>输入方式: </span>
-                        <span id="input-mode" style="font-weight: bold; color: #2196F3;">鼠标</span>
+                        <span id="input-mode" style="font-weight: 600; color: var(--accent-primary);">鼠标</span>
                     </div>
                     <div class="status-item">
                         <span>泡泡数: </span>
-                        <span id="bubble-count" style="font-weight: bold; color: #4CAF50;">0</span>
+                        <span id="bubble-count" style="font-weight: 600; color: var(--accent-success);">0</span>
                     </div>
                 </div>
-                <div id="debug-info" class="debug-info" style="font-size: 0.9rem; color: #6C757D; margin-top: 10px;"></div>
+                <div id="debug-info" class="debug-info" style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 10px;"></div>
             </div>
         </div>
     </div>

@@ -42,32 +42,65 @@ class GameResultManager {
     const postSessionBtn = document.getElementById("post-session-btn");
     const debugPanel = document.getElementById("debug-panel");
     const expertModeCheckbox = document.getElementById("expert-mode-checkbox");
+    const debugRefreshBtn = document.getElementById("debug-refresh-btn");
 
+    // Expert Mode按钮 - 切换debug panel显示
     if (postSessionBtn && debugPanel) {
-      console.log("✅ Post Session Button & Debug Panel found");
+      console.log("[GameResult] Expert Mode Button & Debug Panel found");
       postSessionBtn.addEventListener("click", () => {
-        console.log("🖱️ Post Session Button clicked");
+        console.log("[GameResult] Expert Mode Button clicked");
         const isHidden = debugPanel.classList.toggle("hidden");
         console.log("Debug Panel hidden:", isHidden);
+        
+        // 更新按钮文本（使用SVG图标）
+        const eyeIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+        if (isHidden) {
+          postSessionBtn.innerHTML = eyeIcon + '<span style="margin-left:4px">专家模式</span>';
+        } else {
+          postSessionBtn.innerHTML = eyeIcon + '<span style="margin-left:4px">隐藏专家</span>';
+        }
+        
         // 如果展开了面板，强制刷新一次数据以确保显示最新状态
         if (!isHidden) {
           this.updateDebugPanel();
         }
       });
+      console.log("[GameResult] Event listener attached to Expert Mode Button");
     } else {
-      console.error("❌ Post Session Button or Debug Panel not found in DOM");
+      console.error("[GameResult] Expert Mode Button or Debug Panel not found in DOM", {
+        postSessionBtn: !!postSessionBtn,
+        debugPanel: !!debugPanel
+      });
+    }
+
+    // Debug刷新按钮 - 手动刷新debug panel数据
+    if (debugRefreshBtn) {
+      const refreshIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>';
+      const checkIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      debugRefreshBtn.addEventListener("click", () => {
+        console.log("[GameResult] Debug Refresh Button clicked");
+        this.updateDebugPanel();
+        
+        // 添加视觉反馈
+        debugRefreshBtn.innerHTML = checkIcon + ' 已刷新';
+        debugRefreshBtn.disabled = true;
+        
+        setTimeout(() => {
+          debugRefreshBtn.innerHTML = refreshIcon + ' 刷新';
+          debugRefreshBtn.disabled = false;
+        }, 1000);
+      });
+      console.log("[GameResult] Event listener attached to Debug Refresh Button");
     }
 
     if (expertModeCheckbox) {
       expertModeCheckbox.addEventListener("change", (e) => {
-        console.log("🎛️ Expert Mode toggled:", e.target.checked);
-        // 更新全局配置或当前会话配置
+        console.log("[Settings] Expert Mode toggled:", e.target.checked);
         if (window.lastGeneratedSequence && window.lastGeneratedSequence.debugPayload) {
           if (!window.lastGeneratedSequence.debugPayload.sessionConfig) {
             window.lastGeneratedSequence.debugPayload.sessionConfig = {};
           }
           window.lastGeneratedSequence.debugPayload.sessionConfig.expertMode = e.target.checked;
-          // 刷新面板显示
           this.updateDebugPanel();
         }
       });
@@ -131,7 +164,7 @@ class GameResultManager {
     };
 
     this.isActive = true;
-    console.log("🎮 游戏数据收集开始");
+    console.log("[Game] 游戏数据收集开始");
   }
 
   /**
@@ -140,7 +173,7 @@ class GameResultManager {
    */
   recordBubblePop(handType = "unknown") {
     if (!this.isActive) {
-      console.warn("⚠️ 游戏未激活，无法记录泡泡戳破");
+      console.warn("[Game] 游戏未激活，无法记录泡泡戳破");
       return;
     }
 
@@ -151,7 +184,7 @@ class GameResultManager {
 
     // 记录手部使用统计
     console.log(
-      "📊 记录手部统计 - 类型:",
+      "[Stats] 记录手部统计 - 类型:",
       handType,
       "记录前:",
       this.gameData.handStats
@@ -161,7 +194,7 @@ class GameResultManager {
     } else {
       this.gameData.handStats.unknown++;
     }
-    console.log("📊 记录手部统计 - 记录后:", this.gameData.handStats);
+    console.log("[Stats] 记录手部统计 - 记录后:", this.gameData.handStats);
 
     // 更新最高连击
     if (this.gameData.currentConsecutive > this.gameData.maxConsecutive) {
@@ -169,7 +202,7 @@ class GameResultManager {
     }
 
     console.log(
-      "🎯 记录泡泡戳破，总数:",
+      "[Game] 记录泡泡戳破，总数:",
       this.gameData.bubblesPopped,
       "尝试次数:",
       this.gameData.totalAttempts
@@ -181,12 +214,12 @@ class GameResultManager {
    */
   recordAttempt() {
     if (!this.isActive) {
-      console.warn("⚠️ 游戏未激活，无法记录尝试");
+      console.warn("[Game] 游戏未激活，无法记录尝试");
       return;
     }
 
     this.gameData.totalAttempts++;
-    console.log("📊 记录尝试，总尝试次数:", this.gameData.totalAttempts);
+    console.log("[Stats] 记录尝试，总尝试次数:", this.gameData.totalAttempts);
   }
 
   /**
@@ -207,7 +240,7 @@ class GameResultManager {
     this.gameData.endTime = Date.now();
     this.isActive = false;
 
-    console.log("🎮 游戏结束，显示结果");
+    console.log("[Game] 游戏结束，显示结果");
     this.showResultWindow();
   }
 
@@ -258,14 +291,10 @@ class GameResultManager {
         ? actualDuration / this.gameData.bubblesPopped
         : 0;
 
-    // 计算手部偏好
-    const handPreference = this.calculateHandPreference();
-
     return {
       bubblesPopped: this.gameData.bubblesPopped,
       avgSpeed: Math.round(avgSpeed * 10) / 10,
       maxConsecutive: this.gameData.maxConsecutive,
-      handPreference: handPreference,
       totalTime: actualDuration,
       encouragement: this.generateEncouragement(this.gameData.bubblesPopped),
     };
@@ -278,7 +307,7 @@ class GameResultManager {
     const { leftHand, rightHand, unknown } = this.gameData.handStats;
     const total = leftHand + rightHand + unknown;
 
-    console.log("📊 计算手部偏好 - 原始数据:", {
+    console.log("[Stats] 计算手部偏好 - 原始数据:", {
       leftHand,
       rightHand,
       unknown,
@@ -286,7 +315,7 @@ class GameResultManager {
     });
 
     if (total === 0) {
-      console.log("📊 没有手部数据，返回none");
+      console.log("[Stats] 没有手部数据，返回none");
       return {
         preferredHand: "none",
         leftPercentage: 0,
@@ -303,13 +332,13 @@ class GameResultManager {
 
     if (leftHand > rightHand && leftPercentage > 60) {
       preferredHand = "left";
-      suggestion = "你更喜欢用左手！下次试试右手，平衡使用双手更有益 🤚";
+      suggestion = "你更喜欢用左手！下次试试右手，平衡使用双手更有益。";
     } else if (rightHand > leftHand && rightPercentage > 60) {
       preferredHand = "right";
-      suggestion = "你更喜欢用右手！下次试试左手，平衡使用双手更有益 🤚";
+      suggestion = "你更喜欢用右手！下次试试左手，平衡使用双手更有益。";
     } else {
       preferredHand = "balanced";
-      suggestion = "很棒！你平衡使用了双手，对运动技能发展很好 👏";
+      suggestion = "很棒！你平衡使用了双手，对运动技能发展很好。";
     }
 
     return {
@@ -328,24 +357,24 @@ class GameResultManager {
   generateEncouragement(bubbles, accuracy) {
     const messages = {
       excellent: [
-        "🌟 太棒了！你是真正的泡泡大师！",
-        "🎉 完美的表现！你的协调性令人惊叹！",
-        "🏆 出色！你已经掌握了游戏的精髓！",
+        "太棒了！你是真正的泡泡大师！",
+        "完美的表现！你的协调性令人惊叹！",
+        "出色！你已经掌握了游戏的精髓！",
       ],
       great: [
-        "👏 很棒的表现！继续保持这个节奏！",
-        "🎯 做得很好！你的技巧在不断提升！",
-        "⭐ 优秀！你的专注力很强！",
+        "很棒的表现！继续保持这个节奏！",
+        "做得很好！你的技巧在不断提升！",
+        "优秀！你的专注力很强！",
       ],
       good: [
-        "👍 不错的开始！多练习会更好！",
-        "🌈 很好！每一次尝试都是进步！",
-        "💪 加油！你正在稳步提升！",
+        "不错的开始！多练习会更好！",
+        "很好！每一次尝试都是进步！",
+        "加油！你正在稳步提升！",
       ],
       encouraging: [
-        "🌱 很好的尝试！游戏就是要享受过程！",
-        "😊 没关系，放松心情最重要！",
-        "🎮 继续努力！每个人都有自己的节奏！",
+        "很好的尝试！游戏就是要享受过程！",
+        "没关系，放松心情最重要！",
+        "继续努力！每个人都有自己的节奏！",
       ],
     };
 
@@ -381,10 +410,7 @@ class GameResultManager {
     if (elements.bubbles) elements.bubbles.textContent = stats.bubblesPopped;
     if (elements.speed) elements.speed.textContent = stats.avgSpeed;
     if (elements.combo) elements.combo.textContent = stats.maxConsecutive;
-
     if (elements.encouragement) {
-      // 强制清空旧的 HTML 内容，避免遗留的手部建议
-      elements.encouragement.innerHTML = "";
       elements.encouragement.textContent = stats.encouragement;
     }
 
@@ -440,7 +466,6 @@ class GameResultManager {
   }
 
   updateDebugPanel() {
-    console.log("📊 updateDebugPanel called");
     const decisionEl = document.getElementById("debug-summary-decision");
     const confidenceEl = document.getElementById("debug-summary-confidence");
     const safetyEl = document.getElementById("debug-summary-safety");
@@ -458,15 +483,6 @@ class GameResultManager {
     const laneBars = document.getElementById("debug-lane-bars");
 
     if (!decisionEl || !confidenceEl || !safetyEl || !rewardEl || !whatList || !whyList || !signalList) {
-      console.error("❌ Critical debug elements missing:", {
-        decisionEl: !!decisionEl,
-        confidenceEl: !!confidenceEl,
-        safetyEl: !!safetyEl,
-        rewardEl: !!rewardEl,
-        whatList: !!whatList,
-        whyList: !!whyList,
-        signalList: !!signalList
-      });
       return;
     }
 
@@ -1134,12 +1150,12 @@ class GameResultManager {
    * 开始新一轮游戏
    */
   startNewGame() {
-    console.log("🔄 开始新一轮游戏");
+    console.log("[Game] 开始新一轮游戏");
     this.hideResultWindow();
 
     // 清除上一轮的音乐数据
     window.lastGeneratedSequence = null;
-    console.log("🎵 已清除上一轮音乐数据");
+    console.log("[Music] 已清除上一轮音乐数据");
 
     // 重置游戏引擎
     if (window.game) {
@@ -1174,7 +1190,7 @@ class GameResultManager {
               // 触发游戏结果管理器结束游戏并显示结果
               if (window.gameResultManager) {
                 window.gameResultManager.endGame();
-                console.log("📊 游戏结果已显示");
+                console.log("[Game] 游戏结果已显示");
               }
 
               // 为新一轮生成新的音乐
@@ -1191,7 +1207,7 @@ class GameResultManager {
                     });
                   } catch (musicError) {
                     console.warn(
-                      "🎵 音乐生成失败，但不影响游戏结果:",
+                      "[Music] 音乐生成失败，但不影响游戏结果:",
                       musicError
                     );
                   }
@@ -1199,7 +1215,7 @@ class GameResultManager {
               } else {
                 // 为新一轮创建新的丰富测试音乐
                 window.lastGeneratedSequence = createRichTestMusic(session);
-                console.log("🎵 新一轮音乐已生成");
+                console.log("[Music] 新一轮音乐已生成");
                 window.gameResultManager?.updateDebugPanel?.();
               }
             } catch (err) {
@@ -1207,10 +1223,10 @@ class GameResultManager {
             }
           },
         });
-        console.log("✅ 新一轮游戏已启动");
+        console.log("[Game] 新一轮游戏已启动");
       }, 500);
     } else {
-      console.error("❌ 游戏引擎未找到");
+      console.error("[Game] 游戏引擎未找到");
     }
   }
 
@@ -1218,7 +1234,7 @@ class GameResultManager {
    * 播放生成的音乐
    */
   async playGeneratedMusic() {
-    console.log("🎵 尝试播放生成的音乐");
+    console.log("[Music] 尝试播放生成的音乐");
 
     try {
       if (window.__panicMute) {
@@ -1227,7 +1243,7 @@ class GameResultManager {
       }
       // 检查是否有最后生成的音乐序列
       if (!window.lastGeneratedSequence) {
-        console.warn("⚠️ 没有找到生成的音乐序列");
+        console.warn("[Music] 没有找到生成的音乐序列");
         this.showMusicError("没有找到生成的音乐，请先完成一局游戏");
         return;
       }
@@ -1235,7 +1251,7 @@ class GameResultManager {
       // 兜底获取播放器
       const player = window.MAGENTA?.player || window.gameApp?.MAGENTA?.player;
       if (!player) {
-        console.warn("⚠️ Magenta播放器未准备好");
+        console.warn("[Music] Magenta播放器未准备好");
         this.showMusicError("音乐播放器未准备好，请稍后再试");
         return;
       }
@@ -1254,18 +1270,20 @@ class GameResultManager {
       player.start(window.lastGeneratedSequence);
 
       // 显示播放提示
-      this.showMusicMessage("🎵 正在播放你创作的音乐！");
+      this.showMusicMessage("正在播放你创作的音乐！");
 
       // 更新按钮状态并添加下载选项
       const playMusicBtn = document.getElementById("play-music-btn");
+      const musicIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>';
+      const downloadIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>';
       if (playMusicBtn) {
         const originalText = playMusicBtn.textContent;
-        playMusicBtn.textContent = "🎵 正在播放...";
+        playMusicBtn.innerHTML = musicIcon + ' 正在播放...';
         playMusicBtn.disabled = true;
 
         // 3秒后恢复按钮状态并添加下载选项
         setTimeout(() => {
-          playMusicBtn.textContent = "💾 下载音乐文件";
+          playMusicBtn.innerHTML = downloadIcon + ' 下载音乐文件';
           playMusicBtn.disabled = false;
 
           // 更改点击事件为下载
@@ -1273,7 +1291,7 @@ class GameResultManager {
         }, 3000);
       }
     } catch (error) {
-      console.error("❌ 播放音乐时出错:", error);
+      console.error("[Music] 播放音乐时出错:", error);
       this.showMusicError("播放音乐时出现错误，请重试");
     }
   }
@@ -1282,11 +1300,11 @@ class GameResultManager {
    * 下载生成的音乐
    */
   downloadGeneratedMusic() {
-    console.log("💾 尝试下载生成的音乐");
+    console.log("[Music] 尝试下载生成的音乐");
 
     try {
       if (!window.lastGeneratedSequence) {
-        console.log("🎵 没有生成的音乐，创建测试序列...");
+        console.log("[Music] 没有生成的音乐，创建测试序列...");
         window.lastGeneratedSequence = this.createTestMusicSequence();
       }
 
@@ -1340,13 +1358,13 @@ class GameResultManager {
         try {
           midi = window.mm.sequenceProtoToMidi(enhancedSequence);
         } catch (convErr) {
-          console.warn("⚠️ MIDI转换失败，降级为JSON保存:", convErr);
+          console.warn("[Music] MIDI转换失败，降级为JSON保存:", convErr);
           this.downloadMusicAsJson(enhancedSequence);
           return;
         }
 
         if (!midi || typeof midi.length === "undefined") {
-          console.warn("⚠️ MIDI数据无效，降级为JSON保存");
+          console.warn("[Music] MIDI数据无效，降级为JSON保存");
           this.downloadMusicAsJson(enhancedSequence);
           return;
         }
@@ -1359,18 +1377,18 @@ class GameResultManager {
         a.click();
         URL.revokeObjectURL(url);
 
-        this.showMusicMessage("💾 MIDI音乐文件已下载！");
+        this.showMusicMessage("MIDI音乐文件已下载！");
         console.log(
-          "✅ MIDI文件下载成功，包含",
+          "[Music] MIDI文件下载成功，包含",
           enhancedSequence.notes.length,
           "个音符"
         );
       } else {
-        console.warn("⚠️ Magenta MIDI转换不可用，改用JSON保存");
+        console.warn("[Music] Magenta MIDI转换不可用，改用JSON保存");
         this.downloadMusicAsJson(enhancedSequence);
       }
     } catch (error) {
-      console.error("❌ 下载音乐时出错:", error);
+      console.error("[Music] 下载音乐时出错:", error);
       this.showMusicError("下载音乐时出现错误：" + error.message);
     }
   }
@@ -1488,14 +1506,14 @@ class GameResultManager {
       a.click();
       URL.revokeObjectURL(url);
 
-      this.showMusicMessage("💾 音乐数据已下载（JSON格式）！");
+      this.showMusicMessage("音乐数据已下载（JSON格式）！");
       console.log(
-        "✅ JSON文件下载成功，包含",
+        "[Music] JSON文件下载成功，包含",
         Array.isArray(sequence.notes) ? sequence.notes.length : 0,
         "个音符"
       );
     } catch (e) {
-      console.error("❌ JSON下载失败:", e);
+      console.error("[Music] JSON下载失败:", e);
       this.showMusicError("下载音乐的降级方案也失败：" + e.message);
     }
   }

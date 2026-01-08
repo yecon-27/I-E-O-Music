@@ -1,31 +1,74 @@
-/* Autism-friendly color palette and design */
+/* Modern Design System - Low Saturation, Matte Aesthetic */
 :root {
-    /* Soft, calming colors */
-    --bg-primary: #F8F9FA;
-    --bg-secondary: #E9ECEF;
-    --text-primary: #2C3E50;
-    --text-secondary: #6C757D;
-    --accent-soft: #B8E6B8;
-    --accent-calm: #B8D4E6;
-    --accent-warm: #E6D4B8;
-    --button-primary: #95C3D8;
-    --button-hover: #7AB3CC;
-    --success-soft: #D4EDDA;
-    --border-light: #DEE2E6;
+    /* Background - Neutral Grays */
+    --bg-primary: #FAFBFC; /* Ultra light gray-blue */
+    --bg-secondary: #F3F4F6; /* Light gray for cards */
+    --bg-tertiary: #E5E7EB; /* Medium gray for borders */
+    
+    /* Text - High Contrast, Modern */
+    --text-primary: #1F2937; /* Near black, softer than pure black */
+    --text-secondary: #6B7280; /* Medium gray */
+    --text-tertiary: #9CA3AF; /* Light gray for hints */
+    
+    /* Accent Colors - Desaturated, Modern Palette */
+    --accent-primary: #6366F1; /* Indigo - main brand */
+    --accent-secondary: #8B5CF6; /* Purple - secondary */
+    --accent-success: #10B981; /* Emerald green */
+    --accent-warning: #F59E0B; /* Amber */
+    --accent-danger: #EF4444; /* Red */
+    
+    /* Bubble Colors - Muted, Harmonious */
+    --bubble-red: #F87171; /* Soft red */
+    --bubble-orange: #FB923C; /* Soft orange */
+    --bubble-yellow: #FBBF24; /* Soft yellow */
+    --bubble-blue: #60A5FA; /* Soft blue */
+    --bubble-purple: #A78BFA; /* Soft purple */
+    
+    /* Interactive Elements */
+    --button-primary: #6366F1;
+    --button-primary-hover: #4F46E5;
+    --button-secondary: #F3F4F6;
+    --button-secondary-hover: #E5E7EB;
+    
+    /* Borders & Shadows - Subtle */
+    --border-light: #E5E7EB;
+    --border-medium: #D1D5DB;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    
+    /* Glassmorphism - Refined */
+    --glass-bg: rgba(255, 255, 255, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+    --glass-blur: blur(16px);
+    
+    /* Spacing Scale */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    -webkit-font-smoothing: antialiased; /* 让 Mac 字体渲染更清晰 */
+    -webkit-font-smoothing: antialiased; 
     -moz-osx-font-smoothing: grayscale;
 }
 
 /* 统一滚动条样式，减少平台差异 */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px; /* Slimmer scrollbar */
+    height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -33,26 +76,28 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.25);
 }
 
 body {
-    /* 跨平台标准字体栈：优先使用各系统的默认无衬线字体 */
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-    background-color: var(--bg-primary);
+    /* Modern Font Stack: Inter (优先) -> System Fonts */
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    background: linear-gradient(135deg, #FAFBFC 0%, #F3F4F6 100%);
     color: var(--text-primary);
     line-height: 1.6;
-    overflow: hidden; /* 防止滚动 */
+    overflow: hidden; 
     width: 100vw;
     height: 100vh;
-    position: fixed; /* 强制固定 */
+    position: fixed; 
     top: 0;
     left: 0;
+    font-weight: 400;
+    letter-spacing: -0.011em; /* Tighter tracking for modern look */
 }
 
 /* 统一表单控件的基础样式 */
@@ -73,17 +118,31 @@ button, input, select, textarea {
     padding: 20px;
 }
 
+/* Glassmorphism Utility Class */
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+}
+
 /* Header with score and controls */
 .game-header {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    padding: 12px 20px;
-    background-color: var(--bg-secondary);
-    border-radius: 12px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    gap: 20px;
+    padding: var(--space-md) var(--space-lg);
+    /* Refined Glassmorphism */
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-lg);
+    
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-lg);
+    gap: var(--space-xl);
 }
 
 .header-section {
@@ -92,20 +151,18 @@ button, input, select, textarea {
     gap: 10px;
 }
 
+
 .header-left {
-    flex: 1;
     justify-content: flex-start;
 }
 
 .header-center {
-    flex: 1;
     justify-content: center;
 }
 
 .header-right {
-    flex: 1;
     justify-content: flex-end;
-    gap: 15px;
+    gap: 12px;
 }
 
 .play-controls {
@@ -113,115 +170,172 @@ button, input, select, textarea {
     gap: 8px;
 }
 
-/* Button styles with autism-friendly design */
+/* Modern Button System - Minimal, Clean */
 .control-btn, .speed-btn {
-    padding: 10px 16px;
+    padding: 10px 18px;
     border: none;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-weight: 600;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500; /* Medium weight for better readability */
+    letter-spacing: -0.01em;
     cursor: pointer;
-    transition: all 0.2s ease;
-    background-color: var(--button-primary);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: var(--button-secondary);
     color: var(--text-primary);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    height: 40px; /* 统一高度 */
+    box-shadow: var(--shadow-sm);
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
     white-space: nowrap;
 }
 
-/* Primary Action Button (Pause) */
+/* Primary Action Button */
 .primary-btn {
-    background-color: #2196F3;
+    background-color: var(--button-primary);
     color: white;
+    font-weight: 600;
 }
 .primary-btn:hover {
-    background-color: #1976D2;
+    background-color: var(--button-primary-hover);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
 }
 
-/* Secondary Action Buttons (Settings, Lang) */
+/* Secondary Action Buttons */
 .secondary-btn {
-    background-color: #E3F2FD;
-    color: #0277BD;
-    border: 1px solid #B3E5FC;
+    background-color: var(--button-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
 }
 .secondary-btn:hover {
-    background-color: #B3E5FC;
+    background-color: var(--button-secondary-hover);
+    border-color: var(--border-medium);
 }
 
 .control-btn.panic-btn {
-    background: #FFEBEE;
-    color: #C62828;
-    border: 1px solid #FFCDD2;
+    background: #FEF2F2;
+    color: var(--accent-danger);
+    border: 1px solid #FECACA;
 }
 
 .control-btn.panic-btn.is-muted {
-    background: #E53935;
+    background: var(--accent-danger);
     color: #fff;
-    border-color: #E53935;
+    border-color: var(--accent-danger);
 }
 
 .control-btn:hover, .speed-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-md);
 }
 
 .speed-controls {
     display: flex;
-    gap: 4px;
-    background: #E0E0E0;
+    gap: 2px;
+    background: var(--bg-secondary);
     padding: 4px;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
 }
 
 .speed-btn {
     background: transparent;
     box-shadow: none;
-    padding: 0 12px;
-    height: 32px;
-    font-size: 1.2rem;
-    color: #757575;
+    padding: 6px 12px;
+    height: auto;
+    min-height: 32px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.speed-btn svg {
+    flex-shrink: 0;
+}
+
+.speed-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
 }
 
 .speed-btn:hover {
-    background: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.6);
+    color: var(--text-primary);
     transform: none;
 }
 
 .speed-btn.active {
     background-color: #fff;
-    color: #2196F3;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: var(--accent-primary);
+    box-shadow: var(--shadow-sm);
+    font-weight: 600;
 }
 
-/* Progress Indicator Optimized */
+.speed-btn.active .speed-label {
+    font-weight: 600;
+}
+
+/* Progress Indicator - Modern, Minimal */
 .progress-indicator {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 200px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-sm);
+    min-width: 220px;
     background: #fff;
-    padding: 6px 16px;
-    border-radius: 20px;
+    padding: 12px 18px;
+    border-radius: var(--radius-xl);
     border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
 }
 
 .time-remaining {
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: 0.875rem;
+    font-weight: 600;
     color: var(--text-primary);
-    min-width: 40px;
-    text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-variant-numeric: tabular-nums; /* Monospaced numbers */
 }
 
 .progress-bar {
-    width: 120px;
-    height: 8px;
+    width: 100%;
+    height: 6px;
     background-color: var(--bg-secondary);
-    border-radius: 4px;
+    border-radius: 999px;
     overflow: hidden;
+    position: relative;
+}
+
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.3) 50%, 
+        transparent 100%);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
 }
 
 /* Game area layout - Tokyo2020 Integration */
@@ -238,44 +352,45 @@ button, input, select, textarea {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #FFFFFF; /* 改为纯白背景，避免发灰 */
-    border-radius: 12px;
+    background-color: #FFFFFF;
+    border-radius: var(--radius-lg);
     overflow: visible;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-lg);
     width: 820px;
     height: 620px;
     flex-shrink: 0;
 }
 
 #game-canvas {
-    background: linear-gradient(180deg, #FFFFFF 0%, #E1F5FE 100%); /* 匹配 JS 中的新渐变 */
-    border-radius: 8px;
+    background: linear-gradient(180deg, #FAFBFC 0%, #F0F9FF 100%);
+    border-radius: var(--radius-md);
     width: 800px;
     height: 600px;
     max-width: none;
     max-height: none;
 }
 
-/* Encouragement messages - 移到页面顶部 */
+/* Encouragement messages - Modern Toast Style */
 .encouragement-message {
     position: fixed;
     top: 80px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 1.8rem;
-    font-weight: 700;
+    font-size: 1.5rem;
+    font-weight: 600;
     color: var(--text-primary);
-    background: var(--success-soft);
-    padding: 12px 24px;
-    border-radius: 12px;
-    border: 2px solid var(--accent-soft);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: var(--accent-success);
+    padding: 16px 32px;
+    border-radius: var(--radius-lg);
+    border: none;
+    box-shadow: var(--shadow-lg);
     text-shadow: none;
     opacity: 0;
     pointer-events: none;
     z-index: 1000;
     max-width: 90vw;
     text-align: center;
+    letter-spacing: -0.02em;
 }
 
 /* Pause overlay */
@@ -311,38 +426,42 @@ button, input, select, textarea {
 
 /* Footer instructions */
 .game-footer {
-    padding: 15px 20px;
+    padding: var(--space-md) var(--space-lg);
     text-align: center;
     background-color: var(--bg-secondary);
-    border-radius: 12px;
-    margin-top: 20px;
+    border-radius: var(--radius-lg);
+    margin-top: var(--space-lg);
+    border: 1px solid var(--border-light);
 }
 
 .instructions p {
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: var(--text-secondary);
     font-weight: 500;
+    letter-spacing: -0.01em;
 }
 
 /* Status display styles */
 .status-display {
     display: flex;
-    gap: 20px;
+    gap: var(--space-md);
     justify-content: center;
-    margin: 10px 0;
+    margin: var(--space-sm) 0;
     flex-wrap: wrap;
 }
 
 .status-item {
     background: var(--bg-secondary);
     padding: 8px 16px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    font-size: 0.9rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    font-size: 0.875rem;
+    border: 1px solid var(--border-light);
 }
 
 .status-item span {
     color: var(--text-primary);
+    font-weight: 500;
 }
 
 /* Enhanced button styles for new features */
@@ -458,8 +577,19 @@ button, input, select, textarea {
     }
     
     .game-header {
+        display: flex;
         flex-direction: column;
         gap: 15px;
+    }
+    
+    .header-section {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .header-left,
+    .header-right {
+        justify-content: center;
     }
     
     .controls {
@@ -526,38 +656,6 @@ button, input, select, textarea {
 
 /* 自闭症友好增强功能样式 - 已移除面板，保留类名防止报错 */
 /* .autism-controls, .sensory-panel, .sensory-control styles removed */
-
-/* 进度指示器 */
-.progress-indicator {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    min-width: 150px;
-}
-
-.time-remaining {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.progress-bar {
-    width: 100%;
-    height: 8px;
-    background-color: var(--bg-secondary);
-    border-radius: 4px;
-    overflow: hidden;
-    border: 1px solid var(--border-light);
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent-soft), var(--accent-calm));
-    border-radius: 4px;
-    transition: width 0.3s ease;
-    width: 100%;
-}
 
 /* 色彩模式变体 */
 body.high-contrast {
@@ -626,50 +724,54 @@ body.high-animation * {
 
 .settings-panel {
     background: var(--bg-primary);
-    border-radius: 16px;
-    padding: 0; /* padding 由内部元素处理 */
-    width: min(520px, 92vw); /* 稍微变窄 */
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
-    max-height: 85vh; /* 更严格的高度限制 */
+    border-radius: var(--radius-xl);
+    padding: 0;
+    width: min(520px, 92vw);
+    box-shadow: var(--shadow-lg);
+    max-height: 85vh;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* 防止圆角被内容溢出覆盖 */
+    overflow: hidden;
+    border: 1px solid var(--border-light);
 }
 
 .settings-header {
-    padding: 20px 24px 10px;
+    padding: var(--space-lg) var(--space-lg) var(--space-md);
     background: var(--bg-primary);
-    flex-shrink: 0; /* 防止头部被压缩 */
+    flex-shrink: 0;
     border-bottom: 1px solid var(--border-light);
 }
 
 .settings-scroll-area {
-    padding: 16px 24px;
+    padding: var(--space-md) var(--space-lg);
     overflow-y: auto;
-    flex: 1; /* 占据剩余空间 */
-    background: #fdfdfd; /* 稍微区分背景 */
+    flex: 1;
+    background: #FAFBFC;
 }
 
 .settings-actions {
-    padding: 16px 24px;
+    padding: var(--space-md) var(--space-lg);
     background: var(--bg-primary);
     border-top: 1px solid var(--border-light);
-    flex-shrink: 0; /* 防止底部被压缩 */
+    flex-shrink: 0;
     display: flex;
-    gap: 12px;
+    gap: var(--space-sm);
     justify-content: flex-end;
 }
 
 .settings-panel h2 {
     margin-bottom: 4px;
     color: var(--text-primary);
-    font-size: 1.4rem; /* 减小标题 */
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
 
 .settings-subtitle {
-    margin-bottom: 12px;
+    margin-bottom: var(--space-sm);
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    font-size: 0.875rem;
+    font-weight: 400;
 }
 
 .settings-mode {
@@ -683,15 +785,15 @@ body.high-animation * {
 .settings-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px 14px; /* 减小间距 */
+    gap: var(--space-sm) var(--space-md);
     margin-bottom: 0;
 }
 
 .settings-field {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    font-size: 0.85rem; /* 减小字体 */
+    gap: 6px;
+    font-size: 0.875rem;
 }
 
 .settings-field-meta {
@@ -699,16 +801,33 @@ body.high-animation * {
     align-items: center;
     justify-content: space-between;
     gap: 6px;
-    font-size: 0.72rem; /* 减小提示字体 */
-    color: var(--text-secondary);
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
 }
 
 .settings-field select {
-    padding: 6px 8px; /* 减小输入框高度 */
-    border-radius: 8px;
-    border: 1px solid var(--accent-soft);
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
     background: #fff;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    transition: all 0.15s ease;
+}
+
+.settings-field select:hover {
+    border-color: var(--border-medium);
+}
+
+.settings-field select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.settings-field label {
+    font-weight: 500;
+    color: var(--text-primary);
 }
 
 .settings-reset {
@@ -741,48 +860,50 @@ body.high-animation * {
     color: var(--text-secondary);
 }
 
-/* 游戏结果窗口 */
+/* Result Overlay - Modern Glassmorphism */
 .game-result-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(31, 41, 55, 0.5);
+    backdrop-filter: blur(8px);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 2000;
-    animation: fadeIn 0.5s ease-out;
-}
-
-.game-result-overlay.hidden {
-    display: none;
+    animation: fadeIn 0.3s ease-out;
 }
 
 .result-content {
-    background: var(--bg-primary);
-    border-radius: 24px;
-    padding: 45px 60px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: var(--shadow-lg);
+    
+    border-radius: var(--radius-xl);
+    padding: 40px 50px;
     max-width: 800px;
     width: 85vw;
     text-align: center;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
-    animation: slideUp 0.5s ease-out;
+    animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
     max-height: 88vh;
     overflow-y: auto;
 }
 
 .result-content h2 {
-    font-size: 2.2rem;
+    font-size: 2rem;
     color: var(--text-primary);
     margin-bottom: 30px;
     font-weight: 700;
+    letter-spacing: -0.03em; /* Tighter for large headings */
 }
 
 .result-stats {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
     gap: 15px;
     margin-bottom: 35px;
     max-width: 900px;
@@ -792,29 +913,31 @@ body.high-animation * {
 
 .stat-item {
     background: var(--bg-secondary);
-    border-radius: 16px;
-    padding: 25px 20px;
+    border-radius: var(--radius-md);
+    padding: 24px 18px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
-    border: 2px solid var(--border-light);
-    transition: all 0.3s ease;
+    gap: 8px;
+    border: 1px solid var(--border-light);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     min-height: 120px;
     justify-content: center;
 }
 
 .stat-item:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-medium);
 }
 
 .stat-icon {
-    font-size: 2rem;
+    font-size: 1.75rem;
+    color: var(--accent-primary);
 }
 
 .stat-label {
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     color: var(--text-secondary);
     font-weight: 500;
 }
@@ -822,32 +945,36 @@ body.high-animation * {
 .stat-value {
     font-size: 2rem;
     font-weight: 700;
-    color: var(--accent-calm);
+    color: var(--accent-primary);
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
 }
 
 .stat-unit {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-weight: 400;
 }
 
 .result-message {
     margin-bottom: 25px;
-    padding: 16px 20px;
-    background: var(--success-soft);
-    border-radius: 12px;
-    border: 2px solid var(--accent-soft);
+    padding: 16px 24px;
+    background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+    border-radius: var(--radius-md);
+    border: 1px solid #A7F3D0;
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
 }
 
 .result-message p {
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: var(--text-primary);
     font-weight: 500;
     margin: 0;
-    line-height: 1.4;
+    line-height: 1.5;
     text-align: center;
+    letter-spacing: -0.01em;
 }
 
 .result-actions {
@@ -858,78 +985,81 @@ body.high-animation * {
 }
 
 .result-btn {
-    padding: 16px 35px;
+    padding: 14px 28px;
     border: none;
-    border-radius: 12px;
-    font-size: 1.1rem;
-    font-weight: 600;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
     cursor: pointer;
-    transition: all 0.3s ease;
-    min-width: 150px;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 140px;
 }
 .result-btn.small {
-    padding: 10px 14px;
-    font-size: 0.9rem;
+    padding: 8px 16px;
+    font-size: 0.875rem;
     min-width: auto;
 }
 
 .result-btn.primary {
-    background: #2196F3; /* 更明显的深蓝色 */
+    background: var(--accent-primary);
     color: white;
 }
 
 .result-btn.primary:hover {
-    background: #9E9E9E; /* 悬停变灰 */
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    background: var(--button-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
 }
 
 .result-btn.secondary {
-    background: var(--bg-secondary);
+    background: var(--button-secondary);
     color: var(--text-primary);
-    border: 2px solid var(--border-light);
+    border: 1px solid var(--border-light);
 }
 
 .result-btn.secondary:hover {
-    background: var(--border-light);
-    transform: translateY(-2px);
+    background: var(--button-secondary-hover);
+    border-color: var(--border-medium);
+    transform: translateY(-1px);
 }
 
 .result-btn.panic-btn {
-    background: #f3d8d8;
-    color: #7b3b3b;
-    border: 2px solid #e3bcbc;
+    background: #FEF2F2;
+    color: var(--accent-danger);
+    border: 1px solid #FECACA;
 }
 
 .result-btn.panic-btn.is-muted {
-    background: #e98d8d;
+    background: var(--accent-danger);
     color: #fff;
-    border-color: #e98d8d;
+    border-color: var(--accent-danger);
 }
 
 .result-btn.music {
-    background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     color: white;
     border: none;
+    font-weight: 600;
 }
 
 .result-btn.music:hover {
-    background: linear-gradient(135deg, #FF5252, #FF7043);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(255, 107, 107, 0.3);
+    background: linear-gradient(135deg, var(--button-primary-hover), #7C3AED);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
 }
 
 .debug-panel {
     margin: 22px 0 10px;
-    padding: 18px 20px;
+    padding: 20px 24px;
     background: var(--bg-secondary);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--border-light);
     text-align: left;
 }
 
 .debug-section {
-    margin-top: 16px;
+    margin-top: var(--space-md);
 }
 
 .debug-section:first-of-type {
@@ -937,10 +1067,12 @@ body.high-animation * {
 }
 
 .debug-section-title {
-    margin: 0 0 10px;
-    font-size: 0.95rem;
+    margin: 0 0 var(--space-sm);
+    font-size: 0.875rem;
     color: var(--text-secondary);
     text-transform: none;
+    font-weight: 600;
+    letter-spacing: -0.01em;
 }
 
 .debug-header {
@@ -959,17 +1091,19 @@ body.high-animation * {
 
 .debug-header h3 {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: var(--text-primary);
+    font-weight: 600;
+    letter-spacing: -0.01em;
 }
 
 .debug-help {
     background: #fff;
-    border-radius: 12px;
-    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
     border: 1px solid var(--border-light);
-    margin-bottom: 12px;
-    font-size: 0.85rem;
+    margin-bottom: var(--space-md);
+    font-size: 0.875rem;
     color: var(--text-secondary);
 }
 
@@ -997,8 +1131,8 @@ body.high-animation * {
 
 .overview-item {
     background: #fff;
-    border-radius: 12px;
-    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
     border: 1px solid var(--border-light);
     display: flex;
     flex-direction: column;
@@ -1006,12 +1140,15 @@ body.high-animation * {
 }
 
 .overview-label {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .overview-value {
-    font-size: 0.95rem;
+    font-size: 0.875rem;
     color: var(--text-primary);
     font-weight: 600;
 }
@@ -1024,8 +1161,8 @@ body.high-animation * {
 
 .debug-block {
     background: #fff;
-    border-radius: 12px;
-    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
     border: 1px solid var(--border-light);
 }
 
@@ -1034,22 +1171,23 @@ body.high-animation * {
 }
 
 .debug-block h4 {
-    margin: 0 0 8px;
-    font-size: 0.95rem;
+    margin: 0 0 var(--space-sm);
+    font-size: 0.875rem;
     color: var(--text-secondary);
+    font-weight: 600;
 }
 
 .debug-list {
     margin: 0;
     padding-left: 18px;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     color: var(--text-primary);
-    line-height: 1.4;
+    line-height: 1.5;
 }
 
 .debug-details {
-    margin-top: 8px;
-    font-size: 0.85rem;
+    margin-top: var(--space-sm);
+    font-size: 0.8125rem;
     color: var(--text-secondary);
 }
 
@@ -1135,24 +1273,25 @@ body.high-animation * {
     }
 }
 
-/* 成就提示样式 - 也移到页面顶部 */
+/* Achievement popup - Modern Toast Style */
 .achievement-popup {
     position: fixed;
     top: 80px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--success-soft);
+    background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
     color: var(--text-primary);
-    padding: 20px 30px;
-    border-radius: 16px;
-    font-size: 1.2rem;
+    padding: 18px 32px;
+    border-radius: var(--radius-lg);
+    font-size: 1.125rem;
     font-weight: 600;
-    border: 2px solid var(--accent-soft);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    border: 1px solid #A7F3D0;
+    box-shadow: var(--shadow-lg);
     z-index: 1001;
-    animation: achievementPop 0.5s ease-out;
+    animation: achievementPop 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     max-width: 90vw;
     text-align: center;
+    letter-spacing: -0.02em;
 }
 
 @keyframes achievementPop {
@@ -1292,3 +1431,182 @@ body.high-animation * {
 
 /* 高对比度模式下修正感官面板的文字与背景对比 - 已移除 */
 /* body.high-contrast .sensory-panel styles removed */
+
+/* Progress Bar Shimmer Animation */
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+    border-radius: 999px;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 100%;
+    position: relative;
+    z-index: 1;
+}
+
+/* Color Mode Variants */
+body.high-contrast {
+    --bg-primary: #000000;
+    --bg-secondary: #1a1a1a;
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --button-primary: #333333;
+    --button-hover: #555555;
+    --border-light: #666666;
+}
+
+body.soft-colors {
+    --bg-primary: #faf9f7;
+    --bg-secondary: #f5f3f0;
+    --text-primary: #5d4e37;
+    --text-secondary: #8b7355;
+    --button-primary: #d4c5b9;
+    --button-hover: #c9b79c;
+}
+
+/* Animation Intensity Control */
+body.low-animation * {
+    animation-duration: 2s !important;
+    transition-duration: 0.5s !important;
+}
+
+body.high-animation * {
+    animation-duration: 0.3s !important;
+    transition-duration: 0.1s !important;
+}
+
+/* Predictable Mode Indicator */
+.predictable-mode-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+    color: var(--text-primary);
+    padding: 8px 16px;
+    border-radius: var(--radius-xl);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1px solid #A7F3D0;
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+}
+
+/* ========================================
+   游戏进度指示器 - 大型、清晰的倒计时显示
+   ======================================== */
+.game-progress-indicator {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-lg);
+    z-index: 15;
+    min-width: 280px;
+}
+
+.game-progress-bar {
+    flex: 1;
+    height: 10px;
+    background: var(--bg-tertiary);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+    min-width: 140px;
+}
+
+.game-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+    border-radius: 999px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 100%;
+    position: relative;
+}
+
+.game-progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.4) 50%, 
+        transparent 100%);
+    animation: shimmer 2s infinite;
+}
+
+.game-progress-time {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 1.25rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.game-progress-time svg {
+    color: var(--accent-primary);
+    flex-shrink: 0;
+}
+
+.game-progress-unit {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+/* 进度条颜色变化 - 根据剩余时间 */
+.game-progress-indicator.warning .game-progress-fill {
+    background: linear-gradient(90deg, var(--accent-warning), #F97316);
+}
+
+.game-progress-indicator.danger .game-progress-fill {
+    background: linear-gradient(90deg, var(--accent-danger), #DC2626);
+    animation: pulse-danger 1s ease-in-out infinite;
+}
+
+@keyframes pulse-danger {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .game-progress-indicator {
+        bottom: 10px;
+        padding: 10px 16px;
+        min-width: 220px;
+        gap: 12px;
+    }
+    
+    .game-progress-bar {
+        min-width: 100px;
+        height: 8px;
+    }
+    
+    .game-progress-time {
+        font-size: 1.1rem;
+    }
+    
+    .game-progress-time svg {
+        width: 18px;
+        height: 18px;
+    }
+}

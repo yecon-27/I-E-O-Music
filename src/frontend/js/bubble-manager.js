@@ -4,12 +4,13 @@
  */
 
 // 为泡泡管理器单独定义 lane，避免与其他脚本的全局命名冲突
+// 使用降低饱和度的现代配色
 const BUBBLE_LANES = [
-    { id: 1, color: '#e34f4f', note: { name: 'C4', midi: 60, freq: 261.6256 } }, // 红
-    { id: 2, color: '#f28c28', note: { name: 'D4', midi: 62, freq: 293.6648 } }, // 橙
-    { id: 3, color: '#f2c14f', note: { name: 'E4', midi: 64, freq: 329.6276 } }, // 黄
-    { id: 4, color: '#3e7ab8', note: { name: 'G4', midi: 67, freq: 391.9954 } }, // 蓝
-    { id: 5, color: '#4b4ba8', note: { name: 'A4', midi: 69, freq: 440.0 } }, // 靛
+    { id: 1, color: '#F87171', note: { name: 'C4', midi: 60, freq: 261.6256 } }, // Soft Red
+    { id: 2, color: '#FB923C', note: { name: 'D4', midi: 62, freq: 293.6648 } }, // Soft Orange
+    { id: 3, color: '#FBBF24', note: { name: 'E4', midi: 64, freq: 329.6276 } }, // Soft Yellow
+    { id: 4, color: '#60A5FA', note: { name: 'G4', midi: 67, freq: 391.9954 } }, // Soft Blue
+    { id: 5, color: '#A78BFA', note: { name: 'A4', midi: 69, freq: 440.0 } }, // Soft Purple
 ];
 // 从左到右的高度比例（归一化 0-1），依次由高到低
 // 从左到右统一从底部生成，使用相同的起始高度（避免梯度）
@@ -237,64 +238,58 @@ class BubbleManager {
     }
     
     /**
-     * Render a single bubble with autism-friendly styling
+     * Render a single bubble with Modern Matte / Micro-texture styling
      */
     renderBubble(ctx, bubble) {
         ctx.save();
         
-        // Create radial gradient for smooth, calming bubble appearance
+        // 1. Base Fill - Matte, Semi-transparent
+        ctx.fillStyle = this.hexToRgba(bubble.color, 0.35); 
+        ctx.beginPath();
+        ctx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. Subtle Top Highlight - Very Minimal for Micro-texture
         const gradient = ctx.createRadialGradient(
-            bubble.x - bubble.radius * 0.3, // Highlight offset for 3D effect
-            bubble.y - bubble.radius * 0.3,
+            bubble.x - bubble.radius * 0.25,
+            bubble.y - bubble.radius * 0.25,
             0,
             bubble.x,
             bubble.y,
             bubble.radius
         );
+        // Extremely subtle white glow
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+        gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.05)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
         
-        // Soft gradient stops for autism-friendly appearance
-        gradient.addColorStop(0, this.lightenColor(bubble.color, 0.3)); // Bright center
-        gradient.addColorStop(0.7, bubble.color); // Main color
-        gradient.addColorStop(1, this.darkenColor(bubble.color, 0.2)); // Darker edge
-        
-        // Draw main bubble
         ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
         ctx.fill();
         
-        // Add very subtle border for definition (autism-friendly)
-        ctx.strokeStyle = this.darkenColor(bubble.color, 0.1);
-        ctx.lineWidth = 1;
+        // 3. Clean, Thin Border
+        ctx.strokeStyle = this.hexToRgba(bubble.color, 0.6);
+        ctx.lineWidth = 1.5;
         ctx.stroke();
-        
-        // Add shine effect for realistic bubble appearance
-        this.addBubbleShine(ctx, bubble);
         
         ctx.restore();
     }
     
     /**
+     * Helper to convert Hex to RGBA
+     */
+    hexToRgba(hex, alpha) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    /**
      * Add shine effect to make bubbles look more realistic
+     * (Deprecated/Unused in new style, kept for compatibility if needed later)
      */
     addBubbleShine(ctx, bubble) {
-        // Small highlight circle
-        const shineRadius = bubble.radius * 0.25;
-        const shineX = bubble.x - bubble.radius * 0.25;
-        const shineY = bubble.y - bubble.radius * 0.25;
-        
-        const shineGradient = ctx.createRadialGradient(
-            shineX, shineY, 0,
-            shineX, shineY, shineRadius
-        );
-        
-        shineGradient.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
-        shineGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-        
-        ctx.fillStyle = shineGradient;
-        ctx.beginPath();
-        ctx.arc(shineX, shineY, shineRadius, 0, Math.PI * 2);
-        ctx.fill();
+        // ... kept empty or unused
     }
     
     /**

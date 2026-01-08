@@ -62,23 +62,36 @@ let pausedBySettings = false;
 let panicMuted = false;
 let currentLang = 'zh';
 
+// SVG图标定义
+const ICONS = {
+    pause: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>',
+    play: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>',
+    volumeX: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>',
+    volume2: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>',
+    settings: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
+    rewind: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></svg>',
+    playSmall: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>',
+    fastForward: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 19 22 12 13 5 13 19"></polygon><polygon points="2 19 11 12 2 5 2 19"></polygon></svg>',
+    target: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>'
+};
+
 const TRANSLATIONS = {
     zh: {
-        'pause-btn-paused': '▶️ 继续',
-        'pause-btn-running': '⏸️ 暂停',
-        'panic-btn-muted': '🔊 恢复声音',
-        'panic-btn-unmuted': '🔇 停止/静音',
-        'settings-btn': '⚙️ 参数',
-        'sensory-btn': '🎛️ 感官设置',
-        'slow-btn': '🐌 慢速',
-        'normal-btn': '🚶 正常',
-        'fast-btn': '🏃 快速',
+        'pause-btn-paused': ICONS.play+ '<span style="margin-left:6px">继续</span>',
+        'pause-btn-running': ICONS.pause + '<span style="margin-left:6px">暂停</span>',
+        'panic-btn-muted': ICONS.volume2 + '<span style="margin-left:6px">恢复声音</span>',
+        'panic-btn-unmuted': ICONS.volumeX + '<span style="margin-left:6px">静音</span>',
+        'settings-btn': ICONS.settings + '<span style="margin-left:6px">参数</span>',
+        'sensory-btn': '感官设置',
+        'slow-btn': ICONS.rewind + '<span class="speed-label">慢速</span>',
+        'normal-btn': ICONS.playSmall + '<span class="speed-label">正常</span>',
+        'fast-btn': ICONS.fastForward + '<span class="speed-label">快速</span>',
         'start-round-btn': '开始本轮',
         'save-settings-btn': '保存设置',
-        'instructions': '🎯 移动光标戳泡泡！',
+        'instructions': ICONS.target + ' 移动光标戳泡泡',
         'input-mode': '输入方式: ',
         'bubble-count': '泡泡数: ',
-        'time-remaining': '⏱️ 剩余: ',
+        'time-remaining': '剩余: ',
         'game-paused': '游戏已暂停',
         'click-continue': '点击继续按钮恢复游戏',
         // Settings Modal
@@ -107,33 +120,33 @@ const TRANSLATIONS = {
         'opt-visual': '仅视觉 (Visual-only)',
         'opt-off': '关闭 (Off)',
         'opt-on': '开启 (On)',
-        'msg-paused': '休息一下！⏸️',
-        'msg-resume': '继续加油！▶️',
-        'msg-slow': '慢慢来，很好！🐌',
-        'msg-normal': '节奏刚好！👍',
-        'msg-fast': '快速挑战！⚡',
+        'msg-paused': '休息一下！',
+        'msg-resume': '继续加油！',
+        'msg-slow': '慢慢来，很好！',
+        'msg-normal': '节奏刚好！',
+        'msg-fast': '快速挑战！',
         'msg-welcome': '欢迎！移动鼠标戳泡泡！',
         'msg-saved': '设置已保存，将在下一轮生效',
-        'msg-reward': 'Reward 已生成，点击“享受你创作的音乐”播放 🎵',
+        'msg-reward': 'Reward 已生成，点击“享受你创作的音乐”播放🎵',
         'msg-error': 'AI 生成失败：查看控制台错误',
         'input-mouse': '鼠标'
     },
     en: {
-        'pause-btn-paused': '▶️ Resume',
-        'pause-btn-running': '⏸️ Pause',
-        'panic-btn-muted': '🔊 Unmute',
-        'panic-btn-unmuted': '🔇 Stop/Mute',
-        'settings-btn': '⚙️ Settings',
-        // 'sensory-btn': '🎛️ Sensory', // Removed
-        'slow-btn': '🐌 Slow',
-        'normal-btn': '🚶 Normal',
-        'fast-btn': '🏃 Fast',
+        'pause-btn-paused': ICONS.play + '<span style="margin-left:6px">Resume</span>',
+        'pause-btn-running': ICONS.pause + '<span style="margin-left:6px">Pause</span>',
+        'panic-btn-muted': ICONS.volume2 + '<span style="margin-left:6px">Unmute</span>',
+        'panic-btn-unmuted': ICONS.volumeX + '<span style="margin-left:6px">Mute</span>',
+        'settings-btn': ICONS.settings + '<span style="margin-left:6px">Settings</span>',
+        // 'sensory-btn': 'Sensory', // Removed
+        'slow-btn': ICONS.rewind + '<span class="speed-label">Slow</span>',
+        'normal-btn': ICONS.playSmall + '<span class="speed-label">Normal</span>',
+        'fast-btn': ICONS.fastForward + '<span class="speed-label">Fast</span>',
         'start-round-btn': 'Start Round',
         'save-settings-btn': 'Save Settings',
-        'instructions': '🎯 Move cursor to pop bubbles!',
+        'instructions': ICONS.target + ' Move cursor to pop bubbles!',
         'input-mode': 'Input: ',
         'bubble-count': 'Bubbles: ',
-        'time-remaining': '⏱️ Time: ',
+        'time-remaining': 'Time: ',
         'game-paused': 'Game Paused',
         'click-continue': 'Click resume button to continue',
         // Settings Modal
@@ -162,14 +175,14 @@ const TRANSLATIONS = {
         'opt-visual': 'Visual Only',
         'opt-off': 'Off',
         'opt-on': 'On',
-        'msg-paused': 'Take a break! ⏸️',
-        'msg-resume': 'Keep going! ▶️',
-        'msg-slow': 'Take your time! 🐌',
-        'msg-normal': 'Good pace! 👍',
-        'msg-fast': 'Fast challenge! ⚡',
+        'msg-paused': 'Take a break!',
+        'msg-resume': 'Keep going!',
+        'msg-slow': 'Take your time!',
+        'msg-normal': 'Good pace!',
+        'msg-fast': 'Fast challenge!',
         'msg-welcome': 'Welcome! Move cursor to pop bubbles!',
         'msg-saved': 'Settings saved, will apply next round',
-        'msg-reward': 'Reward generated, click "Enjoy Music" to play 🎵',
+        'msg-reward': 'Reward generated, click "Enjoy Music" to play',
         'msg-error': 'AI Generation Failed: Check Console',
         'input-mouse': 'Mouse'
     }
@@ -180,14 +193,14 @@ function t(key) {
 }
 
 function updateUIText() {
-    // Buttons
-    if(elements.pauseBtn) elements.pauseBtn.textContent = game?.isPaused ? t('pause-btn-paused') : t('pause-btn-running');
-    if(elements.panicMuteBtn) elements.panicMuteBtn.textContent = panicMuted ? t('panic-btn-muted') : t('panic-btn-unmuted');
-    if(elements.resultMuteBtn) elements.resultMuteBtn.textContent = panicMuted ? t('panic-btn-muted') : t('panic-btn-unmuted');
-    if(elements.sessionSettingsBtn) elements.sessionSettingsBtn.textContent = t('settings-btn');
-    if(elements.slowBtn) elements.slowBtn.textContent = t('slow-btn');
-    if(elements.normalBtn) elements.normalBtn.textContent = t('normal-btn');
-    if(elements.fastBtn) elements.fastBtn.textContent = t('fast-btn');
+    // Buttons - 使用innerHTML来支持SVG图标
+    if(elements.pauseBtn) elements.pauseBtn.innerHTML = game?.isPaused ? t('pause-btn-paused') : t('pause-btn-running');
+    if(elements.panicMuteBtn) elements.panicMuteBtn.innerHTML = panicMuted ? t('panic-btn-muted') : t('panic-btn-unmuted');
+    if(elements.resultMuteBtn) elements.resultMuteBtn.innerHTML = panicMuted ? t('panic-btn-muted') : t('panic-btn-unmuted');
+    if(elements.sessionSettingsBtn) elements.sessionSettingsBtn.innerHTML = t('settings-btn');
+    if(elements.slowBtn) elements.slowBtn.innerHTML = t('slow-btn');
+    if(elements.normalBtn) elements.normalBtn.innerHTML = t('normal-btn');
+    if(elements.fastBtn) elements.fastBtn.innerHTML = t('fast-btn');
     
     // Sensory button
     const sensoryBtn = document.getElementById('sensory-panel-toggle');
@@ -195,7 +208,7 @@ function updateUIText() {
 
     // Instructions & Status
     const instructionsP = document.querySelector('.instructions p');
-    if(instructionsP) instructionsP.textContent = t('instructions');
+    if(instructionsP) instructionsP.innerHTML = t('instructions');
     
     const inputModeLabel = document.querySelector('.status-item:nth-child(1) span:first-child');
     if(inputModeLabel) inputModeLabel.textContent = t('input-mode');
@@ -555,7 +568,7 @@ function handlePauseToggle() {
     const isPaused = game.togglePause();
     
     // Update UI
-    elements.pauseBtn.textContent = isPaused ? t('pause-btn-paused') : t('pause-btn-running');
+    elements.pauseBtn.innerHTML = isPaused ? t('pause-btn-paused') : t('pause-btn-running');
     
     if (isPaused) {
         elements.pauseOverlay.classList.remove('hidden');
@@ -799,7 +812,7 @@ function resetSessionForm() {
 function syncPanicButton(btn, isMuted) {
     if (!btn) return;
     btn.classList.toggle('is-muted', isMuted);
-    btn.textContent = isMuted ? t('panic-btn-muted') : t('panic-btn-unmuted');
+    btn.innerHTML = isMuted ? t('panic-btn-muted') : t('panic-btn-unmuted');
 }
 
 function refreshPanicButtons() {

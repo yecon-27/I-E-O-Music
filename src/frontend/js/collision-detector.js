@@ -253,16 +253,14 @@ class CollisionDetector {
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
         
-        // Choose hand emoji based on hand type - 对调左右手emoji
-        const handEmojis = {
-            leftHand: '✋',   // 左手显示✋
-            rightHand: '🤚'   // 右手显示🤚
-        };
-        
-        const handEmoji = handEmojis[handType];
-        
-        // Draw the hand emoji
-        ctx.fillText(handEmoji, x, y);
+        // Draw hand indicator (circle)
+        ctx.beginPath();
+        ctx.arc(x, y, 15, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
         
         // Reset shadow
         ctx.shadowBlur = 0;
@@ -271,20 +269,30 @@ class CollisionDetector {
         this.drawHandEffects(ctx, x, y, size, color);
         
         // Add hand type label with better styling
-        ctx.fillStyle = color;
-        ctx.font = `bold ${size * 0.4}px Arial`;
+        ctx.font = `500 ${size * 0.35}px "Inter", -apple-system, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Background for label - 镜像显示标签
-        const labelY = y + size * 1.2;
+        // Background for label - 使用柔和的半透明背景
+        const labelY = y + size * 1.3;
         const labelText = handType === 'leftHand' ? '左手' : '右手';
-        const labelWidth = ctx.measureText(labelText).width + 8;
+        const labelWidth = ctx.measureText(labelText).width + 12;
+        const labelHeight = size * 0.45;
         
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(x - labelWidth/2, labelY - size * 0.2, labelWidth, size * 0.4);
+        // 柔和的圆角背景
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.beginPath();
+        const radius = labelHeight / 2;
+        ctx.roundRect(x - labelWidth/2, labelY - labelHeight/2, labelWidth, labelHeight, radius);
+        ctx.fill();
         
-        ctx.fillStyle = '#FFFFFF';
+        // 柔和的边框
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        // 文字使用柔和的深灰色
+        ctx.fillStyle = '#6B7280';
         ctx.fillText(labelText, x, labelY);
     }
     

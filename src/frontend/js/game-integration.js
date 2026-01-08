@@ -4,26 +4,26 @@
 
 // 等待页面加载完成
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔗 游戏集成脚本启动');
+    console.log('[Integration] 游戏集成脚本启动');
     
     // 监听游戏结束事件
     window.addEventListener('round:ended', function(event) {
-        console.log('🎯 接收到游戏结束事件:', event.detail);
+        console.log('[Integration] 接收到游戏结束事件:', event.detail);
         
         if (window.gameResultManager) {
             // 调用endGame方法，它会处理数据并显示结果窗口
             window.gameResultManager.endGame();
         } else {
-            console.error('❌ GameResultManager 未找到');
+            console.error('[Integration] GameResultManager 未找到');
         }
     });
     
-    console.log('✅ 游戏事件监听器已设置');
+    console.log('[Integration] 游戏事件监听器已设置');
 });
 
 // 调试函数 - 测试结果窗口
 window.testResultWindow = function() {
-    console.log('🧪 测试结果窗口');
+    console.log('[Test] 测试结果窗口');
     
     if (window.gameResultManager) {
         // 模拟一些游戏数据
@@ -45,10 +45,10 @@ window.testResultWindow = function() {
 // 调试函数 - 检查当前游戏数据
 window.checkGameData = function() {
     if (window.gameResultManager) {
-        console.log('📊 当前游戏数据:', window.gameResultManager.gameData);
-        console.log('🎮 游戏是否激活:', window.gameResultManager.isActive);
+        console.log('[Data] 当前游戏数据:', window.gameResultManager.gameData);
+        console.log('[Data] 游戏是否激活:', window.gameResultManager.isActive);
         const stats = window.gameResultManager.calculateStats();
-        console.log('📈 计算的统计数据:', stats);
+        console.log('[Data] 计算的统计数据:', stats);
     } else {
         console.error('GameResultManager 未找到');
     }
@@ -56,9 +56,9 @@ window.checkGameData = function() {
 
 // 调试函数 - 测试游戏重启
 window.testGameRestart = function() {
-    console.log('🧪 测试游戏重启功能');
-    console.log('🎮 当前游戏对象:', window.game);
-    console.log('📊 当前结果管理器:', window.gameResultManager);
+    console.log('[Test] 测试游戏重启功能');
+    console.log('[Test] 当前游戏对象:', window.game);
+    console.log('[Test] 当前结果管理器:', window.gameResultManager);
     
     if (window.gameResultManager) {
         window.gameResultManager.startNewGame();
@@ -69,14 +69,14 @@ window.testGameRestart = function() {
 
 // 调试函数 - 测试碰撞检测流程
 window.testCollisionFlow = function() {
-    console.log('🧪 测试碰撞检测流程');
+    console.log('[Test] 测试碰撞检测流程');
     
     if (!window.game) {
-        console.error('❌ 游戏对象未找到');
+        console.error('[Test] 游戏对象未找到');
         return;
     }
     
-    console.log('🎮 游戏引擎状态:');
+    console.log('[Test] 游戏引擎状态:');
     console.log('  - isRunning:', window.game.isRunning);
     console.log('  - roundActive:', window.game.roundActive);
     console.log('  - bubbleManager:', !!window.game.bubbleManager);
@@ -84,16 +84,16 @@ window.testCollisionFlow = function() {
     
     if (window.game.bubbleManager) {
         const bubbles = window.game.bubbleManager.bubbles;
-        console.log('🫧 泡泡状态:');
+        console.log('[Test] 泡泡状态:');
         console.log('  - 泡泡数量:', bubbles.length);
         console.log('  - 泡泡列表:', bubbles.map(b => ({id: b.id, x: b.x, y: b.y, radius: b.radius})));
     }
     
-    console.log('👋 手部位置:');
+    console.log('[Test] 手部位置:');
     console.log('  - handPositions:', window.game.handPositions);
     
     if (window.gameResultManager) {
-        console.log('📊 结果管理器状态:');
+        console.log('[Test] 结果管理器状态:');
         console.log('  - isActive:', window.gameResultManager.isActive);
         console.log('  - 当前数据:', window.gameResultManager.gameData);
     }
@@ -101,26 +101,26 @@ window.testCollisionFlow = function() {
     // 模拟一次碰撞
     if (window.game.bubbleManager && window.game.bubbleManager.bubbles.length > 0) {
         const bubble = window.game.bubbleManager.bubbles[0];
-        console.log('🧪 模拟戳破第一个泡泡:', bubble.id);
+        console.log('[Test] 模拟戳破第一个泡泡:', bubble.id);
         
         // 直接调用 BubbleManager 的 checkCollision
         const result = window.game.bubbleManager.checkCollision(bubble.x, bubble.y);
-        console.log('✅ 碰撞检测结果:', result);
+        console.log('[Test] 碰撞检测结果:', result);
     }
 };
 
 // 调试函数 - 手动记录泡泡戳破
 window.testRecordBubblePop = function(handType = 'leftHand') {
-    console.log('🧪 测试手动记录泡泡戳破 - 手部类型:', handType);
+    console.log('[Test] 测试手动记录泡泡戳破 - 手部类型:', handType);
     
     if (window.gameResultManager) {
-        console.log('📊 戳破前数据:', window.gameResultManager.gameData);
+        console.log('[Test] 戳破前数据:', window.gameResultManager.gameData);
         
         // 手动记录一次泡泡戳破
         window.gameResultManager.recordBubblePop(handType);
         
-        console.log('📊 戳破后数据:', window.gameResultManager.gameData);
-        console.log('✅ 手动记录完成');
+        console.log('[Test] 戳破后数据:', window.gameResultManager.gameData);
+        console.log('[Test] 手动记录完成');
     } else {
         console.error('GameResultManager 未找到');
     }

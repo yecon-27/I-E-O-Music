@@ -74,6 +74,15 @@ python -m http.server 8081
 docker-compose -f docker/docker-compose.yml up --build
 ```
 
+### 3. iPad/移动设备访问
+
+```bash
+# 启动支持局域网访问的服务器（包含HTTPS和WebSocket）
+python scripts/start_for_ipad.py
+```
+
+📱 详细说明请查看 [iPad使用指南](docs/IPAD_SETUP.md)
+
 ---
 
 ## 📚 文档导航

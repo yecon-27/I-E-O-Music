@@ -109,14 +109,14 @@ class AutismFriendlyFeatures {
         // 应用到PopSynth音效
         if (window.popSynth && typeof window.popSynth.setVolume === 'function') {
             window.popSynth.setVolume(volume);
-            console.log(`🔊 音效音量已设置为: ${this.settings.soundVolume}%`);
+            console.log(`[Audio] 音效音量已设置为: ${this.settings.soundVolume}%`);
         } else {
             // 如果popSynth还没初始化，延迟应用
-            console.log('⏳ PopSynth未就绪，将在初始化后应用音量设置');
+            console.log('[Audio] PopSynth未就绪，将在初始化后应用音量设置');
             setTimeout(() => {
                 if (window.popSynth && typeof window.popSynth.setVolume === 'function') {
                     window.popSynth.setVolume(volume);
-                    console.log(`🔊 延迟应用音效音量: ${this.settings.soundVolume}%`);
+                    console.log(`[Audio] 延迟应用音效音量: ${this.settings.soundVolume}%`);
                 }
             }, 1000);
         }
@@ -257,14 +257,41 @@ class AutismFriendlyFeatures {
         const countdownDisplay = document.getElementById('countdown-display');
         const progressFill = document.getElementById('progress-fill');
         
+        // 新的游戏进度指示器元素
+        const gameCountdownDisplay = document.getElementById('game-countdown-display');
+        const gameProgressFill = document.getElementById('game-progress-fill');
+        const gameProgressIndicator = document.getElementById('game-progress-indicator');
+        
+        const seconds = Math.ceil(remainingMs / 1000);
+        const progress = ((totalMs - remainingMs) / totalMs) * 100;
+        const progressWidth = `${Math.max(0, Math.min(100, 100 - progress))}%`;
+        
+        // 更新顶部小进度条
         if (countdownDisplay) {
-            const seconds = Math.ceil(remainingMs / 1000);
             countdownDisplay.textContent = `${seconds}s`;
         }
         
         if (progressFill) {
-            const progress = ((totalMs - remainingMs) / totalMs) * 100;
-            progressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+            progressFill.style.width = progressWidth;
+        }
+        
+        // 更新底部大进度指示器
+        if (gameCountdownDisplay) {
+            gameCountdownDisplay.textContent = seconds;
+        }
+        
+        if (gameProgressFill) {
+            gameProgressFill.style.width = progressWidth;
+        }
+        
+        // 根据剩余时间更新进度条颜色
+        if (gameProgressIndicator) {
+            gameProgressIndicator.classList.remove('warning', 'danger');
+            if (seconds <= 10) {
+                gameProgressIndicator.classList.add('danger');
+            } else if (seconds <= 20) {
+                gameProgressIndicator.classList.add('warning');
+            }
         }
     }
     
@@ -274,34 +301,6 @@ class AutismFriendlyFeatures {
     showAchievement(message, type = 'success') {
         // 用户已禁用成就弹窗，直接返回
         return;
-        /* 
-        // 禁用原有弹窗逻辑，由 showSimpleFeedback 接管或彻底禁用
-        const popup = document.createElement('div');
-        popup.className = 'achievement-popup';
-        popup.textContent = message;
-        
-        // 不同类型的样式差异
-        if (type === 'milestone') {
-            popup.style.background = '#FFD700'; // 金色
-            popup.style.color = '#000';
-            popup.style.border = '2px solid #FFA500';
-        }
-        
-        document.body.appendChild(popup);
-        
-        // 3秒后消失
-        setTimeout(() => {
-            popup.style.opacity = '0';
-            popup.style.transform = 'translate(-50%, -20px)';
-            popup.style.transition = 'all 0.5s ease';
-            
-            setTimeout(() => {
-                if (popup.parentNode) {
-                    popup.parentNode.removeChild(popup);
-                }
-            }, 500);
-        }, 3000);
-        */
     }
     
     /**
@@ -351,7 +350,7 @@ class AutismFriendlyFeatures {
         
         // 调试信息 - 帮助诊断25个泡泡后的问题
         const totalCount = this.sessionData.successes.length;
-        console.log(`🎯 成功记录: 总数=${totalCount}, 连续=${this.sessionData.consecutiveCount}`);
+        console.log(`[Success] 成功记录: 总数=${totalCount}, 连续=${this.sessionData.consecutiveCount}`);
         
         // 显示简单的即时反馈（不与成就冲突）
         this.showSimpleFeedback();
@@ -377,33 +376,33 @@ class AutismFriendlyFeatures {
         const consecutiveCount = this.sessionData.consecutiveCount;
         
         // 调试信息
-        console.log(`🏆 检查成就: 总数=${totalCount}, 连续=${consecutiveCount}, 标志=`, this.achievementFlags);
+        console.log(`[Achievement] 检查成就: 总数=${totalCount}, 连续=${consecutiveCount}, 标志=`, this.achievementFlags);
         
         // 连续成功成就 - 只在重要里程碑时触发，避免过度反馈
         if (consecutiveCount === 5 && !this.achievementFlags.consecutive5) {
             this.achievementFlags.consecutive5 = true;
-            this.showAchievement('太棒了！连续戳中5个泡泡！🎯', 'success');
+            this.showAchievement('太棒了！连续戳中5个泡泡！', 'success');
         } else if (consecutiveCount === 10 && !this.achievementFlags.consecutive10) {
             this.achievementFlags.consecutive10 = true;
-            this.showAchievement('连击高手！连续戳中10个泡泡！⚡', 'success');
+            this.showAchievement('连击高手！连续戳中10个泡泡！', 'success');
         } else if (consecutiveCount === 15 && !this.achievementFlags.consecutive15) {
             this.achievementFlags.consecutive15 = true;
-            this.showAchievement('超级连击！连续戳中15个泡泡！🔥', 'success');
+            this.showAchievement('超级连击！连续戳中15个泡泡！', 'success');
         }
         
         // 总数成就 - 只在刚达到时触发
         if (totalCount === 10 && !this.achievementFlags.total10) {
             this.achievementFlags.total10 = true;
-            this.showAchievement('第一个里程碑！戳中10个泡泡！🏆', 'milestone');
+            this.showAchievement('第一个里程碑！戳中10个泡泡！', 'milestone');
         } else if (totalCount === 25 && !this.achievementFlags.total25) {
             this.achievementFlags.total25 = true;
-            this.showAchievement('进步神速！戳中25个泡泡！🌟', 'milestone');
+            this.showAchievement('进步神速！戳中25个泡泡！', 'milestone');
         } else if (totalCount === 50 && !this.achievementFlags.total50) {
             this.achievementFlags.total50 = true;
-            this.showAchievement('协调大师！戳中50个泡泡！👑', 'milestone');
+            this.showAchievement('协调大师！戳中50个泡泡！', 'milestone');
         } else if (totalCount === 100 && !this.achievementFlags.total100) {
             this.achievementFlags.total100 = true;
-            this.showAchievement('传奇玩家！戳中100个泡泡！🎊', 'milestone');
+            this.showAchievement('传奇玩家！戳中100个泡泡！', 'milestone');
         }
     }
     
