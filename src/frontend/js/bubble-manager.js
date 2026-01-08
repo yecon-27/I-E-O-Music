@@ -56,10 +56,20 @@ class BubbleManager {
 
     /**
      * 设置泡泡密度 (rhythmDensity)
-     * @param {'sparse' | 'normal'} density
+     * @param {'sparse' | 'normal' | number} density - 字符串枚举或数字倍率 (1.0 = normal)
      */
     setDensity(density) {
-        if (density === 'sparse') {
+        if (typeof density === 'number') {
+            // 数字倍率模式 (专家模式)
+            // 1.0 = 2000ms interval, 4 bubbles
+            // 2.0 = 1000ms interval, 8 bubbles (clamped by maxOnScreen)
+            const multiplier = Math.max(0.1, density);
+            this.baseSpawnInterval = 2000 / multiplier;
+            this.targetBubbleCount = Math.max(2, Math.min(10, Math.round(4 * multiplier)));
+            this.minOnScreen = Math.max(1, this.targetBubbleCount - 1);
+            this.maxOnScreen = this.targetBubbleCount + 2;
+            console.log(`🫧 泡泡密度: 倍率 ${multiplier.toFixed(2)}x (间隔 ${this.baseSpawnInterval.toFixed(0)}ms)`);
+        } else if (density === 'sparse') {
             this.minOnScreen = 2;
             this.maxOnScreen = 3;
             this.targetBubbleCount = 2;
@@ -259,37 +269,78 @@ class BubbleManager {
     
     /**
      * Render a single bubble with Modern Matte / Micro-texture styling
+     * Updated: Visual noise reduction (No scale, Light envelope, Thin ripple)
      */
     renderBubble(ctx, bubble) {
         ctx.save();
         
-        // 1. Base Fill - Matte, Semi-transparent
-        ctx.fillStyle = this.hexToRgba(bubble.color, 0.35); 
+        let alpha = 0.35;
+        let radius = bubble.radius;
+        let isRipple = false;
+        let rippleRadius = 0;
+        let rippleAlpha = 0;
+
+        // Handle Pop Animation State
+        if (bubble.isPopping && bubble.popAnimation) {
+            const now = performance.now();
+            const elapsed = now - bubble.popAnimation.startTime;
+            const duration = bubble.popAnimation.duration; // 300ms
+            const t = Math.min(1, Math.max(0, elapsed / duration)); // 0 -> 1
+
+            // 1. Light Effect: Alpha 0.3 -> 1.0 -> 0.3 (linear decay)
+            // "Trigger alpha from 0.3 jump to 1.0, then linear decay"
+            alpha = 1.0 - (0.7 * t); 
+
+            // 2. No Scale Animation (Radius stays constant)
+            // "禁甩动作：去掉大幅度的 Scale（缩放）动画"
+            radius = bubble.radius;
+
+            // 3. Ripple Effect
+            // "增加一个向外扩散的 0.5px 极细圆环动画"
+            isRipple = true;
+            // Ripple expands from radius to radius + 15px
+            rippleRadius = radius + (15 * t);
+            rippleAlpha = 1.0 - t; // Fade out
+        }
+        
+        // 1. Base Fill
+        ctx.fillStyle = this.hexToRgba(bubble.color, alpha); 
         ctx.beginPath();
-        ctx.arc(bubble.x, bubble.y, bubble.radius, 0, Math.PI * 2);
+        ctx.arc(bubble.x, bubble.y, radius, 0, Math.PI * 2);
         ctx.fill();
 
-        // 2. Subtle Top Highlight - Very Minimal for Micro-texture
+        // 2. Subtle Top Highlight
+        // Adjust highlight intensity based on alpha state
+        const highlightOpacity = bubble.isPopping ? 0.4 : 0.2;
+        
         const gradient = ctx.createRadialGradient(
-            bubble.x - bubble.radius * 0.25,
-            bubble.y - bubble.radius * 0.25,
+            bubble.x - radius * 0.25,
+            bubble.y - radius * 0.25,
             0,
             bubble.x,
             bubble.y,
-            bubble.radius
+            radius
         );
-        // Extremely subtle white glow
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
-        gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.05)');
+        gradient.addColorStop(0, `rgba(255, 255, 255, ${highlightOpacity})`);
+        gradient.addColorStop(0.5, `rgba(255, 255, 255, ${highlightOpacity * 0.25})`);
         gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
         
         ctx.fillStyle = gradient;
         ctx.fill();
         
         // 3. Clean, Thin Border
-        ctx.strokeStyle = this.hexToRgba(bubble.color, 0.6);
+        ctx.strokeStyle = this.hexToRgba(bubble.color, Math.min(1, alpha + 0.25));
         ctx.lineWidth = 1.5;
         ctx.stroke();
+
+        // 4. Draw Ripple (if popping)
+        if (isRipple) {
+            ctx.beginPath();
+            ctx.arc(bubble.x, bubble.y, rippleRadius, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(255, 255, 255, ${rippleAlpha})`;
+            ctx.lineWidth = 0.5; // 0.5px极细
+            ctx.stroke();
+        }
         
         ctx.restore();
     }
@@ -374,6 +425,9 @@ class BubbleManager {
             try { this.onPop(bubble); }
             catch (e) { console.warn('[BubbleManager] onPop callback error:', e); }
         }
+        
+            // ★ 触发全局事件供侧边栏等模块使用
+            window.dispatchEvent(new CustomEvent('bubble:popped', { detail: bubble }));
             
             console.log(`Started pop animation for bubble ${bubbleId}`);
             return true;

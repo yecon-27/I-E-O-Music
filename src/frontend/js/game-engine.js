@@ -135,6 +135,9 @@ class GameEngine {
                 }, delay);
             }
 
+            // ★ 触发音高标签跳动动画
+            this.triggerLanePop(b.laneId);
+
             // 记录成功事件到自闭症友好系统
             if (window.autismFeatures) {
                 window.autismFeatures.recordSuccess({
@@ -267,6 +270,28 @@ class GameEngine {
                 }
             }
         });
+    }
+
+    /**
+     * 触发音高标签的跳动动画（泡泡被戳破时调用）
+     * @param {number} laneId - lane 编号 (1-5)
+     */
+    triggerLanePop(laneId) {
+        const el = this.laneLabelElements?.[laneId];
+        if (!el) return;
+        
+        // 优化：防止高频重复触发导致的视觉过载
+        // 如果动画正在进行中，忽略新的触发请求
+        if (el.classList.contains('pop')) return;
+        
+        // 添加跳动 class
+        el.classList.add('pop');
+        el.style.color = el.dataset.color;
+        
+        // 动画结束后移除 class (匹配 CSS 0.6s 动画时间)
+        setTimeout(() => {
+            el.classList.remove('pop');
+        }, 600);
     }
     
     /**
@@ -568,6 +593,11 @@ class GameEngine {
             }
         }
         
+        // 记录到 SessionLogger (仅记录未命中的，命中的在 handleBubblePop 记录以避免重复)
+        if (!hit && window.sessionLogger) {
+            window.sessionLogger.recordClick(x, y, false);
+        }
+        
         // 记录到数据追踪器
         if (this.poseDetector?.handDataTracker) {
             this.poseDetector.handDataTracker.recordPop(hit);
@@ -771,10 +801,21 @@ class GameEngine {
                 if (poppedBubble) {
                     console.log('🖱️ 鼠标点击戳破泡泡:', poppedBubble.id);
                     
+                    // 记录到 SessionLogger
+                    if (window.sessionLogger) {
+                        window.sessionLogger.recordBubblePop(poppedBubble);
+                        window.sessionLogger.recordClick(x, y, true);
+                    }
+
                     // 直接记录手部数据（鼠标模式默认为右手）
                     if (window.gameResultManager) {
                         window.gameResultManager.recordBubblePop('rightHand');
                         console.log('📊 记录右手戳破数据');
+                    }
+                } else {
+                    // 鼠标点击未命中
+                    if (window.sessionLogger) {
+                        window.sessionLogger.recordClick(x, y, false);
                     }
                 }
             }

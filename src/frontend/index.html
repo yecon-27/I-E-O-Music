@@ -123,7 +123,13 @@
                 <!-- 游戏结果窗口 -->
                 <div id="game-result-overlay" class="game-result-overlay hidden">
                     <div class="result-content glass-panel">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <!-- 专家模式按钮 - 右上角 -->
+                        <button id="post-session-btn" class="expert-mode-btn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                            专家模式
+                        </button>
+                        
+                        <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 20px;">
                             <h2 style="margin: 0; display: flex; align-items: center; gap: 12px;">
                                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="10"></circle>
@@ -133,10 +139,6 @@
                                 </svg>
                                 游戏结束
                             </h2>
-                            <button id="post-session-btn" class="result-btn secondary small">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                                <span style="margin-left:4px">专家模式</span>
-                            </button>
                         </div>
                         <div class="result-stats">
                             <div class="stat-item">
@@ -167,103 +169,7 @@
                         <div class="result-message">
                             <p id="result-encouragement">太棒了！你的表现很出色！</p>
                         </div>
-                        <div id="debug-panel" class="debug-panel">
-                            <div class="debug-header">
-                                <h3>Post-Session Review</h3>
-                                <div class="debug-header-actions">
-                                    <button id="debug-refresh-btn" class="result-btn secondary small">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-                                        Refresh
-                                    </button>
-                                    <button id="debug-help-toggle" class="result-btn secondary small">How to read</button>
-                                    <button id="open-reward-controls-btn" class="result-btn secondary small">Open Reward Controls</button>
-                                </div>
-                            </div>
-                            <div id="debug-help" class="debug-help hidden">
-                                <strong>How to read this panel</strong>
-                                <ol>
-                                    <li>Q1：判定结果 + 安全状态</li>
-                                    <li>Q2：证据可视化 + Top-3 规则</li>
-                                    <li>Q3：反事实解释 + 审计</li>
-                                </ol>
-                            </div>
-                            <div class="debug-section">
-                                <h4 class="debug-section-title">Q1：系统判定了什么？是否安全？</h4>
-                                <div class="debug-overview">
-                                    <div class="overview-item">
-                                        <span class="overview-label">判定结果（主/次）</span>
-                                        <span id="debug-summary-decision" class="overview-value">-</span>
-                                    </div>
-                                    <div class="overview-item">
-                                        <span class="overview-label">置信度</span>
-                                        <span id="debug-summary-confidence" class="overview-value">-</span>
-                                    </div>
-                                    <div class="overview-item">
-                                        <span class="overview-label">安全状态</span>
-                                        <span id="debug-summary-safety" class="overview-value">-</span>
-                                    </div>
-                                    <div class="overview-item">
-                                        <span class="overview-label">Reward 概览</span>
-                                        <span id="debug-summary-reward" class="overview-value">-</span>
-                                    </div>
-                                </div>
-                                <div id="debug-summary-reason" class="debug-reason">-</div>
-                                <div class="debug-grid">
-                                    <div class="debug-block">
-                                        <h4>生成结构摘要</h4>
-                                        <ul id="debug-structure-list" class="debug-list"></ul>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="debug-section">
-                                <h4 class="debug-section-title">Q2：为什么这么判？证据长什么样？</h4>
-                                <div class="debug-grid">
-                                    <div class="debug-block debug-block-wide">
-                                        <h4>点击轨迹与 Lane 分布</h4>
-                                        <canvas id="debug-timeline" class="debug-timeline" width="640" height="90"></canvas>
-                                        <div id="debug-lane-bars" class="debug-lane-bars"></div>
-                                    </div>
-                                    <div class="debug-block">
-                                        <h4>检测到的 Pattern（数字证据）</h4>
-                                        <ul id="debug-what-list" class="debug-list"></ul>
-                                    </div>
-                                    <div class="debug-block">
-                                        <h4>Top-3 规则证据</h4>
-                                        <ul id="debug-why-list" class="debug-list"></ul>
-                                        <details class="debug-details">
-                                            <summary>查看更多规则</summary>
-                                            <ul id="debug-why-details-list" class="debug-list"></ul>
-                                        </details>
-                                    </div>
-                                    <div class="debug-block">
-                                        <h4>三类证据得分（用于决策）</h4>
-                                        <ul id="debug-signal-list" class="debug-list"></ul>
-                                        <div class="debug-note">最终标签=得分最高者；差距越大→置信度越高。</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="debug-section">
-                                <h4 class="debug-section-title">Q3：如果专家不同意，怎么调？</h4>
-                                <div class="debug-grid">
-                                    <div class="debug-block">
-                                        <h4>What would change the decision?</h4>
-                                        <ul id="debug-counterfactual-list" class="debug-list"></ul>
-                                    </div>
-                                    <div class="debug-block">
-                                        <h4>约束审计（Audit）</h4>
-                                        <ul id="debug-constraint-list" class="debug-list"></ul>
-                                        <div class="debug-note">Safety by design: reward 生成器=约束集合，而不是事后过滤。</div>
-                                    </div>
-                                    <div class="debug-block">
-                                        <h4>本轮配置 / 变更记录</h4>
-                                        <ul id="debug-config-list" class="debug-list"></ul>
-                                        <div class="debug-note">展示与保守默认值的差异，便于审计与复现。</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        
                         <div class="result-actions">
                             <button id="play-music-btn" class="result-btn music">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -297,10 +203,180 @@
                                 结束
                             </button>
                         </div>
+                        
+                        <!-- 专家报告面板 - 游戏数据报告 -->
+                        <div id="report-panel" class="report-panel hidden" style="background: #f8fafc; color: #1f2937;">
+                            <div class="report-panel-header">
+                                <h3>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                                    游戏报告
+                                </h3>
+                                <button id="report-panel-close" class="report-close-btn">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                </button>
+                            </div>
+                            
+                            <!-- 游戏概览 -->
+                            <div class="report-section">
+                                <h4 class="report-section-title">游戏概览</h4>
+                                <div class="report-grid">
+                                    <div class="report-item">
+                                        <span class="report-label">游戏时长</span>
+                                        <span class="report-value" id="report-duration">60s</span>
+                                    </div>
+                                    <div class="report-item">
+                                        <span class="report-label">总点击数</span>
+                                        <span class="report-value" id="report-total-clicks">0</span>
+                                    </div>
+                                    <div class="report-item">
+                                        <span class="report-label">成功命中</span>
+                                        <span class="report-value" id="report-successful">0</span>
+                                    </div>
+                                    <div class="report-item">
+                                        <span class="report-label">命中率</span>
+                                        <span class="report-value" id="report-accuracy">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 行为模式分析 -->
+                            <div class="report-section">
+                                <h4 class="report-section-title">行为模式</h4>
+                                <div class="report-pattern">
+                                    <div class="pattern-type" id="report-pattern-type">
+                                        <span class="pattern-icon">🎯</span>
+                                        <span class="pattern-name">分析中...</span>
+                                    </div>
+                                    <p class="pattern-desc" id="report-pattern-desc">等待游戏数据...</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Lane 分布 -->
+                            <div class="report-section">
+                                <h4 class="report-section-title">音符分布</h4>
+                                <div class="report-lane-chart" id="report-lane-chart">
+                                    <div class="lane-bar-item" data-lane="C">
+                                        <span class="lane-name">C</span>
+                                        <div class="lane-bar-bg"><div class="lane-bar-fill" style="width: 0%; background: #F87171;"></div></div>
+                                        <span class="lane-count">0</span>
+                                    </div>
+                                    <div class="lane-bar-item" data-lane="D">
+                                        <span class="lane-name">D</span>
+                                        <div class="lane-bar-bg"><div class="lane-bar-fill" style="width: 0%; background: #FB923C;"></div></div>
+                                        <span class="lane-count">0</span>
+                                    </div>
+                                    <div class="lane-bar-item" data-lane="E">
+                                        <span class="lane-name">E</span>
+                                        <div class="lane-bar-bg"><div class="lane-bar-fill" style="width: 0%; background: #FBBF24;"></div></div>
+                                        <span class="lane-count">0</span>
+                                    </div>
+                                    <div class="lane-bar-item" data-lane="G">
+                                        <span class="lane-name">G</span>
+                                        <div class="lane-bar-bg"><div class="lane-bar-fill" style="width: 0%; background: #60A5FA;"></div></div>
+                                        <span class="lane-count">0</span>
+                                    </div>
+                                    <div class="lane-bar-item" data-lane="A">
+                                        <span class="lane-name">A</span>
+                                        <div class="lane-bar-bg"><div class="lane-bar-fill" style="width: 0%; background: #A78BFA;"></div></div>
+                                        <span class="lane-count">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 节奏分析 -->
+                            <div class="report-section">
+                                <h4 class="report-section-title">节奏分析</h4>
+                                <div class="report-grid">
+                                    <div class="report-item">
+                                        <span class="report-label">平均BPM</span>
+                                        <span class="report-value" id="report-bpm">-</span>
+                                    </div>
+                                    <div class="report-item">
+                                        <span class="report-label">最高连击</span>
+                                        <span class="report-value" id="report-max-combo">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+        
+        <!-- 右侧实时监控面板 -->
+        <div id="game-sidebar" class="game-sidebar">
+            <div class="sidebar-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18 17V9"></path><path d="M13 17V5"></path><path d="M8 17v-3"></path></svg>
+                <span class="sidebar-title">实时监控</span>
+                <button id="sidebar-toggle-btn" class="sidebar-toggle-btn" title="展开/收起">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+            </div>
             
+            <div class="sidebar-content">
+                <!-- 实时数据 -->
+                <div class="sidebar-section">
+                    <h4 class="section-title">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                        实时数据
+                    </h4>
+                    <div class="debug-mini-stats">
+                        <div class="mini-stat">
+                            <span class="mini-label">点击数</span>
+                            <span id="rt-clicks" class="mini-value">0</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-label">命中率</span>
+                            <span id="rt-accuracy" class="mini-value">-</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-label">BPM</span>
+                            <span id="rt-bpm" class="mini-value">-</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-label">主导Lane</span>
+                            <span id="rt-dominant" class="mini-value">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lane 分布 -->
+                <div class="sidebar-section">
+                    <h4 class="section-title">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                        Lane 分布
+                    </h4>
+                    <div id="rt-lane-bars" class="rt-lane-bars">
+                        <div class="lane-bar" data-lane="1" style="--lane-color: #F87171;"><span>C</span></div>
+                        <div class="lane-bar" data-lane="2" style="--lane-color: #FB923C;"><span>D</span></div>
+                        <div class="lane-bar" data-lane="3" style="--lane-color: #FBBF24;"><span>E</span></div>
+                        <div class="lane-bar" data-lane="4" style="--lane-color: #60A5FA;"><span>G</span></div>
+                        <div class="lane-bar" data-lane="5" style="--lane-color: #A78BFA;"><span>A</span></div>
+                    </div>
+                </div>
+                
+                <!-- 模式预测 -->
+                <div class="sidebar-section">
+                    <h4 class="section-title">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                        模式预测
+                    </h4>
+                    <div id="rt-pattern" class="rt-pattern">
+                        <span class="pattern-label">等待更多数据...</span>
+                    </div>
+                </div>
+                
+                <!-- 最近点击 -->
+                <div class="sidebar-section">
+                    <h4 class="section-title">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                        最近点击
+                    </h4>
+                    <div id="rt-recent-clicks" class="rt-recent-clicks">
+                        <span class="no-data">暂无</span>
+                    </div>
+                </div>
+            </div>
+        </div>
         </div>
         
         <div class="game-footer">
@@ -316,14 +392,13 @@
                 <div class="status-display" style="display: flex; gap: 20px; justify-content: center; margin: 10px 0;">
                     <div class="status-item">
                         <span>输入方式: </span>
-                        <span id="input-mode" style="font-weight: 600; color: var(--accent-primary);">鼠标</span>
+                        <span id="input-mode-footer" style="font-weight: 600; color: var(--accent-primary);">鼠标</span>
                     </div>
                     <div class="status-item">
                         <span>泡泡数: </span>
-                        <span id="bubble-count" style="font-weight: 600; color: var(--accent-success);">0</span>
+                        <span id="bubble-count-footer" style="font-weight: 600; color: var(--accent-success);">0</span>
                     </div>
                 </div>
-                <div id="debug-info" class="debug-info" style="font-size: 0.875rem; color: var(--text-secondary); margin-top: 10px;"></div>
             </div>
         </div>
     </div>
@@ -437,6 +512,14 @@
     <script src="js/note-log.js"></script>
     <script src="js/advanced-music-generator.js"></script>
     <script src="js/autism-friendly-features.js"></script>
+    
+    <!-- Expert Audit Mode Scripts -->
+    <script src="js/safety-envelope.js"></script>
+    <script src="js/session-logger.js"></script>
+    <script src="js/expert-drawer.js"></script>
+    <script src="js/audit-dashboard.js"></script>
+    <script src="js/sidebar-controller.js"></script>
+
     <script src="js/game-result-manager.js"></script>
     <script src="js/game-integration.js"></script>
     <script src="js/debug-collision.js"></script>

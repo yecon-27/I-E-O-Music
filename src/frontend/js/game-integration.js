@@ -17,9 +17,80 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('[Integration] GameResultManager 未找到');
         }
     });
+
+    // 初始化专家模式集成
+    setupExpertIntegration();
     
     console.log('[Integration] 游戏事件监听器已设置');
 });
+
+/**
+ * 设置专家模式与游戏引擎的实时集成
+ */
+function setupExpertIntegration() {
+    console.log('[Integration] 初始化专家模式集成...');
+    
+    // 监听安全层参数变化
+    if (window.safetyEnvelope) {
+        window.safetyEnvelope.subscribe('paramChanged', ({ name, newValue, intercepted }) => {
+            console.log(`[Expert] 参数变更: ${name} = ${newValue} ${intercepted ? '(已拦截)' : ''}`);
+            
+            if (!window.game) return;
+            
+            // 1. Tempo -> 奖励 BPM
+            if (name === 'tempo') {
+                window.game.sessionConfig.rewardBpm = newValue;
+                // 如果有背景音乐引擎，这里也可以更新
+            }
+            
+            // 2. Volume -> 合成器音量
+            if (name === 'volume') {
+                // GameEngine 使用 'low'/'medium'/'high'，但专家模式支持精细控制
+                // 我们直接操作 PopSynth
+                window.popSynth?.setVolume?.(newValue);
+                // 更新 game config 以保持一致性 (近似映射)
+                window.game.sessionConfig.volumeLevel = newValue > 0.8 ? 'high' : (newValue < 0.4 ? 'low' : 'medium');
+            }
+            
+            // 3. Density -> 泡泡生成密度
+            if (name === 'density') {
+                // 直接传递数字给 BubbleManager (需要 BubbleManager 支持数字)
+                window.game.bubbleManager?.setDensity?.(newValue);
+                // 更新 game config
+                window.game.sessionConfig.rhythmDensity = newValue < 0.8 ? 'sparse' : 'normal';
+            }
+            
+            // 4. Note Range -> 可以在 BubbleManager 中实现音域限制 (TODO)
+        });
+        
+        // 监听预览模式/静音
+        window.safetyEnvelope.subscribe('previewModeChanged', ({ enabled, muted }) => {
+            console.log(`[Expert] 预览模式: ${enabled}, 静音: ${muted}`);
+            if (muted) {
+                window.popSynth?.setVolume?.(0);
+            } else {
+                const vol = window.safetyEnvelope.getParam('volume');
+                window.popSynth?.setVolume?.(vol);
+            }
+        });
+
+        // 监听不安全模式
+        window.safetyEnvelope.subscribe('unsafeModeChanged', ({ enabled }) => {
+            console.log(`[Expert] 不安全模式: ${enabled}`);
+            window.game.sessionConfig.expertMode = true; // 强制标记为专家模式
+            
+            // 视觉反馈：给 Canvas 容器加红框？
+            const gameContainer = document.querySelector('.game-container') || document.body;
+            if (enabled) {
+                gameContainer.classList.add('unsafe-mode-active');
+            } else {
+                gameContainer.classList.remove('unsafe-mode-active');
+            }
+        });
+    } else {
+        console.warn('[Integration] SafetyEnvelope 未找到，无法绑定专家控制');
+    }
+}
 
 // 调试函数 - 测试结果窗口
 window.testResultWindow = function() {

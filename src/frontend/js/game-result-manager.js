@@ -30,79 +30,45 @@ class GameResultManager {
    * 初始化UI元素
    */
   initializeUI() {
+    console.log("[GameResult] initializeUI 被调用");
     this.resultOverlay = document.getElementById("game-result-overlay");
+    console.log("[GameResult] resultOverlay 元素:", !!this.resultOverlay);
 
     // 绑定按钮事件
     const playAgainBtn = document.getElementById("play-again-btn");
     const finishGameBtn = document.getElementById("finish-game-btn");
     const playMusicBtn = document.getElementById("play-music-btn");
-    const openRewardControlsBtn = document.getElementById("open-reward-controls-btn");
-    const debugHelpToggleBtn = document.getElementById("debug-help-toggle");
-    const debugHelp = document.getElementById("debug-help");
     const postSessionBtn = document.getElementById("post-session-btn");
-    const debugPanel = document.getElementById("debug-panel");
-    const expertModeCheckbox = document.getElementById("expert-mode-checkbox");
-    const debugRefreshBtn = document.getElementById("debug-refresh-btn");
+    const reportPanel = document.getElementById("report-panel");
+    const reportPanelClose = document.getElementById("report-panel-close");
 
-    // Expert Mode按钮 - 切换debug panel显示
-    if (postSessionBtn && debugPanel) {
-      console.log("[GameResult] Expert Mode Button & Debug Panel found");
+    console.log("[GameResult] 按钮元素:", {
+      playAgainBtn: !!playAgainBtn,
+      finishGameBtn: !!finishGameBtn,
+      playMusicBtn: !!playMusicBtn,
+      postSessionBtn: !!postSessionBtn,
+      reportPanel: !!reportPanel
+    });
+
+    // Expert Mode按钮 - 切换report panel显示
+    if (postSessionBtn && reportPanel) {
+      console.log("[GameResult] Expert Mode Button & Report Panel found");
       postSessionBtn.addEventListener("click", () => {
         console.log("[GameResult] Expert Mode Button clicked");
-        const isHidden = debugPanel.classList.toggle("hidden");
-        console.log("Debug Panel hidden:", isHidden);
+        const isHidden = reportPanel.classList.toggle("hidden");
+        postSessionBtn.classList.toggle("active", !isHidden);
         
-        // 更新按钮文本（使用SVG图标）
-        const eyeIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
-        if (isHidden) {
-          postSessionBtn.innerHTML = eyeIcon + '<span style="margin-left:4px">专家模式</span>';
-        } else {
-          postSessionBtn.innerHTML = eyeIcon + '<span style="margin-left:4px">隐藏专家</span>';
-        }
-        
-        // 如果展开了面板，强制刷新一次数据以确保显示最新状态
         if (!isHidden) {
-          this.updateDebugPanel();
+          this.updateReportPanel();
         }
-      });
-      console.log("[GameResult] Event listener attached to Expert Mode Button");
-    } else {
-      console.error("[GameResult] Expert Mode Button or Debug Panel not found in DOM", {
-        postSessionBtn: !!postSessionBtn,
-        debugPanel: !!debugPanel
       });
     }
 
-    // Debug刷新按钮 - 手动刷新debug panel数据
-    if (debugRefreshBtn) {
-      const refreshIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>';
-      const checkIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-      debugRefreshBtn.addEventListener("click", () => {
-        console.log("[GameResult] Debug Refresh Button clicked");
-        this.updateDebugPanel();
-        
-        // 添加视觉反馈
-        debugRefreshBtn.innerHTML = checkIcon + ' 已刷新';
-        debugRefreshBtn.disabled = true;
-        
-        setTimeout(() => {
-          debugRefreshBtn.innerHTML = refreshIcon + ' 刷新';
-          debugRefreshBtn.disabled = false;
-        }, 1000);
-      });
-      console.log("[GameResult] Event listener attached to Debug Refresh Button");
-    }
-
-    if (expertModeCheckbox) {
-      expertModeCheckbox.addEventListener("change", (e) => {
-        console.log("[Settings] Expert Mode toggled:", e.target.checked);
-        if (window.lastGeneratedSequence && window.lastGeneratedSequence.debugPayload) {
-          if (!window.lastGeneratedSequence.debugPayload.sessionConfig) {
-            window.lastGeneratedSequence.debugPayload.sessionConfig = {};
-          }
-          window.lastGeneratedSequence.debugPayload.sessionConfig.expertMode = e.target.checked;
-          this.updateDebugPanel();
-        }
+    // 关闭按钮
+    if (reportPanelClose && reportPanel) {
+      reportPanelClose.addEventListener("click", () => {
+        reportPanel.classList.add("hidden");
+        if (postSessionBtn) postSessionBtn.classList.remove("active");
       });
     }
 
@@ -123,17 +89,177 @@ class GameResultManager {
         this.playGeneratedMusic();
       });
     }
+  }
 
-    if (openRewardControlsBtn) {
-      openRewardControlsBtn.addEventListener("click", () => {
-        if (window.sessionUI?.open) {
-          window.sessionUI.open();
-          return;
+  /**
+   * 初始化专家面板控件
+   */
+  initExpertControls() {
+    // Tempo 滑块
+    const tempoSlider = document.getElementById("tempo-slider");
+    const tempoDisplay = document.getElementById("tempo-display");
+    if (tempoSlider && tempoDisplay) {
+      tempoSlider.addEventListener("input", (e) => {
+        const value = e.target.value;
+        tempoDisplay.textContent = value;
+        // 应用到音乐生成配置
+        if (window.sessionConfig) {
+          window.sessionConfig.rewardBpm = parseInt(value);
         }
-        const modal = document.getElementById("session-settings-modal");
-        if (modal) modal.classList.remove("hidden");
       });
     }
+
+    // 音量滑块
+    const volumeSlider = document.getElementById("volume-slider");
+    const volumeDisplay = document.getElementById("volume-display");
+    if (volumeSlider && volumeDisplay) {
+      volumeSlider.addEventListener("input", (e) => {
+        const value = e.target.value;
+        volumeDisplay.textContent = value + "%";
+        // 应用音量
+        if (window.popSynth) {
+          window.popSynth.setVolume(value / 100);
+        }
+      });
+    }
+
+    // 密度滑块
+    const densitySlider = document.getElementById("density-slider");
+    const densityDisplay = document.getElementById("density-display");
+    if (densitySlider && densityDisplay) {
+      densitySlider.addEventListener("input", (e) => {
+        const value = parseFloat(e.target.value);
+        densityDisplay.textContent = value.toFixed(1);
+        // 应用密度
+        if (window.game?.bubbleManager) {
+          window.game.bubbleManager.setDensity(value);
+        }
+      });
+    }
+
+    // 一键重置按钮
+    const panicResetBtn = document.getElementById("panic-reset-btn");
+    if (panicResetBtn) {
+      panicResetBtn.addEventListener("click", () => {
+        this.resetToSafeDefaults();
+      });
+    }
+
+    // 不安全模式开关
+    const unsafeModeToggle = document.getElementById("unsafe-mode-toggle");
+    if (unsafeModeToggle) {
+      unsafeModeToggle.addEventListener("change", (e) => {
+        this.unsafeMode = e.target.checked;
+        console.log("[Expert] Unsafe mode:", this.unsafeMode);
+        // 如果关闭不安全模式，强制 clamp tempo
+        if (!this.unsafeMode && tempoSlider) {
+          const currentTempo = parseInt(tempoSlider.value);
+          if (currentTempo > 80) {
+            tempoSlider.value = 80;
+            if (tempoDisplay) tempoDisplay.textContent = "80";
+          }
+        }
+      });
+    }
+
+    // 预览模式开关
+    const previewModeToggle = document.getElementById("preview-mode-toggle");
+    if (previewModeToggle) {
+      previewModeToggle.addEventListener("change", (e) => {
+        this.previewMode = e.target.checked;
+        console.log("[Expert] Preview mode:", this.previewMode);
+      });
+    }
+  }
+
+  /**
+   * 初始化专家面板显示
+   */
+  initExpertPanel() {
+    // 更新实时状态
+    this.updateExpertStatus();
+  }
+
+  /**
+   * 更新专家面板的实时状态
+   */
+  updateExpertStatus() {
+    const clickRateEl = document.getElementById("click-rate-display");
+    const successRateEl = document.getElementById("success-rate-display");
+    const interceptCountEl = document.getElementById("intercept-count-display");
+
+    if (clickRateEl) {
+      const rate = this.gameData.popTimes.length > 0 
+        ? (this.gameData.popTimes.length / (this.gameData.sessionDuration || 60)).toFixed(1)
+        : "0";
+      clickRateEl.textContent = rate + "/s";
+    }
+
+    if (successRateEl) {
+      const rate = this.gameData.totalAttempts > 0
+        ? Math.round((this.gameData.bubblesPopped / this.gameData.totalAttempts) * 100)
+        : 0;
+      successRateEl.textContent = rate + "%";
+    }
+
+    if (interceptCountEl) {
+      interceptCountEl.textContent = this.interceptCount || 0;
+    }
+  }
+
+  /**
+   * 重置到安全默认值
+   */
+  resetToSafeDefaults() {
+    console.log("[Expert] Resetting to safe defaults");
+    
+    // 重置 Tempo
+    const tempoSlider = document.getElementById("tempo-slider");
+    const tempoDisplay = document.getElementById("tempo-display");
+    if (tempoSlider && tempoDisplay) {
+      tempoSlider.value = 72;
+      tempoDisplay.textContent = "72";
+    }
+
+    // 重置音量
+    const volumeSlider = document.getElementById("volume-slider");
+    const volumeDisplay = document.getElementById("volume-display");
+    if (volumeSlider && volumeDisplay) {
+      volumeSlider.value = 70;
+      volumeDisplay.textContent = "70%";
+      if (window.popSynth) window.popSynth.setVolume(0.7);
+    }
+
+    // 重置密度
+    const densitySlider = document.getElementById("density-slider");
+    const densityDisplay = document.getElementById("density-display");
+    if (densitySlider && densityDisplay) {
+      densitySlider.value = 1;
+      densityDisplay.textContent = "1.0";
+      if (window.game?.bubbleManager) window.game.bubbleManager.setDensity(1);
+    }
+
+    // 关闭不安全模式
+    const unsafeModeToggle = document.getElementById("unsafe-mode-toggle");
+    if (unsafeModeToggle) {
+      unsafeModeToggle.checked = false;
+      this.unsafeMode = false;
+    }
+
+    // 关闭预览模式
+    const previewModeToggle = document.getElementById("preview-mode-toggle");
+    if (previewModeToggle) {
+      previewModeToggle.checked = false;
+      this.previewMode = false;
+    }
+  }
+
+  /**
+   * 初始化调试帮助按钮
+   */
+  initDebugHelp() {
+    const debugHelpToggleBtn = document.getElementById("debug-help-toggle");
+    const debugHelp = document.getElementById("debug-help");
 
     if (debugHelpToggleBtn && debugHelp) {
       debugHelpToggleBtn.addEventListener("click", () => {
@@ -147,6 +273,8 @@ class GameResultManager {
    * 开始新游戏
    */
   startGame() {
+    console.log("[GameResult] startGame 被调用");
+    
     this.gameData = {
       startTime: Date.now(),
       endTime: null,
@@ -164,7 +292,7 @@ class GameResultManager {
     };
 
     this.isActive = true;
-    console.log("[Game] 游戏数据收集开始");
+    console.log("[GameResult] 游戏数据收集开始, isActive:", this.isActive);
   }
 
   /**
@@ -235,12 +363,18 @@ class GameResultManager {
    * 游戏结束
    */
   endGame() {
-    if (!this.isActive) return;
+    console.log("[GameResult] endGame 被调用, isActive:", this.isActive);
+    
+    if (!this.isActive) {
+      console.log("[GameResult] 游戏未激活，跳过 endGame");
+      return;
+    }
 
     this.gameData.endTime = Date.now();
     this.isActive = false;
 
-    console.log("[Game] 游戏结束，显示结果");
+    console.log("[GameResult] 游戏结束，准备显示结果窗口");
+    console.log("[GameResult] 游戏数据:", this.gameData);
     this.showResultWindow();
   }
 
@@ -248,7 +382,16 @@ class GameResultManager {
    * 显示结果窗口
    */
   showResultWindow() {
+    console.log("[GameResult] showResultWindow 被调用");
+    
+    // 确保 resultOverlay 已获取（防止初始化时 DOM 未就绪）
+    if (!this.resultOverlay) {
+      this.resultOverlay = document.getElementById("game-result-overlay");
+      console.log("[GameResult] 重新获取 resultOverlay:", !!this.resultOverlay);
+    }
+
     const stats = this.calculateStats();
+    console.log("[GameResult] 计算的统计数据:", stats);
     this.updateResultDisplay(stats);
 
     // 暂停手部检测，避免在结果界面产生音效
@@ -258,7 +401,35 @@ class GameResultManager {
 
     if (this.resultOverlay) {
       this.resultOverlay.classList.remove("hidden");
+      console.log("[GameResult] 结果窗口已显示");
+    } else {
+      console.error("[GameResult] resultOverlay 元素未找到，无法显示结果窗口");
     }
+  }
+
+  /**
+   * 将简单的游戏数据转换为 Session 格式（兜底用）
+   */
+  convertGameDataToSession() {
+    return {
+      sessionId: `legacy_${Date.now()}`,
+      startTime: this.gameData.startTime,
+      endTime: this.gameData.endTime,
+      durationSec: (this.gameData.endTime - this.gameData.startTime) / 1000,
+      timeline: {
+        userClicks: [], // 简易模式下可能没有详细点击数据
+        bubblePops: this.gameData.popTimes.map(t => ({ t: (t - this.gameData.startTime)/1000 })),
+        paramChanges: [],
+        causalAlignment: []
+      },
+      stats: {
+        totalClicks: this.gameData.totalAttempts,
+        successfulPops: this.gameData.bubblesPopped,
+        interceptedNotes: 0
+      },
+      safetyChecks: {},
+      config: window.sessionConfig || {}
+    };
   }
 
   /**
@@ -298,6 +469,166 @@ class GameResultManager {
       totalTime: actualDuration,
       encouragement: this.generateEncouragement(this.gameData.bubblesPopped),
     };
+  }
+
+  /**
+   * 更新报告面板数据
+   */
+  updateReportPanel() {
+    console.log("[GameResult] 更新报告面板");
+    
+    // 获取最近一局的数据
+    const session = window.game?.getLastSession?.() || {};
+    const notes = session.notes || [];
+    const durationSec = session.durationSec || this.gameData.sessionDuration || 60;
+    
+    // 游戏概览
+    const durationEl = document.getElementById("report-duration");
+    const totalClicksEl = document.getElementById("report-total-clicks");
+    const successfulEl = document.getElementById("report-successful");
+    const accuracyEl = document.getElementById("report-accuracy");
+    
+    if (durationEl) durationEl.textContent = Math.round(durationSec) + "s";
+    if (totalClicksEl) totalClicksEl.textContent = this.gameData.totalAttempts || notes.length;
+    if (successfulEl) successfulEl.textContent = this.gameData.bubblesPopped || notes.length;
+    
+    const accuracy = this.gameData.totalAttempts > 0 
+      ? Math.round((this.gameData.bubblesPopped / this.gameData.totalAttempts) * 100)
+      : (notes.length > 0 ? 100 : 0);
+    if (accuracyEl) accuracyEl.textContent = accuracy + "%";
+    
+    // 行为模式分析
+    const patternTypeEl = document.getElementById("report-pattern-type");
+    const patternDescEl = document.getElementById("report-pattern-desc");
+    
+    const pattern = this.analyzePattern(notes);
+    if (patternTypeEl) {
+      patternTypeEl.innerHTML = `<span class="pattern-icon">${pattern.icon}</span><span class="pattern-name">${pattern.name}</span>`;
+    }
+    if (patternDescEl) patternDescEl.textContent = pattern.description;
+    
+    // Lane 分布
+    this.updateLaneChart(notes);
+    
+    // 节奏分析
+    const bpmEl = document.getElementById("report-bpm");
+    const maxComboEl = document.getElementById("report-max-combo");
+    
+    const bpm = this.estimateBPM(notes);
+    if (bpmEl) bpmEl.textContent = bpm > 0 ? Math.round(bpm) : "-";
+    if (maxComboEl) maxComboEl.textContent = this.gameData.maxConsecutive || 0;
+  }
+
+  /**
+   * 分析行为模式
+   */
+  analyzePattern(notes) {
+    if (!notes || notes.length < 3) {
+      return { icon: "🎯", name: "数据不足", description: "需要更多点击数据来分析行为模式" };
+    }
+    
+    // 统计 lane 分布
+    const laneCounts = {};
+    notes.forEach(n => {
+      const lane = n.laneId || n.name?.[0] || "?";
+      laneCounts[lane] = (laneCounts[lane] || 0) + 1;
+    });
+    
+    const lanes = Object.keys(laneCounts);
+    const maxCount = Math.max(...Object.values(laneCounts));
+    const dominantLane = Object.entries(laneCounts).find(([k, v]) => v === maxCount)?.[0];
+    const dominantRatio = maxCount / notes.length;
+    
+    // 检测顺序模式 (CDEGA)
+    let sequentialHits = 0;
+    const expectedOrder = ["C", "D", "E", "G", "A"];
+    for (let i = 1; i < notes.length; i++) {
+      const prevNote = notes[i-1].name?.[0] || "";
+      const currNote = notes[i].name?.[0] || "";
+      const prevIdx = expectedOrder.indexOf(prevNote);
+      const currIdx = expectedOrder.indexOf(currNote);
+      if (prevIdx >= 0 && currIdx >= 0 && currIdx === prevIdx + 1) {
+        sequentialHits++;
+      }
+    }
+    const sequentialRatio = sequentialHits / (notes.length - 1);
+    
+    // 判断模式类型
+    if (sequentialRatio > 0.4 && lanes.length >= 4) {
+      return { 
+        icon: "🎹", 
+        name: "顺序型", 
+        description: `按照 C-D-E-G-A 顺序演奏，覆盖了 ${lanes.length} 个音符` 
+      };
+    } else if (dominantRatio > 0.6) {
+      return { 
+        icon: "🔁", 
+        name: "重复型", 
+        description: `偏好重复点击 ${dominantLane} 音符 (${Math.round(dominantRatio * 100)}%)` 
+      };
+    } else if (lanes.length >= 4) {
+      return { 
+        icon: "🌈", 
+        name: "探索型", 
+        description: `积极探索不同音符，覆盖了 ${lanes.length} 个不同的音` 
+      };
+    } else {
+      return { 
+        icon: "🎯", 
+        name: "混合型", 
+        description: `点击模式多样化，共 ${notes.length} 次点击` 
+      };
+    }
+  }
+
+  /**
+   * 更新 Lane 分布图表
+   */
+  updateLaneChart(notes) {
+    const chartEl = document.getElementById("report-lane-chart");
+    if (!chartEl) return;
+    
+    // 统计每个 lane 的点击数
+    const laneCounts = { C: 0, D: 0, E: 0, G: 0, A: 0 };
+    notes.forEach(n => {
+      const noteName = n.name?.[0] || "";
+      if (laneCounts.hasOwnProperty(noteName)) {
+        laneCounts[noteName]++;
+      }
+    });
+    
+    const maxCount = Math.max(...Object.values(laneCounts), 1);
+    
+    // 更新每个 lane 的条形图
+    Object.entries(laneCounts).forEach(([lane, count]) => {
+      const item = chartEl.querySelector(`[data-lane="${lane}"]`);
+      if (item) {
+        const fill = item.querySelector(".lane-bar-fill");
+        const countEl = item.querySelector(".lane-count");
+        if (fill) fill.style.width = (count / maxCount * 100) + "%";
+        if (countEl) countEl.textContent = count;
+      }
+    });
+  }
+
+  /**
+   * 估算 BPM
+   */
+  estimateBPM(notes) {
+    if (!notes || notes.length < 3) return 0;
+    
+    const intervals = [];
+    for (let i = 1; i < Math.min(notes.length, 10); i++) {
+      const interval = notes[i].dt - notes[i-1].dt;
+      if (interval > 0 && interval < 3000) {
+        intervals.push(interval);
+      }
+    }
+    
+    if (intervals.length === 0) return 0;
+    
+    const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+    return 60000 / avgInterval; // 转换为 BPM
   }
 
   /**
@@ -1531,7 +1862,11 @@ class GameResultManager {
 
 // 导出类
 window.GameResultManager = GameResultManager;
+console.log("[GameResultManager] 类已导出到 window.GameResultManager");
 
 if (!window.gameResultManager) {
   window.gameResultManager = new GameResultManager();
+  console.log("[GameResultManager] 实例已创建:", !!window.gameResultManager);
+} else {
+  console.log("[GameResultManager] 实例已存在，跳过创建");
 }
