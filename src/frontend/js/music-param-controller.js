@@ -13,6 +13,7 @@ class MusicParamController {
             contrast: { min: 0, max: 20, absMin: 0, absMax: 50, unit: '%' },
             volume: { min: 60, max: 80, absMin: 0, absMax: 100, unit: '%' },
             density: { min: 30, max: 70, absMin: 0, absMax: 100, unit: '%' },
+            duration: { min: 8, max: 20, absMin: 8, absMax: 20, unit: 's' },
         };
         
         // 安全和声选项
@@ -204,6 +205,7 @@ class MusicParamController {
         // Segment labels
         const segLabel = document.getElementById('segment-label');
         const segTip = document.querySelector('.segment-tip');
+        const durationWarning = document.getElementById('duration-warning');
         if (segLabel) segLabel.textContent = this.t('expert.segment');
         if (segTip) segTip.textContent = this.t('expert.segment.tip');
     }
@@ -346,6 +348,7 @@ class MusicParamController {
         const enforceBounds = (source) => {
             let start = this.currentParams.segmentStartSec;
             let end = this.currentParams.segmentEndSec;
+            const durSafe = this.convergedParams?.duration || this.safeRanges.duration;
             if (end - start < 8) {
                 if (source === 'start') {
                     end = Math.min(20, start + 8);
@@ -354,18 +357,32 @@ class MusicParamController {
                 }
             }
             start = Math.max(0, Math.min(start, 20));
-            end = Math.max(8, Math.min(end, 20));
+            end = Math.max(durSafe.min, Math.min(end, durSafe.max));
             if (start >= end) {
                 end = Math.min(20, start + 8);
             }
             this.currentParams.segmentStartSec = start;
             this.currentParams.segmentEndSec = end;
             if (segStartSlider) segStartSlider.max = String(Math.max(0, end - 8));
-            if (segEndSlider) segEndSlider.min = String(Math.min(20, start + 8));
+            if (segEndSlider) {
+                segEndSlider.min = String(Math.min(durSafe.max, Math.max(durSafe.min, start + 8)));
+                segEndSlider.max = String(durSafe.max);
+            }
             if (segStartSlider) segStartSlider.value = String(start);
             if (segEndSlider) segEndSlider.value = String(end);
             if (segStartValue) segStartValue.textContent = `${start.toFixed(1)}s`;
             if (segEndValue) segEndValue.textContent = `${end.toFixed(1)}s`;
+            const isUnsafe = end > durSafe.max || end < durSafe.min;
+            const selector = document.querySelector('.segment-selector');
+            if (isUnsafe) {
+                selector?.classList.add('unsafe');
+                durationWarning?.classList.remove('hidden');
+                durationWarning && (durationWarning.style.cssText = 'display:inline-block !important;');
+            } else {
+                selector?.classList.remove('unsafe');
+                durationWarning?.classList.add('hidden');
+                durationWarning && (durationWarning.style.cssText = '');
+            }
             updateComputedDuration();
             drawSegment();
         };
@@ -384,6 +401,15 @@ class MusicParamController {
                 this.currentParams.segmentEndSec = Math.max(8, Math.min(20, v));
                 enforceBounds('end');
                 try { localStorage.setItem('expert.segmentEndSec', String(this.currentParams.segmentEndSec)); } catch {}
+            });
+        }
+        // 重置右界
+        const segReset = document.getElementById('segment-reset-btn');
+        if (segReset) {
+            segReset.addEventListener('click', () => {
+                const durSafe = this.convergedParams?.duration || this.safeRanges.duration;
+                this.currentParams.segmentEndSec = Math.min(durSafe.max, 15);
+                enforceBounds('end');
             });
         }
         // 初始化
@@ -863,6 +889,8 @@ class MusicParamController {
         const contrastMax = parseInt(document.getElementById('converge-contrast-max')?.value) || 20;
         const volumeMin = parseInt(document.getElementById('converge-volume-min')?.value) || 60;
         const volumeMax = parseInt(document.getElementById('converge-volume-max')?.value) || 80;
+        const durationMin = parseInt(document.getElementById('converge-duration-min')?.value) || 8;
+        const durationMax = parseInt(document.getElementById('converge-duration-max')?.value) || 20;
         
         // 收集安全和声选项（从按钮组）
         const harmonyBtnsContainer = document.getElementById('converge-harmony-btns');
@@ -874,6 +902,7 @@ class MusicParamController {
             tempo: { min: tempoMin, max: tempoMax },
             contrast: { min: contrastMin, max: contrastMax },
             volume: { min: volumeMin, max: volumeMax },
+            duration: { min: durationMin, max: durationMax },
             safeHarmonies,
             timestamp: Date.now()
         };

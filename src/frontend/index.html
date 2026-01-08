@@ -404,6 +404,7 @@
                                 <div class="segment-selector">
                                     <div class="segment-header">
                                         <span id="segment-label">片段选择</span>
+                                        <span id="duration-warning" class="param-warning-badge hidden">可能有感官过载风险</span>
                                         <span class="segment-tip">拖动下方滑块设置起始/结束位置</span>
                                     </div>
                                     <div class="segment-canvas-wrapper" style="position:relative;">
@@ -416,6 +417,7 @@
                                     <div class="segment-values" style="display:flex;justify-content:space-between;margin-top:4px;font-size:12px;color:var(--text-secondary);">
                                         <span>起始: <strong id="segment-start-value" style="color:var(--accent-primary);">0.0s</strong></span>
                                         <span>结束: <strong id="segment-end-value" style="color:var(--accent-primary);">15.0s</strong></span>
+                                        <button id="segment-reset-btn" class="param-btn secondary" style="margin-left:auto;">重置右界</button>
                                     </div>
                                 </div>
                                 
@@ -442,10 +444,10 @@
                                         设定安全区间
                                     </h4>
                                         <div class="daw-range-grid">
-                                        <div class="daw-range-item">
-                                            <div class="daw-range-header">
-                                                <label>时长</label>
-                                                <span class="daw-range-values">
+                                            <div class="daw-range-item">
+                                                <div class="daw-range-header">
+                                                    <label>BPM</label>
+                                                    <span class="daw-range-values">
                                                     <span id="converge-duration-min-val" class="daw-value">12</span>
                                                     <span class="daw-separator">-</span>
                                                     <span id="converge-duration-max-val" class="daw-value">18</span>
@@ -469,6 +471,36 @@
                                                 </div>
                                                 <input type="range" class="daw-thumb daw-thumb-min" id="converge-duration-min" min="8" max="20" value="12">
                                                 <input type="range" class="daw-thumb daw-thumb-max" id="converge-duration-max" min="8" max="20" value="18">
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="daw-range-item">
+                                            <div class="daw-range-header">
+                                                <label>时长</label>
+                                                <span class="daw-range-values">
+                                                    <span id="converge-duration-min-val" class="daw-value">8</span>
+                                                    <span class="daw-separator">-</span>
+                                                    <span id="converge-duration-max-val" class="daw-value">20</span>
+                                                    <span class="daw-unit">s</span>
+                                                </span>
+                                            </div>
+                                            <div class="daw-dual-slider" data-param="duration" data-min="8" data-max="20">
+                                                <div class="daw-track">
+                                                    <div class="daw-track-fill"></div>
+                                                    <div class="daw-lock-icon daw-lock-left">
+                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                                    </div>
+                                                    <div class="daw-lock-icon daw-lock-right">
+                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                                    </div>
+                                                </div>
+                                                <div class="daw-scale" data-min="8" data-max="20">
+                                                    <span class="daw-scale-mark" style="--pos: 0%">8</span>
+                                                    <span class="daw-scale-mark" style="--pos: 50%">14</span>
+                                                    <span class="daw-scale-mark" style="--pos: 100%">20</span>
+                                                </div>
+                                                <input type="range" class="daw-thumb daw-thumb-min" id="converge-duration-min" min="8" max="20" value="8">
+                                                <input type="range" class="daw-thumb daw-thumb-max" id="converge-duration-max" min="8" max="20" value="20">
                                             </div>
                                         </div>
                                         <div class="daw-range-item">
