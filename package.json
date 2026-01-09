@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "echo 'Static site, no build needed'",
+    "build": "node scripts/build-vercel.js",
     "start": "npx serve src/frontend -l 3000"
   },
   "repository": {

@@ -1,17 +1,5 @@
 {
-  "buildCommand": "",
-  "outputDirectory": ".",
-  "rewrites": [
-    { "source": "/vendor/(.*)", "destination": "/vendor/$1" },
-    { "source": "/(.*)", "destination": "/src/frontend/$1" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
-        { "key": "Cross-Origin-Embedder-Policy", "value": "require-corp" }
-      ]
-    }
-  ]
+  "framework": null,
+  "buildCommand": "node scripts/build-vercel.js",
+  "outputDirectory": "public"
 }

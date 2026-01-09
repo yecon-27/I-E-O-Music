@@ -132,3 +132,7 @@ Thumbs.db
 
 # Project specific
 *.bat
+
+# Ver
+cel build output
+public/
