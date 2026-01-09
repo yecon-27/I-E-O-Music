@@ -26,6 +26,7 @@ class MusicParamController {
             contrast: 10,
             volume: 70,
             harmony: 'I-V',
+            instrument: 'piano',
             durationSec: 15,
             segmentStartSec: 0
         };
@@ -53,6 +54,7 @@ class MusicParamController {
         this.bindModeToggle();
         this.bindSliders();
         this.bindHarmonyOptions();
+        this.bindInstrumentOptions();
         this.bindDurationAndSegment();
         this.bindActionButtons();
         this.bindDawDualSliders();
@@ -87,9 +89,9 @@ class MusicParamController {
          const rightPanelTitle = document.querySelector('.expert-right .expert-panel-title');
          if (rightPanelTitle) rightPanelTitle.textContent = window.i18n ? window.i18n.t('report.musicParams') : 'Music Parameters';
 
-        // Labels with Safe Range
+        // Labels with Safe Range (现在只有4个: Tempo, Contrast, Volume, Harmony)
         const labels = document.querySelectorAll('.music-params-grid label');
-        if (labels.length >= 5) {
+        if (labels.length >= 4) {
             // labels[0] = Tempo (BPM)
             const tempoLabel = labels[0];
             if (tempoLabel) {
@@ -122,18 +124,9 @@ class MusicParamController {
                 const warning = volumeLabel.querySelector('.param-warning-badge');
                 if (warning) warning.textContent = this.t('expert.warning.unsafe');
             }
-            
-            // labels[3] = 奖励时长
-            const durationLabel = labels[3];
-            if (durationLabel) {
-                const span = durationLabel.querySelector('span:first-child');
-                if (span) {
-                    span.innerHTML = `${this.t('expert.duration')} <span class="param-safe-range">${this.t('expert.safeRange')}8-20s</span>`;
-                }
-            }
 
-            // labels[4] = 音乐
-            const harmonyLabel = labels[4];
+            // labels[3] = 音乐
+            const harmonyLabel = labels[3];
             if (harmonyLabel) {
                 const span = harmonyLabel.querySelector('span:first-child');
                 if (span) {
@@ -223,24 +216,44 @@ class MusicParamController {
         if (segTip) segTip.textContent = this.t('expert.segment.tip');
         
         const drawSegment = () => {
-            if (!segCanvas) return;
+            if (!segCanvas) {
+                console.warn('[Segment] Canvas not found');
+                return;
+            }
             const ctx = segCanvas.getContext('2d');
+            
+            // 获取canvas的CSS显示尺寸
+            const rect = segCanvas.getBoundingClientRect();
+            let displayWidth = rect.width;
+            let displayHeight = rect.height;
+            
+            // 如果尺寸为0，使用默认值并稍后重试
+            if (displayWidth < 10 || displayHeight < 10) {
+                displayWidth = 500;
+                displayHeight = 120;
+                // 延迟重绘
+                setTimeout(() => drawSegment(), 100);
+            }
+            
+            // 设置canvas的实际像素尺寸
+            segCanvas.width = Math.floor(displayWidth);
+            segCanvas.height = Math.floor(displayHeight);
+            
             const w = segCanvas.width;
             const h = segCanvas.height;
             const spectrumH = h - 28; // 频谱图高度，留出底部刻度空间
             
-            ctx.clearRect(0, 0, w, h);
-            
             // 背景
-            ctx.fillStyle = '#fafbfc';
+            ctx.fillStyle = '#f8fafc';
             ctx.fillRect(0, 0, w, h);
             
-            // 简单波形（根据 lastGeneratedSequence 画力度条，否则画占位）
+            // 绘制波形（占位或真实数据）
             const seq = window.lastGeneratedSequence;
+            ctx.fillStyle = '#c7d2fe';
+            
             if (seq && Array.isArray(seq.notes) && seq.notes.length) {
-                ctx.fillStyle = '#c7d2fe';
-                const total = Math.max(seq.totalTime || 0, 20);
-                const buckets = 100;
+                const total = Math.max(seq.totalTime || 20, 20);
+                const buckets = 80;
                 const energy = new Array(buckets).fill(0);
                 seq.notes.forEach(n => {
                     const startIdx = Math.floor((n.startTime / total) * buckets);
@@ -249,35 +262,37 @@ class MusicParamController {
                         energy[i] += (n.velocity || 80);
                     }
                 });
+                const barWidth = w / buckets;
                 for (let i = 0; i < buckets; i++) {
-                    const x = (i / buckets) * w;
-                    const barH = Math.min(spectrumH - 4, (energy[i] / 400) * (spectrumH - 4));
-                    ctx.fillRect(x, spectrumH - barH, w / buckets - 1, barH);
+                    const x = i * barWidth;
+                    const barH = Math.min(spectrumH - 4, (energy[i] / 300) * (spectrumH - 4)) || 5;
+                    ctx.fillRect(x, spectrumH - barH, barWidth - 2, barH);
                 }
             } else {
-                ctx.fillStyle = '#e0e7ff';
-                for (let i = 0; i < 100; i++) {
-                    const x = (i / 100) * w;
-                    const barH = (Math.sin(i * 0.2) * 0.5 + 0.5) * (spectrumH * 0.6) + 10;
-                    ctx.fillRect(x, spectrumH - barH, w / 100 - 1, barH);
+                // 占位波形 - 模拟音频波形
+                const barCount = 60;
+                const barWidth = w / barCount;
+                for (let i = 0; i < barCount; i++) {
+                    const x = i * barWidth;
+                    // 使用多个正弦波叠加模拟真实波形
+                    const noise = Math.sin(i * 0.3) * 0.3 + Math.sin(i * 0.7) * 0.2 + Math.sin(i * 0.1) * 0.4;
+                    const barH = (noise * 0.5 + 0.5) * (spectrumH * 0.6) + 15;
+                    ctx.fillRect(x + 1, spectrumH - barH, barWidth - 2, barH);
                 }
             }
             
             // 选中片段高亮
-            const start = this.currentParams.segmentStartSec;
-            const end = this.currentParams.segmentEndSec;
+            const start = this.currentParams.segmentStartSec || 0;
+            const end = this.currentParams.segmentEndSec || 15;
             const startX = (start / 20) * w;
             const endX = (end / 20) * w;
-            ctx.fillStyle = 'rgba(99,102,241,0.15)';
+            
+            ctx.fillStyle = 'rgba(99, 102, 241, 0.15)';
             ctx.fillRect(startX, 0, Math.max(2, endX - startX), spectrumH);
             
-            // 边界线（主题色渐变，紧贴频谱图）
-            const gradient = ctx.createLinearGradient(0, 0, 0, spectrumH);
-            gradient.addColorStop(0, '#818cf8');
-            gradient.addColorStop(1, '#6366f1');
-            
-            ctx.strokeStyle = gradient;
-            ctx.lineWidth = 2.5;
+            // 边界线
+            ctx.strokeStyle = '#6366f1';
+            ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.moveTo(startX, 0);
             ctx.lineTo(startX, spectrumH);
@@ -287,57 +302,55 @@ class MusicParamController {
             ctx.lineTo(endX, spectrumH);
             ctx.stroke();
             
-            // 边界手柄（主题色三角形，紧贴频谱图底部）
-            const handleY = spectrumH;
-            const handleSize = 8;
-            
-            // 左边界手柄
+            // 边界手柄（三角形）
             ctx.fillStyle = '#6366f1';
+            const handleSize = 6;
+            
+            // 左手柄
             ctx.beginPath();
-            ctx.moveTo(startX, handleY);
-            ctx.lineTo(startX - handleSize, handleY + handleSize + 2);
-            ctx.lineTo(startX + handleSize, handleY + handleSize + 2);
+            ctx.moveTo(startX, spectrumH);
+            ctx.lineTo(startX - handleSize, spectrumH + handleSize + 2);
+            ctx.lineTo(startX + handleSize, spectrumH + handleSize + 2);
             ctx.closePath();
             ctx.fill();
             
-            // 右边界手柄
+            // 右手柄
             ctx.beginPath();
-            ctx.moveTo(endX, handleY);
-            ctx.lineTo(endX - handleSize, handleY + handleSize + 2);
-            ctx.lineTo(endX + handleSize, handleY + handleSize + 2);
+            ctx.moveTo(endX, spectrumH);
+            ctx.lineTo(endX - handleSize, spectrumH + handleSize + 2);
+            ctx.lineTo(endX + handleSize, spectrumH + handleSize + 2);
             ctx.closePath();
             ctx.fill();
             
-            // 时间刻度线（在频谱图底部）
-            const rulerY = spectrumH + 12;
-            ctx.strokeStyle = '#d1d5db';
+            // 时间刻度
+            const rulerY = spectrumH + 16;
+            ctx.strokeStyle = '#e5e7eb';
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(0, rulerY);
             ctx.lineTo(w, rulerY);
             ctx.stroke();
             
-            // 时间刻度标签（8s, 12s, 15s, 20s）
-            ctx.fillStyle = '#6b7280';
-            ctx.font = '11px Inter, system-ui, sans-serif';
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = '10px system-ui, sans-serif';
             ctx.textAlign = 'center';
             
-            const keyTimes = [0, 8, 12, 15, 20];
-            keyTimes.forEach(t => {
+            [0, 8, 12, 15, 20].forEach(t => {
                 const tx = (t / 20) * w;
-                // 刻度线
-                ctx.strokeStyle = '#9ca3af';
-                ctx.lineWidth = 1;
+                ctx.strokeStyle = '#d1d5db';
                 ctx.beginPath();
                 ctx.moveTo(tx, rulerY - 3);
                 ctx.lineTo(tx, rulerY + 3);
                 ctx.stroke();
-                // 刻度文字
                 ctx.fillText(`${t}s`, tx, rulerY + 14);
             });
             
-            ctx.textAlign = 'left'; // 重置
+            ctx.textAlign = 'left';
         };
+        this.drawSegment = drawSegment;
+        try {
+            window.addEventListener('sequence:updated', () => this.drawSegment());
+        } catch {}
         
         const updateComputedDuration = () => {
             const dur = Math.max(8, Math.min(20, this.currentParams.segmentEndSec - this.currentParams.segmentStartSec));
@@ -348,7 +361,7 @@ class MusicParamController {
         const enforceBounds = (source) => {
             let start = this.currentParams.segmentStartSec;
             let end = this.currentParams.segmentEndSec;
-            const durSafe = this.convergedParams?.duration || this.safeRanges.duration;
+            const durSafe = this.convergedParams?.duration || this.safeRanges?.duration || { min: 8, max: 20 };
             if (end - start < 8) {
                 if (source === 'start') {
                     end = Math.min(20, start + 8);
@@ -372,17 +385,6 @@ class MusicParamController {
             if (segEndSlider) segEndSlider.value = String(end);
             if (segStartValue) segStartValue.textContent = `${start.toFixed(1)}s`;
             if (segEndValue) segEndValue.textContent = `${end.toFixed(1)}s`;
-            const isUnsafe = end > durSafe.max || end < durSafe.min;
-            const selector = document.querySelector('.segment-selector');
-            if (isUnsafe) {
-                selector?.classList.add('unsafe');
-                durationWarning?.classList.remove('hidden');
-                durationWarning && (durationWarning.style.cssText = 'display:inline-block !important;');
-            } else {
-                selector?.classList.remove('unsafe');
-                durationWarning?.classList.add('hidden');
-                durationWarning && (durationWarning.style.cssText = '');
-            }
             updateComputedDuration();
             drawSegment();
         };
@@ -419,7 +421,132 @@ class MusicParamController {
         this.currentParams.segmentEndSec = Math.max(8, Math.min(20, savedEnd));
         enforceBounds('init');
         
+        // 暴露drawSegment到实例，以便外部调用
+        this.drawSegment = drawSegment;
+        
+        // 初始绘制
         drawSegment();
+        
+        // 延迟重绘，确保canvas可见后正确绘制
+        setTimeout(() => drawSegment(), 200);
+        setTimeout(() => drawSegment(), 500);
+        
+        // ===== Canvas拖动交互（替代HTML滑块） =====
+        if (segCanvas) {
+            const canvasWrapper = segCanvas.closest('.segment-canvas-wrapper');
+            let dragging = null; // 'start' | 'end' | null
+            const handleHitRadius = 15; // 手柄点击检测半径
+            
+            const getCanvasX = (e) => {
+                const rect = segCanvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                return clientX - rect.left;
+            };
+            
+            const xToTime = (x) => {
+                const w = segCanvas.width;
+                return Math.max(0, Math.min(20, (x / w) * 20));
+            };
+            
+            const timeToX = (t) => {
+                const w = segCanvas.width;
+                return (t / 20) * w;
+            };
+            
+            const getSpectrumHeight = () => {
+                return segCanvas.height - 28;
+            };
+            
+            // 检测点击位置是否在手柄附近
+            const hitTest = (x, y) => {
+                const spectrumH = getSpectrumHeight();
+                const startX = timeToX(this.currentParams.segmentStartSec || 0);
+                const endX = timeToX(this.currentParams.segmentEndSec || 15);
+                const handleY = spectrumH + 4; // 三角形中心Y位置
+                
+                // 检测是否点击了起始手柄
+                const distStart = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - handleY, 2));
+                if (distStart < handleHitRadius) return 'start';
+                
+                // 检测是否点击了结束手柄
+                const distEnd = Math.sqrt(Math.pow(x - endX, 2) + Math.pow(y - handleY, 2));
+                if (distEnd < handleHitRadius) return 'end';
+                
+                return null;
+            };
+            
+            // 更新光标样式
+            const updateCursor = (x, y) => {
+                if (dragging) {
+                    segCanvas.style.cursor = 'ew-resize';
+                    return;
+                }
+                const hit = hitTest(x, y);
+                segCanvas.style.cursor = hit ? 'ew-resize' : 'default';
+            };
+            
+            // 鼠标/触摸按下
+            const onPointerDown = (e) => {
+                const rect = segCanvas.getBoundingClientRect();
+                const x = getCanvasX(e);
+                const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+                
+                dragging = hitTest(x, y);
+                if (dragging && canvasWrapper) {
+                    canvasWrapper.classList.add(`dragging-${dragging}`);
+                    e.preventDefault();
+                }
+            };
+            
+            // 鼠标/触摸移动
+            const onPointerMove = (e) => {
+                const rect = segCanvas.getBoundingClientRect();
+                const x = getCanvasX(e);
+                const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+                
+                if (dragging) {
+                    const time = xToTime(x);
+                    if (dragging === 'start') {
+                        this.currentParams.segmentStartSec = Math.round(time * 2) / 2; // 0.5s步进
+                        enforceBounds('start');
+                        try { localStorage.setItem('expert.segmentStartSec', String(this.currentParams.segmentStartSec)); } catch {}
+                    } else if (dragging === 'end') {
+                        this.currentParams.segmentEndSec = Math.round(time * 2) / 2; // 0.5s步进
+                        enforceBounds('end');
+                        try { localStorage.setItem('expert.segmentEndSec', String(this.currentParams.segmentEndSec)); } catch {}
+                    }
+                    e.preventDefault();
+                } else {
+                    updateCursor(x, y);
+                }
+            };
+            
+            // 鼠标/触摸释放
+            const onPointerUp = () => {
+                if (dragging && canvasWrapper) {
+                    canvasWrapper.classList.remove(`dragging-start`);
+                    canvasWrapper.classList.remove(`dragging-end`);
+                }
+                dragging = null;
+                segCanvas.style.cursor = 'default';
+            };
+            
+            // 绑定事件
+            segCanvas.addEventListener('mousedown', onPointerDown);
+            segCanvas.addEventListener('mousemove', onPointerMove);
+            segCanvas.addEventListener('mouseup', onPointerUp);
+            segCanvas.addEventListener('mouseleave', onPointerUp);
+            
+            // 触摸支持
+            segCanvas.addEventListener('touchstart', onPointerDown, { passive: false });
+            segCanvas.addEventListener('touchmove', onPointerMove, { passive: false });
+            segCanvas.addEventListener('touchend', onPointerUp);
+            segCanvas.addEventListener('touchcancel', onPointerUp);
+            
+            // 全局鼠标释放（防止拖出canvas后无法释放）
+            document.addEventListener('mouseup', onPointerUp);
+            document.addEventListener('touchend', onPointerUp);
+        }
     }
     
     /**
@@ -443,6 +570,8 @@ class MusicParamController {
                 paramActions?.classList.remove('hidden');
                 // 隐藏测试模式的奖励时长 label 栏
                 document.getElementById('duration-param-item')?.classList.add('hidden');
+                // 测试模式显示片段选择器
+                document.querySelector('.segment-selector')?.classList.remove('hidden');
             });
         }
         
@@ -457,9 +586,33 @@ class MusicParamController {
                 paramActions?.classList.add('hidden');
                 // 收敛模式保留奖励时长 label 栏
                 document.getElementById('duration-param-item')?.classList.remove('hidden');
+                // 收敛模式不显示片段选择器
+                document.querySelector('.segment-selector')?.classList.add('hidden');
                 this.updateConvergeSummary();
                 // 播放收敛动画
                 setTimeout(() => this.playConvergeAnimation(), 50);
+                
+                // 初始化“选定时长”滑条范围与值
+                const selSlider = document.getElementById('converge-duration-selected');
+                const selVal = document.getElementById('converge-duration-selected-val');
+                const bounds = this.convergedParams?.duration || this.safeRanges.duration;
+                if (selSlider) {
+                    selSlider.min = String(bounds.min);
+                    selSlider.max = String(bounds.max);
+                    const initVal = Math.max(bounds.min, Math.min(bounds.max, this.selectedDuration || this.currentParams.durationSec || 15));
+                    selSlider.value = String(initVal);
+                    this.selectedDuration = initVal;
+                    if (selVal) selVal.textContent = String(initVal);
+                    if (!selSlider.__bound) {
+                        selSlider.addEventListener('input', (e) => {
+                            const v = parseInt(e.target.value, 10);
+                            const clamped = Math.max(bounds.min, Math.min(bounds.max, v));
+                            this.selectedDuration = clamped;
+                            if (selVal) selVal.textContent = String(clamped);
+                        });
+                        selSlider.__bound = true;
+                    }
+                }
             });
         }
     }
@@ -574,6 +727,36 @@ class MusicParamController {
     }
     
     /**
+     * 绑定乐器选项按钮
+     */
+    bindInstrumentOptions() {
+        const container = document.getElementById('instrument-options');
+        const warningEl = document.getElementById('instrument-warning');
+        
+        if (!container) return;
+        
+        const buttons = container.querySelectorAll('.instrument-btn');
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // 移除其他按钮的active状态
+                buttons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const value = btn.dataset.value;
+                this.currentParams.instrument = value;
+                
+                // 触发回调
+                this.onParamChange?.({ param: 'instrument', value, isUnsafe: false });
+                
+                // 如果在收敛模式，更新摘要
+                if (this.mode === 'converge') {
+                    this.updateConvergeSummary();
+                }
+            });
+        });
+    }
+
+    /**
      * 绑定操作按钮
      */
     bindActionButtons() {
@@ -614,6 +797,17 @@ class MusicParamController {
         const harmonyBtnsContainer = document.getElementById('converge-harmony-btns');
         if (harmonyBtnsContainer) {
             const btns = harmonyBtnsContainer.querySelectorAll('.converge-harmony-btn');
+            btns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    btn.classList.toggle('selected');
+                });
+            });
+        }
+
+        // 收敛模式乐器按钮组
+        const instrumentBtnsContainer = document.getElementById('converge-instrument-btns');
+        if (instrumentBtnsContainer) {
+            const btns = instrumentBtnsContainer.querySelectorAll('.daw-instrument-btn');
             btns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     btn.classList.toggle('selected');
@@ -738,6 +932,7 @@ class MusicParamController {
         const harmonyEl = document.getElementById('converge-harmony');
         const durationMinEl = document.getElementById('converge-duration-min-val');
         const durationMaxEl = document.getElementById('converge-duration-max-val');
+        const durationSelEl = document.getElementById('converge-duration-selected-val');
         
         if (tempoEl) tempoEl.textContent = this.currentParams.tempo;
         if (contrastEl) contrastEl.textContent = this.currentParams.contrast + '%';
@@ -745,6 +940,7 @@ class MusicParamController {
         if (harmonyEl) harmonyEl.textContent = this.currentParams.harmony;
         if (durationMinEl && this.convergedDuration) durationMinEl.textContent = this.convergedDuration.min;
         if (durationMaxEl && this.convergedDuration) durationMaxEl.textContent = this.convergedDuration.max;
+        if (durationSelEl && this.selectedDuration) durationSelEl.textContent = this.selectedDuration;
     }
     
     /**
@@ -757,11 +953,15 @@ class MusicParamController {
             return;
         }
         
+        // 先停止当前播放
+        this.stopMusic();
+        
         // 应用参数到音乐生成器
         if (window.sessionConfig) {
             window.sessionConfig.rewardBpm = this.currentParams.tempo;
             window.sessionConfig.dynamicContrast = this.currentParams.contrast / 100;
             window.sessionConfig.harmonyType = this.currentParams.harmony;
+            window.sessionConfig.instrument = this.currentParams.instrument || 'piano'; // 默认钢琴，避免采样未加载
             const baseDuration = Math.max(8, Math.min(20, (this.currentParams.segmentEndSec ?? 15) - (this.currentParams.segmentStartSec ?? 0)));
             const finalDuration = this.testDurationRange
                 ? Math.max(this.testDurationRange.min, Math.min(this.testDurationRange.max, baseDuration))
@@ -785,13 +985,35 @@ class MusicParamController {
             window.popSynth.setVolume(this.currentParams.volume / 100);
         }
         
-        // 触发音乐播放
-        const playBtn = document.getElementById('play-music-btn');
-        if (playBtn) {
-            playBtn.click();
+        // 总是根据当前参数重新生成音乐（而不是复用旧的）
+        try {
+            const session = window.game?.getLastSession?.() || { notes: [] };
+            if (typeof window.createRichTestMusic === 'function') {
+                window.lastGeneratedSequence = window.createRichTestMusic(session);
+                console.log('[MusicParamController] 已根据测试参数重新生成音乐:', {
+                    bpm: window.sessionConfig?.rewardBpm,
+                    contrast: window.sessionConfig?.dynamicContrast,
+                    harmony: window.sessionConfig?.harmonyType,
+                    instrument: window.sessionConfig?.instrument,
+                    segmentStart: window.sessionConfig?.segmentStartSec,
+                    segmentEnd: window.sessionConfig?.segmentEndSec
+                });
+                try { 
+                    window.dispatchEvent(new CustomEvent('sequence:updated', { detail: { sequence: window.lastGeneratedSequence } })); 
+                } catch {}
+            } else {
+                console.warn('[MusicParamController] createRichTestMusic 函数不存在');
+            }
+        } catch (err) {
+            console.error('[MusicParamController] 生成音乐失败:', err);
         }
         
-        this.isPlaying = true;
+        // 延迟播放，确保之前的播放已停止
+        setTimeout(() => {
+            const playBtn = document.getElementById('play-music-btn');
+            if (playBtn) playBtn.click();
+            this.isPlaying = true;
+        }, 100);
     }
     
     /**
@@ -800,19 +1022,32 @@ class MusicParamController {
     stopMusic() {
         console.log('[MusicParamController] 暂停音乐');
         
-        // 停止 Magenta 播放器
-        if (window.rewardPlayer) {
-            window.rewardPlayer.stop();
+        // 停止 Magenta 播放器 (多种可能的引用)
+        const player = window.rewardPlayer || window.MAGENTA?.player || window.gameApp?.MAGENTA?.player;
+        if (player) {
+            try {
+                player.stop();
+            } catch (e) {
+                console.warn('[stopMusic] 停止 Magenta 播放器失败:', e);
+            }
         }
         
         // 停止 popSynth
         if (window.popSynth?.stopAll) {
-            window.popSynth.stopAll();
+            try {
+                window.popSynth.stopAll();
+            } catch (e) {
+                console.warn('[stopMusic] 停止 popSynth 失败:', e);
+            }
         }
         
-        // 尝试停止其他可能的音频源
+        // 尝试停止 Tone.js
         if (window.Tone?.Transport) {
-            window.Tone.Transport.stop();
+            try {
+                window.Tone.Transport.stop();
+            } catch (e) {
+                console.warn('[stopMusic] 停止 Tone.js 失败:', e);
+            }
         }
         
         this.isPlaying = false;
@@ -827,6 +1062,7 @@ class MusicParamController {
             contrast: 10,
             volume: 70,
             harmony: 'I-V',
+            instrument: 'piano',
             durationSec: 15,
             segmentStartSec: 0,
             segmentEndSec: 15
@@ -863,9 +1099,18 @@ class MusicParamController {
                 btn.classList.add('active');
             }
         });
+
+        // 重置乐器选项
+        const instrumentBtns = document.querySelectorAll('.instrument-btn');
+        instrumentBtns.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.value === 'piano') {
+                btn.classList.add('active');
+            }
+        });
         
         // 隐藏所有警告（使用 updateWarning 方法确保一致性）
-        ['tempo-warning', 'contrast-warning', 'volume-warning', 'harmony-warning'].forEach(id => {
+        ['tempo-warning', 'contrast-warning', 'volume-warning', 'harmony-warning', 'instrument-warning'].forEach(id => {
             const el = document.getElementById(id);
             this.updateWarning(el, false);
         });
@@ -891,19 +1136,27 @@ class MusicParamController {
         const volumeMax = parseInt(document.getElementById('converge-volume-max')?.value) || 80;
         const durationMin = parseInt(document.getElementById('converge-duration-min')?.value) || 8;
         const durationMax = parseInt(document.getElementById('converge-duration-max')?.value) || 20;
+        const durationSel = parseInt(document.getElementById('converge-duration-selected')?.value) || Math.max(durationMin, Math.min(durationMax, 15));
         
         // 收集安全和声选项（从按钮组）
         const harmonyBtnsContainer = document.getElementById('converge-harmony-btns');
         const safeHarmonies = harmonyBtnsContainer 
             ? Array.from(harmonyBtnsContainer.querySelectorAll('.converge-harmony-btn.selected')).map(btn => btn.dataset.value)
             : ['I-V'];
+
+        // 收集安全乐器选项（从按钮组）
+        const instrumentBtnsContainer = document.getElementById('converge-instrument-btns');
+        const safeInstruments = instrumentBtnsContainer
+            ? Array.from(instrumentBtnsContainer.querySelectorAll('.daw-instrument-btn.selected')).map(btn => btn.dataset.value)
+            : ['piano'];
         
         this.convergedParams = {
             tempo: { min: tempoMin, max: tempoMax },
             contrast: { min: contrastMin, max: contrastMax },
             volume: { min: volumeMin, max: volumeMax },
-            duration: { min: durationMin, max: durationMax },
+            duration: { min: durationMin, max: durationMax, selected: durationSel },
             safeHarmonies,
+            safeInstruments,
             timestamp: Date.now()
         };
         

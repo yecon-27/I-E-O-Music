@@ -24,6 +24,7 @@ const DEFAULT_SESSION_CONFIG = {
   // 新增参数
   dynamicContrast: 0.1, // 0-0.5, 动态对比度
   harmonyType: 'I-V', // 和声组合: 'I-V', 'I-IV', 'I-vi', 'I-IV-V', 'I-vi-IV-V'
+  instrument: 'piano', // 乐器: 'piano', 'epiano', 'guitar', 'strings'
 };
 
 const REWARD_SETTINGS = {
@@ -33,6 +34,13 @@ const REWARD_SETTINGS = {
   maxBpm: 75,
   baseBpm: 72,
   pentatonic: ["C4", "D4", "E4", "G4", "A4"],
+};
+
+const INSTRUMENT_DEFS = {
+  'piano': 0,    // Acoustic Grand Piano
+  'epiano': 4,   // Electric Piano 1
+  'guitar': 24,  // Acoustic Guitar (nylon)
+  'strings': 48, // String Ensemble 1
 };
 
 const NOTE_TO_SEMITONE = {
@@ -747,22 +755,42 @@ class AdvancedMusicGenerator {
     const dynamicContrast = config.dynamicContrast || 0.1;
     const contrastRange = baseVelocity * dynamicContrast;
     
+    // 获取乐器 program
+    const instrumentProgram = INSTRUMENT_DEFS[config.instrument] ?? 0;
+
+    // 乐器音域限制 (根据用户建议: 吉他不弹太高, 弦乐控制音域)
+    const constrainPitch = (midi, instr) => {
+      if (instr === 'guitar') {
+        // Nylon Guitar range: E2(40) - B5(83). Cap high notes to avoid harshness.
+        return clamp(midi, 40, 83);
+      }
+      if (instr === 'strings') {
+        // String Ensemble: Avoid very high screechy notes.
+        return clamp(midi, 36, 84); // C2 - C6
+      }
+      return midi;
+    };
+
     const velocityFor = (vel, noteIndex = 0) => {
       // 根据动态对比度添加力度变化
       const variation = Math.sin(noteIndex * 0.5) * contrastRange;
-      return clamp(Math.round((vel + variation) * timbreScale), 30, 110);
+      // 弦乐/吉他稍微柔和一些
+      let scale = timbreScale;
+      if (config.instrument === 'strings' || config.instrument === 'guitar') {
+        scale *= 0.9;
+      }
+      return clamp(Math.round((vel + variation) * scale), 30, 110);
     };
     
     let noteIndex = 0;
     phrases.forEach((phrase) => {
       phrase.notes.forEach((n) => {
-        // program 0 = Acoustic Grand Piano，统一用钢琴避免亮色小提琴
         notes.push({
-          pitch: n.midi,
+          pitch: constrainPitch(n.midi, config.instrument),
           startTime: n.startTime,
           endTime: n.endTime,
           velocity: velocityFor(baseVelocity, noteIndex++),
-          program: 0,
+          program: instrumentProgram,
           isDrum: false,
         });
       });
@@ -771,11 +799,11 @@ class AdvancedMusicGenerator {
     // 添加和弦/低音层
     chordNotes.forEach((n, idx) => {
       notes.push({
-        pitch: n.midi,
+        pitch: constrainPitch(n.midi, config.instrument),
         startTime: n.startTime,
         endTime: n.endTime,
         velocity: velocityFor(baseVelocity * (n.velocityScale || 0.55), idx),
-        program: 0,
+        program: instrumentProgram,
         isDrum: false,
       });
     });

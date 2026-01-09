@@ -51,7 +51,7 @@ const elements = {
 const SESSION_DEFAULTS = {
     volumeLevel: 'medium',
     rhythmDensity: 'normal',
-    timbre: 'soft',
+    timbre: 'piano',
     feedbackLatencyMs: 0,
     immediateToneMode: 'full',
     rewardEnabled: true,
@@ -145,7 +145,7 @@ function updateUIText() {
 
     // Update Segmented Controls
     updateSelectOptions('session-volume', ['opt.low', 'opt.medium', 'opt.high']);
-    updateSelectOptions('session-timbre', ['opt.soft', 'opt.bright']);
+    updateSelectOptions('session-timbre', ['opt.piano', 'opt.epiano', 'opt.guitar', 'opt.strings']);
     updateSelectOptions('session-latency', ['opt.immediate', 'opt.delay']);
     updateSelectOptions('session-immediate', ['opt.full', 'opt.visual', 'opt.off']);
     updateSelectOptions('session-reward', ['opt.on', 'opt.off']);
@@ -909,14 +909,14 @@ function loadSessionSettingsForm(config) {
     
     // 更新分段选择器（只更新界面上存在的设置项）
     updateSegmentedControl('session-volume', normalized.volumeLevel || 'medium');
-    updateSegmentedControl('session-timbre', normalized.timbre || 'soft');
+    updateSegmentedControl('session-timbre', normalized.timbre || 'piano');
     updateSegmentedControl('session-latency', String(normalized.feedbackLatencyMs ?? 0));
     updateSegmentedControl('session-immediate', normalized.immediateToneMode || 'full');
     
     // 同时更新隐藏的input值（兼容旧代码）
     if(elements.sessionVolume) elements.sessionVolume.value = normalized.volumeLevel || 'medium';
     if(elements.sessionDensity) elements.sessionDensity.value = normalized.rhythmDensity || 'normal';
-    if(elements.sessionTimbre) elements.sessionTimbre.value = normalized.timbre || 'soft';
+    if(elements.sessionTimbre) elements.sessionTimbre.value = normalized.timbre || 'piano';
     if(elements.sessionLatency) elements.sessionLatency.value = String(normalized.feedbackLatencyMs ?? 0);
     if(elements.sessionImmediate) elements.sessionImmediate.value = normalized.immediateToneMode || 'full';
     if(elements.sessionReward) elements.sessionReward.value = normalized.rewardEnabled ? 'on' : 'off';
@@ -928,7 +928,7 @@ function readSessionSettingsForm() {
     return normalizeSessionConfig({
         volumeLevel: elements.sessionVolume?.value || 'medium',
         rhythmDensity: elements.sessionDensity?.value || 'normal',
-        timbre: elements.sessionTimbre?.value || 'soft',
+        timbre: elements.sessionTimbre?.value || 'piano',
         feedbackLatencyMs: parseInt(elements.sessionLatency?.value || '0', 10),
         immediateToneMode: elements.sessionImmediate?.value || 'full',
         rewardEnabled: elements.sessionReward?.value === 'on',
@@ -1062,6 +1062,7 @@ function handleStartRound() {
                     window.lastGeneratedSequence = createRichTestMusic(session);
                     console.log('🎵 音乐生成已禁用，使用丰富测试序列');
                     window.gameResultManager?.updateDebugPanel?.();
+                    try { window.dispatchEvent(new CustomEvent('sequence:updated', { detail: { sequence: window.lastGeneratedSequence } })); } catch {}
                 }
             } catch (err) {
                 console.error('[AI] submit failed:', err);
@@ -1228,6 +1229,7 @@ const MAGENTA = {
     // 仅生成，不自动播放（由用户点击播放）
     window.lastGeneratedSequence = full;
     window.gameResultManager?.updateDebugPanel?.();
+    try { window.dispatchEvent(new CustomEvent('sequence:updated', { detail: { sequence: full } })); } catch {}
     
     window.gameApp?.showEncouragementMessage?.(t('msg.reward'), 1800);
   

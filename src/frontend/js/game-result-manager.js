@@ -632,6 +632,13 @@ class GameResultManager {
 
     if (this.resultOverlay) {
       this.resultOverlay.classList.remove("hidden");
+      
+      // 延迟重绘频谱图，确保canvas可见后正确绘制
+      setTimeout(() => {
+        if (window.musicParamController?.drawSegment) {
+          window.musicParamController.drawSegment();
+        }
+      }, 100);
     }
   }
 
@@ -1211,9 +1218,35 @@ class GameResultManager {
               this.showMusicError(this.t('music.playerNotReady'));
               return;
           }
-          player.stop();
+          
+          // 先停止当前播放
+          try {
+              if (player.isPlaying?.()) {
+                  player.stop();
+              }
+          } catch (e) {
+              console.warn('[playGeneratedMusic] 停止播放器时出错:', e);
+          }
+          
+          // 等待一小段时间确保停止完成
+          await new Promise(resolve => setTimeout(resolve, 50));
+          
           try { await window.mm.Player.tone?.context?.resume?.(); } catch {}
-          player.start(window.lastGeneratedSequence);
+          
+          // 再次检查播放器状态
+          try {
+              if (player.isPlaying?.()) {
+                  console.warn('[playGeneratedMusic] 播放器仍在播放，跳过');
+                  return;
+              }
+              player.start(window.lastGeneratedSequence);
+          } catch (startErr) {
+              console.warn('[playGeneratedMusic] 启动播放失败:', startErr);
+              // 如果是"already playing"错误，忽略
+              if (!startErr.message?.includes('already playing')) {
+                  throw startErr;
+              }
+          }
           
           this.showMusicMessage(this.t('msg.musicPlaying'));
           
@@ -1228,6 +1261,7 @@ class GameResultManager {
               }, 3000);
           }
       } catch (error) {
+          console.error('[playGeneratedMusic] 播放失败:', error);
           this.showMusicError(this.t('msg.musicError'));
       }
   }
@@ -1242,16 +1276,53 @@ class GameResultManager {
       }
       
       try {
-          // 使用 Magenta 的 sequenceProtoToMidi 转换
-          const midi = window.mm?.sequenceProtoToMidi?.(sequence);
+          // 尝试使用 Magenta 转换
+          let midi = null;
           
-          if (!midi || !midi.length) {
-              console.warn('⚠️ MIDI转换结果为空');
-              this.showMusicError(this.t('music.error'));
+          if (window.mm?.sequenceProtoToMidi) {
+              try {
+                  // 构建符合 NoteSequence proto 格式的对象
+                  const noteSequence = {
+                      notes: sequence.notes.map(n => ({
+                          pitch: n.pitch,
+                          startTime: n.startTime,
+                          endTime: n.endTime,
+                          velocity: n.velocity || 80,
+                          program: n.program || 0,
+                          isDrum: n.isDrum || false
+                      })),
+                      totalTime: sequence.totalTime || sequence.notes.reduce((max, n) => Math.max(max, n.endTime), 0),
+                      tempos: sequence.tempos || [{ time: 0, qpm: 72 }],
+                      timeSignatures: sequence.timeSignatures || [{ time: 0, numerator: 4, denominator: 4 }],
+                      quantizationInfo: { stepsPerQuarter: 4 }
+                  };
+                  midi = window.mm.sequenceProtoToMidi(noteSequence);
+              } catch (magentaErr) {
+                  console.warn('Magenta MIDI转换失败，使用备用方法:', magentaErr);
+              }
+          }
+          
+          // 如果 Magenta 转换失败，使用简单的 JSON 下载作为备用
+          if (!midi || midi.length === 0) {
+              console.log('使用 JSON 格式下载音乐数据');
+              const jsonData = JSON.stringify({
+                  notes: sequence.notes,
+                  totalTime: sequence.totalTime,
+                  tempos: sequence.tempos,
+                  bpm: sequence.tempos?.[0]?.qpm || 72
+              }, null, 2);
+              const blob = new Blob([jsonData], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `musibubbles_${Date.now()}.json`;
+              a.click();
+              URL.revokeObjectURL(url);
+              this.showMusicMessage('音乐数据已下载 (JSON格式)');
               return;
           }
           
-          // 创建下载链接
+          // 创建 MIDI 下载链接
           const blob = new Blob([midi], { type: 'audio/midi' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');

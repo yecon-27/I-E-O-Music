@@ -377,15 +377,6 @@
                                         </div>
                                     </div>
                                     
-                                    <div class="param-item" id="duration-param-item">
-                                        <label>
-                                            <span>奖励时长 <span class="param-safe-range">安全: 8-20s</span></span>
-                                        </label>
-                                        <div class="param-control">
-                                            <span id="report-param-duration-value" class="param-value">15s</span>
-                                        </div>
-                                    </div>
-                                    
                                     <div class="param-item">
                                         <label>
                                             <span>音乐</span>
@@ -399,25 +390,38 @@
                                             <button class="harmony-btn unsafe" data-value="I-vi-IV-V">I-vi-IV-V</button>
                                         </div>
                                     </div>
+                                    
+                                    <div class="param-item">
+                                        <label>
+                                            <span>乐器</span>
+                                            <span id="instrument-warning" class="param-warning-badge hidden">可能有感官过载风险</span>
+                                        </label>
+                                        <div class="instrument-options" id="instrument-options">
+                                            <button class="instrument-btn active" data-value="piano">钢琴</button>
+                                            <button class="instrument-btn" data-value="epiano">电钢</button>
+                                            <button class="instrument-btn" data-value="guitar">吉他</button>
+                                            <button class="instrument-btn" data-value="strings">弦乐</button>
+                                        </div>
+                                    </div>
                                 </div>
                                 
                                 <div class="segment-selector">
                                     <div class="segment-header">
                                         <span id="segment-label">片段选择</span>
-                                        <span id="duration-warning" class="param-warning-badge hidden">可能有感官过载风险</span>
-                                        <span class="segment-tip">拖动下方滑块设置起始/结束位置</span>
+                                        <span class="segment-tip">拖动滑块设置起始/结束位置</span>
                                     </div>
                                     <div class="segment-canvas-wrapper" style="position:relative;">
                                         <canvas id="segment-canvas" width="560" height="120"></canvas>
-                                        <div class="segment-sliders-overlay" style="position:absolute;left:0;right:0;bottom:0;height:40px;">
-                                            <input type="range" id="segment-start-slider" min="0" max="12" value="0" step="0.5" style="position:absolute;left:0;right:0;bottom:0;width:100%;">
-                                            <input type="range" id="segment-end-slider" min="8" max="20" value="15" step="0.5" style="position:absolute;left:0;right:0;bottom:0;width:100%;">
+                                        <!-- 滑块已隐藏，由canvas处理拖动交互 -->
+                                        <div class="segment-sliders-overlay" style="position:absolute;left:0;right:0;bottom:0;height:40px;opacity:0;visibility:hidden;pointer-events:none;">
+                                            <input type="range" id="segment-start-slider" min="0" max="12" value="0" step="0.5" style="opacity:0;visibility:hidden;pointer-events:none;">
+                                            <input type="range" id="segment-end-slider" min="8" max="20" value="15" step="0.5" style="opacity:0;visibility:hidden;pointer-events:none;">
                                         </div>
                                     </div>
                                     <div class="segment-values" style="display:flex;justify-content:space-between;margin-top:4px;font-size:12px;color:var(--text-secondary);">
                                         <span>起始: <strong id="segment-start-value" style="color:var(--accent-primary);">0.0s</strong></span>
+                                        <span>时长: <strong id="report-param-duration-value" style="color:var(--accent-primary);">15s</strong></span>
                                         <span>结束: <strong id="segment-end-value" style="color:var(--accent-primary);">15.0s</strong></span>
-                                        <button id="segment-reset-btn" class="param-btn secondary" style="margin-left:auto;">重置右界</button>
                                     </div>
                                 </div>
                                 
@@ -431,10 +435,6 @@
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
                                         暂停
                                     </button>
-                                    <button id="param-reset-btn" class="param-btn secondary">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
-                                        重置
-                                    </button>
                                 </div>
                                 
                                 <!-- 收敛模式提交区域 (临床风格双滑块) -->
@@ -444,65 +444,7 @@
                                         设定安全区间
                                     </h4>
                                         <div class="daw-range-grid">
-                                            <div class="daw-range-item">
-                                                <div class="daw-range-header">
-                                                    <label>BPM</label>
-                                                    <span class="daw-range-values">
-                                                    <span id="converge-duration-min-val" class="daw-value">12</span>
-                                                    <span class="daw-separator">-</span>
-                                                    <span id="converge-duration-max-val" class="daw-value">18</span>
-                                                    <span class="daw-unit">s</span>
-                                                </span>
-                                            </div>
-                                            <div class="daw-dual-slider" data-param="duration" data-min="8" data-max="20" data-scope="converge">
-                                                <div class="daw-track">
-                                                    <div class="daw-track-fill"></div>
-                                                    <div class="daw-lock-icon daw-lock-left">
-                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                                    </div>
-                                                    <div class="daw-lock-icon daw-lock-right">
-                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                                    </div>
-                                                </div>
-                                                <div class="daw-scale" data-min="8" data-max="20">
-                                                    <span class="daw-scale-mark" style="--pos: 0%">8</span>
-                                                    <span class="daw-scale-mark" style="--pos: 50%">14</span>
-                                                    <span class="daw-scale-mark" style="--pos: 100%">20</span>
-                                                </div>
-                                                <input type="range" class="daw-thumb daw-thumb-min" id="converge-duration-min" min="8" max="20" value="12">
-                                                <input type="range" class="daw-thumb daw-thumb-max" id="converge-duration-max" min="8" max="20" value="18">
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="daw-range-item">
-                                            <div class="daw-range-header">
-                                                <label>时长</label>
-                                                <span class="daw-range-values">
-                                                    <span id="converge-duration-min-val" class="daw-value">8</span>
-                                                    <span class="daw-separator">-</span>
-                                                    <span id="converge-duration-max-val" class="daw-value">20</span>
-                                                    <span class="daw-unit">s</span>
-                                                </span>
-                                            </div>
-                                            <div class="daw-dual-slider" data-param="duration" data-min="8" data-max="20">
-                                                <div class="daw-track">
-                                                    <div class="daw-track-fill"></div>
-                                                    <div class="daw-lock-icon daw-lock-left">
-                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                                    </div>
-                                                    <div class="daw-lock-icon daw-lock-right">
-                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                                    </div>
-                                                </div>
-                                                <div class="daw-scale" data-min="8" data-max="20">
-                                                    <span class="daw-scale-mark" style="--pos: 0%">8</span>
-                                                    <span class="daw-scale-mark" style="--pos: 50%">14</span>
-                                                    <span class="daw-scale-mark" style="--pos: 100%">20</span>
-                                                </div>
-                                                <input type="range" class="daw-thumb daw-thumb-min" id="converge-duration-min" min="8" max="20" value="8">
-                                                <input type="range" class="daw-thumb daw-thumb-max" id="converge-duration-max" min="8" max="20" value="20">
-                                            </div>
-                                        </div>
+                                        <!-- BPM -->
                                         <div class="daw-range-item">
                                             <div class="daw-range-header">
                                                 <label>BPM</label>
@@ -515,12 +457,6 @@
                                             <div class="daw-dual-slider" data-param="tempo" data-min="40" data-max="120">
                                                 <div class="daw-track">
                                                     <div class="daw-track-fill"></div>
-                                                    <div class="daw-lock-icon daw-lock-left">
-                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                                    </div>
-                                                    <div class="daw-lock-icon daw-lock-right">
-                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                                    </div>
                                                 </div>
                                                 <div class="daw-scale" data-min="40" data-max="120">
                                                     <span class="daw-scale-mark" style="--pos: 0%">40</span>
@@ -534,6 +470,7 @@
                                             </div>
                                         </div>
                                         
+                                        <!-- 对比度 -->
                                         <div class="daw-range-item">
                                             <div class="daw-range-header">
                                                 <label>对比度</label>
@@ -547,12 +484,6 @@
                                             <div class="daw-dual-slider" data-param="contrast" data-min="0" data-max="50">
                                                 <div class="daw-track">
                                                     <div class="daw-track-fill"></div>
-                                                    <div class="daw-lock-icon daw-lock-left">
-                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                                    </div>
-                                                    <div class="daw-lock-icon daw-lock-right">
-                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                                    </div>
                                                 </div>
                                                 <div class="daw-scale" data-min="0" data-max="50">
                                                     <span class="daw-scale-mark" style="--pos: 0%">0</span>
@@ -564,6 +495,7 @@
                                             </div>
                                         </div>
                                         
+                                        <!-- 音量 -->
                                         <div class="daw-range-item">
                                             <div class="daw-range-header">
                                                 <label>音量</label>
@@ -577,12 +509,6 @@
                                             <div class="daw-dual-slider" data-param="volume" data-min="0" data-max="100">
                                                 <div class="daw-track">
                                                     <div class="daw-track-fill"></div>
-                                                    <div class="daw-lock-icon daw-lock-left">
-                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                                    </div>
-                                                    <div class="daw-lock-icon daw-lock-right">
-                                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                                    </div>
                                                 </div>
                                                 <div class="daw-scale" data-min="0" data-max="100">
                                                     <span class="daw-scale-mark" style="--pos: 0%">0</span>
@@ -596,6 +522,46 @@
                                             </div>
                                         </div>
                                         
+                                        <!-- 时长 -->
+                                        <div class="daw-range-item" data-param="duration">
+                                            <div class="daw-range-header">
+                                                <label>时长</label>
+                                                <span class="daw-range-values">
+                                                    <span id="converge-duration-min-val" class="daw-value">8</span>
+                                                    <span class="daw-separator">-</span>
+                                                    <span id="converge-duration-max-val" class="daw-value">20</span>
+                                                    <span class="daw-unit">s</span>
+                                                </span>
+                                            </div>
+                                            <div class="daw-dual-slider" data-param="duration" data-scope="converge" data-min="8" data-max="20">
+                                                <div class="daw-track">
+                                                    <div class="daw-track-fill"></div>
+                                                </div>
+                                                <div class="daw-scale" data-min="8" data-max="20">
+                                                    <span class="daw-scale-mark" style="--pos: 0%">8</span>
+                                                    <span class="daw-scale-mark" style="--pos: 33.3%">12</span>
+                                                    <span class="daw-scale-mark" style="--pos: 66.6%">16</span>
+                                                    <span class="daw-scale-mark" style="--pos: 100%">20</span>
+                                                </div>
+                                                <input type="range" class="daw-thumb daw-thumb-min" id="converge-duration-min" min="8" max="20" value="8">
+                                                <input type="range" class="daw-thumb daw-thumb-max" id="converge-duration-max" min="8" max="20" value="20">
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- 乐器 -->
+                                        <div class="daw-range-item daw-instrument-row">
+                                            <div class="daw-range-header">
+                                                <label>乐器</label>
+                                            </div>
+                                            <div class="daw-instrument-btns" id="converge-instrument-btns">
+                                                <button class="daw-instrument-btn selected" data-value="piano">钢琴</button>
+                                                <button class="daw-instrument-btn" data-value="epiano">电钢</button>
+                                                <button class="daw-instrument-btn" data-value="guitar">吉他</button>
+                                                <button class="daw-instrument-btn" data-value="strings">弦乐</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- 和声 -->
                                         <div class="daw-range-item daw-harmony-row">
                                             <div class="daw-harmony-section">
                                                 <div class="daw-range-header">
@@ -777,16 +743,24 @@
                             <span>音色</span>
                         </label>
                         <div class="segmented-control" data-field="session-timbre">
-                            <button type="button" class="segment active" data-value="soft" title="柔和钢琴">
+                            <button type="button" class="segment active" data-value="piano" title="钢琴">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
-                                <span>柔和</span>
+                                <span>钢琴</span>
                             </button>
-                            <button type="button" class="segment" data-value="bright" title="明亮小提琴">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                                <span>明亮</span>
+                            <button type="button" class="segment" data-value="epiano" title="电钢">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M6 12h.01M10 12h.01M14 12h.01M18 12h.01"></path></svg>
+                                <span>电钢</span>
+                            </button>
+                            <button type="button" class="segment" data-value="guitar" title="吉他">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                                <span>吉他</span>
+                            </button>
+                            <button type="button" class="segment" data-value="strings" title="弦乐">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                <span>弦乐</span>
                             </button>
                         </div>
-                        <input type="hidden" id="session-timbre" value="soft">
+                        <input type="hidden" id="session-timbre" value="piano">
                     </div>
 
                     <!-- 声音延迟 -->
@@ -865,9 +839,9 @@
     <script src="js/game-engine.js"></script>
 
   
-    <!-- TFJS & Magenta（在仓库根的 vendor 下） -->
-    <script src="../../vendor/tf/tf.min.js"></script>
-    <script src="../../vendor/magenta/music.js"></script>
+    <!-- TFJS & Magenta -->
+    <script src="/vendor/tf/tf.min.js"></script>
+    <script src="/vendor/magenta/music.js"></script>
 
     <!-- 入口保持 module -->
     <script type="module" src="./js/main.js"></script>
