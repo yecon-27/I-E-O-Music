@@ -958,6 +958,10 @@ class MusicParamController {
         
         // 应用参数到音乐生成器
         if (window.sessionConfig) {
+            // 标记为专家模式，确保使用手动设置的参数
+            window.sessionConfig.expertMode = true;
+            window.sessionConfig.expertOverride = true;
+            
             window.sessionConfig.rewardBpm = this.currentParams.tempo;
             window.sessionConfig.dynamicContrast = this.currentParams.contrast / 100;
             window.sessionConfig.harmonyType = this.currentParams.harmony;

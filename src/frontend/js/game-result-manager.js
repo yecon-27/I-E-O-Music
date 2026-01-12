@@ -105,6 +105,9 @@ class GameResultManager {
       });
     }
 
+    // 无约束音乐按钮绑定
+    this.bindUnconstrainedMusicButtons();
+
     // 绑定报告面板内的音乐参数控件
     this.bindReportMusicParams();
 
@@ -804,6 +807,9 @@ class GameResultManager {
     
     // 更新时间轴散点图
     this.updateTimelineScatter(notes, session.durationSec || 60, "expert-timeline-scatter");
+    
+    // 更新无约束参数显示
+    this.updateUnconstrainedParamsDisplay();
   }
 
   /**
@@ -1363,6 +1369,269 @@ class GameResultManager {
   downloadMusicAsJson(sequence) {
       // ...
       this.showMusicMessage(this.t('msg.downloadJson'));
+  }
+
+  /**
+   * 绑定无约束音乐按钮事件
+   */
+  bindUnconstrainedMusicButtons() {
+    const playBtn = document.getElementById('play-unconstrained-btn');
+    const downloadBtn = document.getElementById('download-unconstrained-btn');
+    const rawBpmBadge = document.getElementById('raw-bpm-badge');
+    const rawContrastBadge = document.getElementById('raw-contrast-badge');
+    const clampIndicator = document.getElementById('clamp-indicator');
+
+    if (playBtn) {
+      playBtn.addEventListener('click', () => {
+        this.playUnconstrainedMusic();
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        this.downloadUnconstrainedMidi();
+      });
+    }
+  }
+
+  /**
+   * 生成并播放无约束音乐
+   */
+  async playUnconstrainedMusic() {
+    const playBtn = document.getElementById('play-unconstrained-btn');
+    const rawBpmBadge = document.getElementById('raw-bpm-badge');
+    const rawContrastBadge = document.getElementById('raw-contrast-badge');
+    const clampIndicator = document.getElementById('clamp-indicator');
+
+    if (!window.createUnconstrainedMusic) {
+      console.error('[Unconstrained] createUnconstrainedMusic 函数不存在');
+      return;
+    }
+
+    // 获取当前游戏会话数据
+    const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [] };
+    
+    if (!session.notes || session.notes.length === 0) {
+      this.showMusicMessage('没有游戏数据，请先完成一局游戏');
+      return;
+    }
+
+    try {
+      // 更新按钮状态
+      if (playBtn) {
+        playBtn.classList.add('playing');
+        const span = playBtn.querySelector('span');
+        if (span) span.textContent = '生成中...';
+      }
+
+      // 生成无约束音乐
+      const result = window.createUnconstrainedMusic(session);
+      const sequence = result.sequence;
+      const rawParams = result.rawParams;
+
+      // 更新参数显示
+      if (rawBpmBadge && rawParams) {
+        rawBpmBadge.textContent = `BPM: ${rawParams.rawBpm}`;
+        rawBpmBadge.classList.toggle('warning', rawParams.rawBpm > 80 || rawParams.rawBpm < 60);
+      }
+      if (rawContrastBadge && rawParams) {
+        rawContrastBadge.textContent = `对比度: ${(rawParams.rawContrast * 100).toFixed(0)}%`;
+        rawContrastBadge.classList.toggle('warning', rawParams.rawContrast > 0.2);
+      }
+      if (clampIndicator) {
+        // 检查是否会被约束
+        const wouldBeConstrained = (rawParams.rawBpm > 80 || rawParams.rawBpm < 60) || 
+                                   (rawParams.rawContrast > 0.2);
+        clampIndicator.style.display = wouldBeConstrained ? 'inline-flex' : 'none';
+        clampIndicator.textContent = wouldBeConstrained ? '约束版会不同' : '';
+      }
+
+      console.log('[Unconstrained] 生成无约束音乐:', {
+        rawBpm: rawParams?.rawBpm,
+        rawContrast: rawParams?.rawContrast,
+        noteCount: sequence?.notes?.length,
+      });
+
+      // 播放音乐
+      if (window.mm && sequence && sequence.notes && sequence.notes.length > 0) {
+        // 停止当前播放
+        if (window.mm.Player) {
+          const player = new window.mm.Player();
+          
+          // 播放完成回调
+          player.callbackObject = {
+            run: () => {},
+            stop: () => {
+              if (playBtn) {
+                playBtn.classList.remove('playing');
+                const span = playBtn.querySelector('span');
+                if (span) span.textContent = '播放无约束音乐';
+              }
+            }
+          };
+
+          await player.start(sequence);
+          
+          if (playBtn) {
+            const span = playBtn.querySelector('span');
+            if (span) span.textContent = '播放中...';
+          }
+        }
+      } else {
+        // 没有 Magenta，使用简单的 Web Audio 播放
+        this.playSequenceWithWebAudio(sequence);
+        
+        if (playBtn) {
+          playBtn.classList.remove('playing');
+          const span = playBtn.querySelector('span');
+          if (span) span.textContent = '播放无约束音乐';
+        }
+      }
+
+    } catch (error) {
+      console.error('[Unconstrained] 播放失败:', error);
+      this.showMusicMessage('播放失败: ' + error.message);
+      
+      if (playBtn) {
+        playBtn.classList.remove('playing');
+        const span = playBtn.querySelector('span');
+        if (span) span.textContent = '播放无约束音乐';
+      }
+    }
+  }
+
+  /**
+   * 使用 Web Audio API 播放序列（备用方案）
+   */
+  playSequenceWithWebAudio(sequence) {
+    if (!sequence || !sequence.notes || sequence.notes.length === 0) return;
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    sequence.notes.forEach(note => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      
+      osc.frequency.value = 440 * Math.pow(2, (note.pitch - 69) / 12);
+      osc.type = 'sine';
+      
+      const velocity = (note.velocity || 80) / 127;
+      gain.gain.value = velocity * 0.3;
+      
+      const startTime = audioCtx.currentTime + note.startTime;
+      const endTime = audioCtx.currentTime + note.endTime;
+      
+      osc.start(startTime);
+      osc.stop(endTime);
+      
+      // 淡出
+      gain.gain.setValueAtTime(velocity * 0.3, endTime - 0.05);
+      gain.gain.linearRampToValueAtTime(0, endTime);
+    });
+  }
+
+  /**
+   * 下载无约束音乐的 MIDI 文件
+   */
+  downloadUnconstrainedMidi() {
+    const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [] };
+    
+    if (!session.notes || session.notes.length === 0) {
+      this.showMusicMessage('没有游戏数据，请先完成一局游戏');
+      return;
+    }
+
+    try {
+      // 生成无约束音乐
+      const result = window.createUnconstrainedMusic(session);
+      const sequence = result.sequence;
+      const rawParams = result.rawParams;
+
+      if (!sequence || !sequence.notes || sequence.notes.length === 0) {
+        this.showMusicMessage('生成的音乐为空');
+        return;
+      }
+
+      // 使用 Magenta 转换为 MIDI
+      if (window.mm && window.mm.sequenceProtoToMidi) {
+        const midi = window.mm.sequenceProtoToMidi(sequence);
+        const blob = new Blob([midi], { type: 'audio/midi' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `unconstrained_bpm${rawParams?.rawBpm || 'unknown'}_${Date.now()}.mid`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        this.showMusicMessage(`已下载无约束音乐 (BPM: ${rawParams?.rawBpm})`);
+      } else {
+        // 没有 Magenta，下载 JSON 格式
+        const jsonData = JSON.stringify({
+          type: 'unconstrained_music',
+          rawParams,
+          sequence: {
+            notes: sequence.notes,
+            totalTime: sequence.totalTime,
+            tempos: sequence.tempos,
+          },
+          generatedAt: new Date().toISOString(),
+        }, null, 2);
+        
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `unconstrained_bpm${rawParams?.rawBpm || 'unknown'}_${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        this.showMusicMessage('已下载无约束音乐 (JSON格式)');
+      }
+
+    } catch (error) {
+      console.error('[Unconstrained] 下载失败:', error);
+      this.showMusicMessage('下载失败: ' + error.message);
+    }
+  }
+
+  /**
+   * 更新无约束参数显示（在专家视图打开时调用）
+   */
+  updateUnconstrainedParamsDisplay() {
+    const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [] };
+    
+    if (!session.notes || session.notes.length < 2) return;
+
+    const generator = new window.AdvancedMusicGenerator();
+    const actions = generator.buildActionTraceFromSession(session);
+    const rawParams = generator.deriveRawParamsFromBehavior(actions);
+
+    const rawBpmBadge = document.getElementById('raw-bpm-badge');
+    const rawContrastBadge = document.getElementById('raw-contrast-badge');
+    const clampIndicator = document.getElementById('clamp-indicator');
+
+    if (rawBpmBadge) {
+      rawBpmBadge.textContent = `BPM: ${rawParams.rawBpm}`;
+      rawBpmBadge.classList.toggle('warning', rawParams.rawBpm > 80 || rawParams.rawBpm < 60);
+    }
+    if (rawContrastBadge) {
+      rawContrastBadge.textContent = `对比度: ${(rawParams.rawContrast * 100).toFixed(0)}%`;
+      rawContrastBadge.classList.toggle('warning', rawParams.rawContrast > 0.2);
+    }
+    if (clampIndicator) {
+      const wouldBeConstrained = (rawParams.rawBpm > 80 || rawParams.rawBpm < 60) || 
+                                 (rawParams.rawContrast > 0.2);
+      clampIndicator.style.display = wouldBeConstrained ? 'inline-flex' : 'none';
+    }
   }
   
   getGameData() {

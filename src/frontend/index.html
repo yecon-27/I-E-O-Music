@@ -216,6 +216,24 @@
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
                                 <span>专家模式</span>
                             </div>
+                            
+                            <!-- 无约束音乐对比区域 -->
+                            <div class="unconstrained-music-section">
+                                <button id="play-unconstrained-btn" class="unconstrained-btn" title="播放基于用户行为的原始音乐（未经安全约束）">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                    <span>播放无约束音乐</span>
+                                </button>
+                                <button id="download-unconstrained-btn" class="unconstrained-btn secondary" title="下载无约束音乐的MIDI文件">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                    <span>下载 MIDI</span>
+                                </button>
+                                <div id="unconstrained-params-display" class="unconstrained-params">
+                                    <span class="param-badge" id="raw-bpm-badge">BPM: --</span>
+                                    <span class="param-badge" id="raw-contrast-badge">对比度: --</span>
+                                    <span class="param-badge warning" id="clamp-indicator" style="display:none;">已约束</span>
+                                </div>
+                            </div>
+                            
                             <button id="exit-expert-btn" class="expert-exit-btn">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                                 退出专家模式

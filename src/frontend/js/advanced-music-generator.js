@@ -30,8 +30,9 @@ const DEFAULT_SESSION_CONFIG = {
 const REWARD_SETTINGS = {
   minDurationSec: 10,
   maxDurationSec: 20,
-  minBpm: 65,
-  maxBpm: 75,
+  // 安全范围由 SafetyEnvelope 控制，这里只定义绝对边界
+  absoluteMinBpm: 30,
+  absoluteMaxBpm: 200,
   baseBpm: 72,
   pentatonic: ["C4", "D4", "E4", "G4", "A4"],
 };
@@ -116,6 +117,10 @@ function motifTemplates(patternType) {
 class AdvancedMusicGenerator {
   constructor() {
     this.sessionConfig = { ...DEFAULT_SESSION_CONFIG };
+    // 缓存原始参数（未经约束）
+    this.lastRawParams = null;
+    // 缓存约束后参数
+    this.lastConstrainedParams = null;
   }
 
   setSessionConfig(config = {}) {
@@ -124,6 +129,201 @@ class AdvancedMusicGenerator {
 
   getSessionConfig() {
     return { ...this.sessionConfig };
+  }
+
+  /**
+   * 从用户行为数据计算原始音乐参数（未经安全约束）
+   * @param {Array} actions - 用户点击动作序列
+   * @returns {Object} 原始参数 { rawBpm, rawContrast, rawIntervals, rawVolume }
+   */
+  deriveRawParamsFromBehavior(actions) {
+    if (!actions || actions.length < 2) {
+      return {
+        rawBpm: REWARD_SETTINGS.baseBpm,
+        rawContrast: 0.1,
+        rawIntervals: [],
+        rawVolume: 0.7,
+        derivationMethod: 'default',
+      };
+    }
+
+    const ordered = [...actions].sort((a, b) => a.timeOffset - b.timeOffset);
+    
+    // 计算点击间隔序列
+    const intervals = [];
+    for (let i = 1; i < ordered.length; i++) {
+      const dt = (ordered[i].timeOffset - ordered[i - 1].timeOffset) * 1000; // 转为毫秒
+      if (dt > 0 && dt < 10000) { // 过滤异常值（>10秒视为走神）
+        intervals.push(dt);
+      }
+    }
+
+    if (intervals.length === 0) {
+      return {
+        rawBpm: REWARD_SETTINGS.baseBpm,
+        rawContrast: 0.1,
+        rawIntervals: [],
+        rawVolume: 0.7,
+        derivationMethod: 'default',
+      };
+    }
+
+    // 计算中位数间隔 → 原始 BPM
+    const sortedIntervals = [...intervals].sort((a, b) => a - b);
+    const medianInterval = sortedIntervals[Math.floor(sortedIntervals.length / 2)];
+    const rawBpm = Math.round(60000 / medianInterval);
+
+    // 计算变异系数 → 原始对比度
+    const mean = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+    const variance = intervals.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / intervals.length;
+    const stdDev = Math.sqrt(variance);
+    const cv = mean > 0 ? stdDev / mean : 0;
+    const rawContrast = clamp(cv, 0, 1);
+
+    // 计算点击密度 → 原始音量
+    const totalDuration = ordered[ordered.length - 1].timeOffset - ordered[0].timeOffset;
+    const hitsPerSec = totalDuration > 0 ? ordered.length / totalDuration : 1;
+    // 密度越高，音量越大（0.5-1.0 范围）
+    const rawVolume = clamp(0.5 + hitsPerSec * 0.1, 0.5, 1.0);
+
+    return {
+      rawBpm: clamp(rawBpm, REWARD_SETTINGS.absoluteMinBpm, REWARD_SETTINGS.absoluteMaxBpm),
+      rawContrast,
+      rawIntervals: intervals,
+      rawVolume,
+      medianInterval,
+      cv,
+      hitsPerSec,
+      derivationMethod: 'behavior',
+    };
+  }
+
+  /**
+   * 通过 SafetyEnvelope 约束原始参数
+   * @param {Object} rawParams - 原始参数
+   * @returns {Object} 约束后的参数，包含 clampLog
+   */
+  constrainParamsWithEnvelope(rawParams) {
+    const envelope = window.safetyEnvelope;
+    const clampLog = [];
+
+    let safeBpm = rawParams.rawBpm;
+    let safeContrast = rawParams.rawContrast;
+    let safeVolume = rawParams.rawVolume;
+
+    if (envelope) {
+      // 通过 SafetyEnvelope 约束，会自动记录拦截
+      const originalBpm = rawParams.rawBpm;
+      safeBpm = envelope.setParam('tempo', rawParams.rawBpm);
+      if (safeBpm !== originalBpm) {
+        clampLog.push({
+          param: 'tempo',
+          original: originalBpm,
+          clamped: safeBpm,
+          rule: `tempo_range_[${envelope.getParamRange('tempo')?.min}, ${envelope.getParamRange('tempo')?.max}]`,
+        });
+      }
+
+      const originalVolume = rawParams.rawVolume;
+      safeVolume = envelope.setParam('volume', rawParams.rawVolume);
+      if (safeVolume !== originalVolume) {
+        clampLog.push({
+          param: 'volume',
+          original: originalVolume,
+          clamped: safeVolume,
+          rule: `volume_range_[${envelope.getParamRange('volume')?.min}, ${envelope.getParamRange('volume')?.max}]`,
+        });
+      }
+
+      // 对比度目前 SafetyEnvelope 没有直接支持，用硬编码安全范围
+      const contrastSafeMax = 0.2;
+      if (rawParams.rawContrast > contrastSafeMax) {
+        safeContrast = contrastSafeMax;
+        clampLog.push({
+          param: 'contrast',
+          original: rawParams.rawContrast,
+          clamped: safeContrast,
+          rule: `contrast_range_[0, ${contrastSafeMax}]`,
+        });
+      }
+    } else {
+      // 没有 SafetyEnvelope，使用硬编码安全范围
+      const safeRanges = {
+        tempo: { min: 60, max: 80 },
+        volume: { min: 0.3, max: 0.8 },
+        contrast: { min: 0, max: 0.2 },
+      };
+
+      if (rawParams.rawBpm < safeRanges.tempo.min || rawParams.rawBpm > safeRanges.tempo.max) {
+        safeBpm = clamp(rawParams.rawBpm, safeRanges.tempo.min, safeRanges.tempo.max);
+        clampLog.push({
+          param: 'tempo',
+          original: rawParams.rawBpm,
+          clamped: safeBpm,
+          rule: `tempo_range_[${safeRanges.tempo.min}, ${safeRanges.tempo.max}]`,
+        });
+      }
+
+      if (rawParams.rawVolume < safeRanges.volume.min || rawParams.rawVolume > safeRanges.volume.max) {
+        safeVolume = clamp(rawParams.rawVolume, safeRanges.volume.min, safeRanges.volume.max);
+        clampLog.push({
+          param: 'volume',
+          original: rawParams.rawVolume,
+          clamped: safeVolume,
+          rule: `volume_range_[${safeRanges.volume.min}, ${safeRanges.volume.max}]`,
+        });
+      }
+
+      if (rawParams.rawContrast > safeRanges.contrast.max) {
+        safeContrast = safeRanges.contrast.max;
+        clampLog.push({
+          param: 'contrast',
+          original: rawParams.rawContrast,
+          clamped: safeContrast,
+          rule: `contrast_range_[${safeRanges.contrast.min}, ${safeRanges.contrast.max}]`,
+        });
+      }
+    }
+
+    return {
+      safeBpm,
+      safeContrast,
+      safeVolume,
+      clampLog,
+      wasConstrained: clampLog.length > 0,
+    };
+  }
+
+  /**
+   * 将原始间隔序列量化到 BPM 网格
+   * @param {Array} rawIntervals - 原始间隔序列（毫秒）
+   * @param {number} targetBpm - 目标 BPM
+   * @returns {Array} 量化后的间隔序列
+   */
+  quantizeIntervalsToGrid(rawIntervals, targetBpm) {
+    if (!rawIntervals || rawIntervals.length === 0) return [];
+    
+    const beatMs = 60000 / targetBpm; // 一拍的毫秒数
+    const gridOptions = [0.25, 0.5, 1, 1.5, 2, 3, 4]; // 可用的拍数选项
+
+    return rawIntervals.map(interval => {
+      const beats = interval / beatMs;
+      // 找到最接近的网格点
+      let closest = gridOptions[0];
+      let minDiff = Math.abs(beats - closest);
+      for (const option of gridOptions) {
+        const diff = Math.abs(beats - option);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closest = option;
+        }
+      }
+      return {
+        originalMs: interval,
+        quantizedBeats: closest,
+        quantizedMs: closest * beatMs,
+      };
+    });
   }
 
   /**
@@ -389,17 +589,18 @@ class AdvancedMusicGenerator {
 
   /**
    * 生成奖励音乐（主入口）
+   * @param {Array} actions - 用户动作序列
+   * @param {Object} sessionConfig - 会话配置
+   * @param {Object} options - 额外选项 { skipEnvelope: false }
    */
-  generateReward(actions, sessionConfig = {}) {
+  generateReward(actions, sessionConfig = {}, options = {}) {
     const config = { ...DEFAULT_SESSION_CONFIG, ...sessionConfig };
+    const skipEnvelope = options.skipEnvelope || false;
+
     if (!config.rewardEnabled) {
       const actionTrace = actions || [];
       const patternSummary = this.analyzePatterns(actionTrace);
-      const mutedBpm = clamp(
-        Number(config.rewardBpm ?? REWARD_SETTINGS.baseBpm),
-        REWARD_SETTINGS.minBpm,
-        REWARD_SETTINGS.maxBpm
-      );
+      const mutedBpm = REWARD_SETTINGS.baseBpm;
       const melodySpec = {
         scale: "C pentatonic",
         bpm: mutedBpm,
@@ -428,20 +629,68 @@ class AdvancedMusicGenerator {
     const actionTrace = actions || [];
     const patternSummary = this.analyzePatterns(actionTrace);
 
-    // 儿歌风格：固定接近 72 BPM，稳定节拍
-    const bpm = clamp(
-      Number(config.rewardBpm ?? REWARD_SETTINGS.baseBpm),
-      REWARD_SETTINGS.minBpm,
-      REWARD_SETTINGS.maxBpm
-    );
+    // 从用户行为派生原始参数
+    const rawParams = this.deriveRawParamsFromBehavior(actionTrace);
+    this.lastRawParams = rawParams;
+
+    let bpm, contrast, volume;
+    let clampLog = [];
+
+    // 检查是否有专家手动设置的参数
+    // 使用 config.expertOverride 标记，或者检查 config.rewardBpm 是否被显式设置
+    const isExpertMode = config.expertMode === true || config.expertOverride === true;
+    const hasExplicitBpm = typeof config.rewardBpm === 'number';
+    const hasExplicitContrast = typeof config.dynamicContrast === 'number';
+
+    if (skipEnvelope) {
+      // 无约束模式：直接使用原始参数（不经过任何约束）
+      bpm = rawParams.rawBpm;
+      contrast = rawParams.rawContrast;
+      volume = rawParams.rawVolume;
+      console.log('[MusicGenerator] 无约束模式，使用原始参数:', { bpm, contrast, volume });
+    } else if (isExpertMode && (hasExplicitBpm || hasExplicitContrast)) {
+      // 专家模式：使用专家手动设置的参数（不经过行为派生）
+      bpm = hasExplicitBpm ? config.rewardBpm : rawParams.rawBpm;
+      contrast = hasExplicitContrast ? config.dynamicContrast : rawParams.rawContrast;
+      
+      // 音量从 volumeLevel 转换
+      if (config.volumeLevel) {
+        volume = config.volumeLevel === 'low' ? 0.4 : config.volumeLevel === 'high' ? 0.9 : 0.7;
+      } else {
+        volume = rawParams.rawVolume;
+      }
+      
+      console.log('[MusicGenerator] 专家模式，使用手动设置参数:', { 
+        bpm, 
+        contrast, 
+        volume,
+        configBpm: config.rewardBpm,
+        configContrast: config.dynamicContrast
+      });
+    } else {
+      // 默认模式：从行为派生参数，然后通过 SafetyEnvelope 约束
+      const constrained = this.constrainParamsWithEnvelope(rawParams);
+      this.lastConstrainedParams = constrained;
+      bpm = constrained.safeBpm;
+      contrast = constrained.safeContrast;
+      volume = constrained.safeVolume;
+      clampLog = constrained.clampLog;
+      
+      if (constrained.wasConstrained) {
+        console.log('[MusicGenerator] 参数被约束:', clampLog);
+      }
+    }
+
     const secondsPerBeat = 60 / bpm;
-    // 默认 20 秒，可在 envelope 内调节
     const rewardDurationSec = clamp(
       Number(config.rewardDurationSec ?? REWARD_SETTINGS.maxDurationSec),
       8,
       REWARD_SETTINGS.maxDurationSec
     );
     const beatsTotal = Math.max(8, Math.round(rewardDurationSec / secondsPerBeat));
+
+    // 量化原始间隔到 BPM 网格
+    const quantizedIntervals = this.quantizeIntervalsToGrid(rawParams.rawIntervals, bpm);
 
     const pitchPool = this.buildPitchPool(actionTrace, patternSummary);
     const styleType =
@@ -452,14 +701,19 @@ class AdvancedMusicGenerator {
         : patternSummary?.patternType === "exploratory"
         ? "exploratory"
         : "mixed";
-    const phraseNotes = this.generateStyleMelody(
+
+    // 使用量化后的节奏生成旋律
+    const phraseNotes = this.generateBehaviorDrivenMelody(
       styleType,
       pitchPool,
-      beatsTotal,
+      actionTrace,
+      quantizedIntervals,
       secondsPerBeat,
+      beatsTotal,
       patternSummary,
       config.rhythmDensity
     );
+
     const { chordTrack, chordNotes } = this.generateSimpleChords(
       beatsTotal,
       secondsPerBeat,
@@ -484,18 +738,118 @@ class AdvancedMusicGenerator {
       styleType,
       rhythmDensity: config.rhythmDensity,
       timbre: config.timbre,
+      // 新增：原始参数和约束信息
+      rawParams,
+      constraintInfo: skipEnvelope ? null : { clampLog, wasConstrained: clampLog.length > 0 },
     };
 
-    const sequence = this.toMagentaSequence(phraseNotes, chordNotes, bpm, config);
+    // 应用派生的音量和对比度
+    const adjustedConfig = {
+      ...config,
+      volumeLevel: volume > 0.8 ? 'high' : volume < 0.5 ? 'low' : 'medium',
+      dynamicContrast: contrast,
+    };
+
+    const sequence = this.toMagentaSequence(phraseNotes, chordNotes, bpm, adjustedConfig);
 
     sequence.debugPayload = {
-      sessionConfig: config,
+      sessionConfig: adjustedConfig,
       actionTrace,
       patternSummary,
       melodySpec,
+      rawParams,
+      clampLog,
+      skipEnvelope,
     };
 
-    return { sequence, actionTrace, patternSummary, melodySpec };
+    return { sequence, actionTrace, patternSummary, melodySpec, rawParams, clampLog };
+  }
+
+  /**
+   * 生成无约束音乐（用于对比实验）
+   */
+  generateUnconstrainedReward(actions, sessionConfig = {}) {
+    return this.generateReward(actions, sessionConfig, { skipEnvelope: true });
+  }
+
+  /**
+   * 基于用户行为的旋律生成（使用量化后的节奏）
+   */
+  generateBehaviorDrivenMelody(styleType, pitchPool, actions, quantizedIntervals, secondsPerBeat, beatsTotal, patternSummary, rhythmDensity) {
+    // 如果有足够的量化间隔数据，使用它们来驱动节奏
+    if (quantizedIntervals && quantizedIntervals.length >= 3) {
+      return this.generateMelodyFromQuantizedIntervals(
+        pitchPool,
+        actions,
+        quantizedIntervals,
+        secondsPerBeat,
+        beatsTotal,
+        patternSummary
+      );
+    }
+
+    // 否则回退到原有的模板生成
+    return this.generateStyleMelody(styleType, pitchPool, beatsTotal, secondsPerBeat, patternSummary, rhythmDensity);
+  }
+
+  /**
+   * 从量化间隔生成旋律（1:1 还原用户节奏，但量化到网格）
+   */
+  generateMelodyFromQuantizedIntervals(pitchPool, actions, quantizedIntervals, secondsPerBeat, beatsTotal, patternSummary) {
+    const notes = [];
+    let currentTime = 0;
+    const maxTime = beatsTotal * secondsPerBeat;
+
+    // 使用用户实际点击的音符序列
+    const orderedActions = [...actions].sort((a, b) => a.timeOffset - b.timeOffset);
+
+    for (let i = 0; i < orderedActions.length && currentTime < maxTime; i++) {
+      const action = orderedActions[i];
+      const noteName = action.note || pitchPool[i % pitchPool.length];
+      const midi = midiFromNoteName(noteName);
+
+      // 使用量化后的间隔作为音符时长
+      const intervalInfo = quantizedIntervals[i] || quantizedIntervals[quantizedIntervals.length - 1];
+      const durationMs = intervalInfo ? intervalInfo.quantizedMs : secondsPerBeat * 1000;
+      const durationSec = Math.min(durationMs / 1000, secondsPerBeat * 2); // 最长 2 拍
+
+      notes.push({
+        startTime: currentTime,
+        endTime: currentTime + durationSec * 0.9, // 留 10% 空隙
+        midi,
+        name: noteName,
+      });
+
+      // 下一个音符的开始时间
+      if (i < quantizedIntervals.length) {
+        currentTime += quantizedIntervals[i].quantizedMs / 1000;
+      } else {
+        currentTime += secondsPerBeat;
+      }
+    }
+
+    // 如果音符不够填满时长，循环填充
+    if (notes.length > 0 && currentTime < maxTime) {
+      const patternLength = notes.length;
+      const patternDuration = currentTime;
+      let loopStart = currentTime;
+
+      while (loopStart < maxTime) {
+        for (let i = 0; i < patternLength && loopStart < maxTime; i++) {
+          const original = notes[i];
+          const offset = loopStart - 0; // 相对于循环开始的偏移
+          notes.push({
+            startTime: original.startTime + loopStart,
+            endTime: Math.min(original.endTime + loopStart, maxTime),
+            midi: original.midi,
+            name: original.name,
+          });
+        }
+        loopStart += patternDuration;
+      }
+    }
+
+    return [{ label: "BEHAVIOR", notes, repeats: 1 }];
   }
 
   buildPitchPool(actions, summary) {
@@ -848,7 +1202,7 @@ class AdvancedMusicGenerator {
 // 导出到全局
 window.AdvancedMusicGenerator = AdvancedMusicGenerator;
 
-// 兼容旧入口：基于 session -> 安全 reward 序列
+// 兼容旧入口：基于 session -> 安全 reward 序列（有约束）
 window.createRichTestMusic = function (session) {
   const generator = new AdvancedMusicGenerator();
   if (window.sessionConfig) {
@@ -859,4 +1213,32 @@ window.createRichTestMusic = function (session) {
   return sequence;
 };
 
-console.log("🎵 安全音乐奖励生成器已加载（鼠标泡泡版）");
+// 新入口：生成无约束音乐（用于对比实验）
+window.createUnconstrainedMusic = function (session) {
+  const generator = new AdvancedMusicGenerator();
+  if (window.sessionConfig) {
+    generator.setSessionConfig(window.sessionConfig);
+  }
+  const actions = generator.buildActionTraceFromSession(session);
+  const result = generator.generateUnconstrainedReward(actions, generator.getSessionConfig());
+  
+  // 保存到全局以便下载
+  window.lastUnconstrainedSequence = result.sequence;
+  window.lastUnconstrainedRawParams = result.rawParams;
+  
+  return result;
+};
+
+// 获取最近一次生成的原始参数（用于调试/审计）
+window.getLastRawMusicParams = function () {
+  const generator = window._lastMusicGenerator;
+  if (generator) {
+    return {
+      rawParams: generator.lastRawParams,
+      constrainedParams: generator.lastConstrainedParams,
+    };
+  }
+  return null;
+};
+
+console.log("🎵 安全音乐奖励生成器已加载（支持行为驱动参数 + 安全约束）");
