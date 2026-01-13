@@ -1116,6 +1116,7 @@ class AdvancedMusicGenerator {
     // 动态对比度：控制音符力度的变化范围
     const dynamicContrast = config.dynamicContrast || 0.1;
     const contrastRange = baseVelocity * dynamicContrast;
+    let prevVel = baseVelocity;
     
     // 获取乐器 program
     const instrumentProgram = INSTRUMENT_DEFS[config.instrument] ?? 0;
@@ -1130,14 +1131,16 @@ class AdvancedMusicGenerator {
     };
 
     const velocityFor = (vel, noteIndex = 0) => {
-      // 根据动态对比度添加力度变化
       const variation = Math.sin(noteIndex * 0.5) * contrastRange;
-      // 吉他稍微柔和一些
+      let target = vel + variation;
+      let alpha = Math.max(0.1, Math.min(0.9, 1 - dynamicContrast));
+      let smoothed = prevVel + (target - prevVel) * alpha;
+      prevVel = smoothed;
       let scale = timbreScale;
       if (config.instrument === 'guitar') {
         scale *= 0.9;
       }
-      return clamp(Math.round((vel + variation) * scale), 30, 110);
+      return clamp(Math.round(smoothed * scale), 30, 110);
     };
     
     let noteIndex = 0;
