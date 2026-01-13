@@ -1023,6 +1023,7 @@ class ExpertSideDrawer {
 document.addEventListener('DOMContentLoaded', () => {
     window.expertDrawer = new ExpertSideDrawer();
     window.ExpertSettingsContext = ExpertSettingsContext;
+    window.expertDrawer.open();
 });
 
 window.ExpertSideDrawer = ExpertSideDrawer;
