@@ -2027,7 +2027,14 @@ class GameResultManager {
     
     if (!session.notes || session.notes.length < 2) return;
 
-    const generator = new window.AdvancedMusicGenerator();
+    const GenCtor = (typeof window.AdvancedMusicGenerator === 'function')
+      ? window.AdvancedMusicGenerator
+      : (typeof AdvancedMusicGenerator === 'function' ? AdvancedMusicGenerator : null);
+    if (!GenCtor) {
+      console.warn('[UnconstrainedParams] AdvancedMusicGenerator not ready');
+      return;
+    }
+    const generator = new GenCtor();
     const actions = generator.buildActionTraceFromSession(session);
     const rawParams = generator.deriveRawParamsFromBehavior(actions);
 

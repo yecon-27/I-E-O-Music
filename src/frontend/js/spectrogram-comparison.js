@@ -34,7 +34,11 @@ class SpectrogramComparison {
       throw new Error('需要有效的游戏会话数据');
     }
 
-    const generator = new window.AdvancedMusicGenerator();
+    const GenCtor = (typeof window.AdvancedMusicGenerator === 'function')
+      ? window.AdvancedMusicGenerator
+      : (typeof AdvancedMusicGenerator === 'function' ? AdvancedMusicGenerator : null);
+    if (!GenCtor) throw new TypeError('AdvancedMusicGenerator is not available');
+    const generator = new GenCtor();
     
     // 设置固定种子
     if (window.sessionConfig) {
