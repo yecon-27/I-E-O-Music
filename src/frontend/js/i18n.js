@@ -312,7 +312,7 @@ const TRANSLATIONS = {
         'opt.soft': 'Soft',
         'opt.bright': 'Bright',
         'opt.piano': 'Piano',
-        'opt.epiano': 'E. Piano',
+        'opt.epiano': 'Electric Piano',
         'opt.guitar': 'Guitar',
         'opt.strings': 'Strings',
         'opt.immediate': 'Immediate',

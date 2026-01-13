@@ -1256,7 +1256,20 @@ class GameResultManager {
                   console.warn('[playGeneratedMusic] 播放器仍在播放，跳过');
                   return;
               }
-              player.start(window.lastGeneratedSequence);
+              
+              // 确保采样已加载
+              if (player.loadSamples) {
+                  this.showMusicMessage(this.t('music.loadingSamples') || 'Loading samples...');
+                  await player.loadSamples(window.lastGeneratedSequence);
+              }
+
+              player.start(window.lastGeneratedSequence).catch(e => {
+                  // 忽略 "already playing" 错误，因为我们已经尽力检查了
+                  if (!e.message?.includes('already playing')) {
+                      console.error('[Magenta] Playback error:', e);
+                      this.showMusicError('Playback error: ' + e.message);
+                  }
+              });
           } catch (startErr) {
               console.warn('[playGeneratedMusic] 启动播放失败:', startErr);
               // 如果是"already playing"错误，忽略

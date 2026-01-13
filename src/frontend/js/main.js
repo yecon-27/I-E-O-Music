@@ -1130,6 +1130,24 @@ const MAGENTA = {
         // 尝试使用SoundFont播放器（如果可用）
         MAGENTA.player = new mm.SoundFontPlayer('https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus');
         console.log('🎹 使用SoundFont播放器（钢琴音色）');
+        
+        // 预加载常用乐器采样，防止首次播放报错
+        // 0: Piano, 4: E.Piano, 24: Guitar (Nylon), 9: Percussion (Standard Kit)
+        const preloadSeq = {
+          notes: [
+            { program: 0, pitch: 60, startTime: 0, endTime: 0.1 },
+            { program: 4, pitch: 60, startTime: 0, endTime: 0.1 },
+            { program: 24, pitch: 60, startTime: 0, endTime: 0.1 },
+            { program: 0, pitch: 36, startTime: 0, endTime: 0.1, isDrum: true } 
+          ],
+          totalTime: 0.1
+        };
+        MAGENTA.player.loadSamples(preloadSeq).then(() => {
+            console.log('✅ 常用乐器采样预加载完成');
+        }).catch(err => {
+            console.warn('⚠️ 乐器采样预加载失败:', err);
+        });
+
       } catch (e) {
         // 降级到普通播放器
         MAGENTA.player = new mm.Player();
