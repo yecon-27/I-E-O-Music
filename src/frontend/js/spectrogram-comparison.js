@@ -674,22 +674,56 @@ class SpectrogramComparison {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
     const halfWidth = width / 2;
-    const specHeight = height * 0.38;
-    const loudnessHeight = height * 0.42;
+    const headerHeight = 140 * scale;
+    const specHeight = height * 0.36;
+    const loudnessHeight = height * 0.38;
     const padding = 40 * scale;
     const labelHeight = 50 * scale;
     ctx.fillStyle = '#111111';
-    ctx.font = `${16 * scale}px system-ui`;
+    ctx.font = `${18 * scale}px system-ui`;
     ctx.textAlign = 'center';
     ctx.fillText('Unconstrained Baseline', halfWidth / 2, 30 * scale);
     ctx.fillText('Constraint-First Output', halfWidth + halfWidth / 2, 30 * scale);
+
+    // 参数区：原始参数 vs 约束后参数
+    const rawBpm = comparisonData.unconstrained?.sequence?.tempos?.[0]?.qpm || comparisonData.unconstrained?.rawParams?.rawBpm || 0;
+    const safeBpm = comparisonData.constrained?.sequence?.tempos?.[0]?.qpm || 0;
+    const rawContrast = comparisonData.unconstrained?.rawParams?.rawContrast ?? null;
+    let safeContrast = null;
+    if (comparisonData.constrained?.safeParams?.safeContrast !== undefined) {
+      safeContrast = comparisonData.constrained.safeParams.safeContrast;
+    } else if (comparisonData.constrained?.clampLog) {
+      const cc = comparisonData.constrained.clampLog.find(c => c.param === 'contrast');
+      safeContrast = cc ? cc.clamped : rawContrast;
+    } else {
+      safeContrast = rawContrast;
+    }
+    const lraRaw = Number(comparisonData.unconstrained?.lra || 0);
+    const lraSafe = Number(comparisonData.constrained?.lra || 0);
+    const lraFactor = lraSafe > 0 ? (lraRaw / lraSafe) : 0;
+
+    ctx.textAlign = 'left';
+    ctx.font = `${16 * scale}px system-ui`;
+    ctx.fillStyle = '#374151';
+    ctx.fillText('原始参数', padding, 60 * scale);
+    ctx.fillText('约束后参数', halfWidth + padding, 60 * scale);
+    ctx.fillStyle = '#111111';
+    ctx.font = `${15 * scale}px system-ui`;
+    ctx.fillText(`BPM: ${Math.round(rawBpm)}`, padding, 90 * scale);
+    ctx.fillText(`Contrast: ${rawContrast !== null ? Math.round(rawContrast * 100) + '%' : '--'}`, padding, 115 * scale);
+    ctx.fillText(`BPM: ${Math.round(safeBpm)}`, halfWidth + padding, 90 * scale);
+    ctx.fillText(`Contrast: ${safeContrast !== null ? Math.round(safeContrast * 100) + '%' : '--'}`, halfWidth + padding, 115 * scale);
+    ctx.fillStyle = '#111111';
+    ctx.font = `${15 * scale}px monospace`;
+    ctx.fillText(`Loudness Range (LRA): ${lraRaw.toFixed(1)} → ${lraSafe.toFixed(1)} LU (${lraFactor > 0 ? '×' + lraFactor.toFixed(1) + ' reduction' : ''})`, padding, 135 * scale);
+    
     const rangeUnc = this.getDisplayRange(comparisonData.unconstrained.spectrogram);
     const rangeCon = this.getDisplayRange(comparisonData.constrained.spectrogram);
     this.drawSpectrogram(ctx, comparisonData.unconstrained.spectrogram,
-      padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, rangeUnc.min, rangeUnc.max);
+      padding, headerHeight, halfWidth - padding * 2, specHeight - labelHeight, rangeUnc.min, rangeUnc.max);
     this.drawSpectrogram(ctx, comparisonData.constrained.spectrogram,
-      halfWidth + padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, rangeCon.min, rangeCon.max);
-    const loudnessY = specHeight + 40 * scale;
+      halfWidth + padding, headerHeight, halfWidth - padding * 2, specHeight - labelHeight, rangeCon.min, rangeCon.max);
+    const loudnessY = headerHeight + specHeight + 20 * scale;
     this.drawLoudnessContour(ctx, comparisonData.unconstrained.loudness,
       padding, loudnessY, halfWidth - padding * 2, loudnessHeight, comparisonData.envelopeBounds, false);
     this.drawLoudnessContour(ctx, comparisonData.constrained.loudness,

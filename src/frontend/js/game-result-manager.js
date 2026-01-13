@@ -2324,15 +2324,14 @@ class GameResultManager {
    * 导出频谱图为 PNG
    */
   exportSpectrumPNG() {
-    const canvas = document.getElementById('spectrum-comparison-canvas');
-    if (!canvas || !this.lastSpectrumData) {
+    if (!this.lastSpectrumData) {
       this.showMusicMessage('请先生成频谱分析');
       return;
     }
-
     const comparison = new window.SpectrogramComparison();
+    comparison.maxFrames = 600;
     const timestamp = Date.now();
-    comparison.exportAsPNG(canvas, `spectrum_analysis_${timestamp}.png`);
+    comparison.exportPaperPNG(this.lastSpectrumData, `spectrum_analysis_${timestamp}.png`, { scale: window.devicePixelRatio || 1, width: 1600, height: 900 });
     this.showMusicMessage('频谱图已导出为 PNG');
   }
   
