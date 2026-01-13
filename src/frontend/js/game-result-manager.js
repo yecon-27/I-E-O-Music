@@ -2299,20 +2299,12 @@ class GameResultManager {
         if (lraSafeEl && data.constrained) lraSafeEl.textContent = `${data.constrained.lra?.toFixed(1) || '--'} LU`;
         const lraFactorEl = document.getElementById('spectrum-lra-factor');
         const lraSummaryEl = document.getElementById('spectrum-lra-summary');
-        if (data.unconstrained && data.constrained) {
+        if (lraSummaryEl) lraSummaryEl.textContent = '';
+        if (data.unconstrained && data.constrained && lraFactorEl) {
           const raw = Number(data.unconstrained.lra || 0);
           const safe = Number(data.constrained.lra || 0);
           const factor = safe > 0 ? (raw / safe) : 0;
-          const summary = (window.i18n ? window.i18n.t('spectro.summary.lra', {
-            raw: (isFinite(raw) ? raw.toFixed(1) : '--'),
-            safe: (isFinite(safe) ? safe.toFixed(1) : '--'),
-            factor: (isFinite(factor) && factor > 0 ? factor.toFixed(1) : '--')
-          }) : `Loudness Range (LRA): ${isFinite(raw) ? raw.toFixed(1) : '--'} → ${isFinite(safe) ? safe.toFixed(1) : '--'} LU (×${isFinite(factor) && factor > 0 ? factor.toFixed(1) : '--'} reduction)`);
-          if (lraSummaryEl) {
-            lraSummaryEl.textContent = summary;
-          } else if (lraFactorEl) {
-            lraFactorEl.textContent = summary;
-          }
+          lraFactorEl.textContent = factor > 0 ? `×${factor.toFixed(1)}` : '';
         }
         if (deRawEl && data.unconstrained?.metrics) deRawEl.textContent = data.unconstrained.metrics.energyChangeRate?.toFixed(2) || '--';
         if (deSafeEl && data.constrained?.metrics) deSafeEl.textContent = data.constrained.metrics.energyChangeRate?.toFixed(2) || '--';
