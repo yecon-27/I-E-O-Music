@@ -2064,7 +2064,7 @@ class GameResultManager {
     const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [] };
     
     if (!session.notes || session.notes.length < 3) {
-      this.showMusicMessage('需要更多游戏数据来生成对比图');
+      this.showMusicMessage('Need more session data to generate comparison');
       return;
     }
 
@@ -2153,7 +2153,7 @@ class GameResultManager {
     const comparison = new window.SpectrogramComparison();
     const timestamp = Date.now();
     comparison.exportAsPNG(canvas, `spectrogram_comparison_${timestamp}.png`);
-    this.showMusicMessage('对比图已导出为 PNG');
+    this.showMusicMessage('PNG exported');
   }
 
   /**
@@ -2168,7 +2168,7 @@ class GameResultManager {
     const comparison = new window.SpectrogramComparison();
     const timestamp = Date.now();
     comparison.exportDataAsJSON(this.lastComparisonData, `comparison_data_${timestamp}.json`);
-    this.showMusicMessage('对比数据已导出为 JSON');
+    this.showMusicMessage('JSON exported');
   }
 
   /**
@@ -2205,7 +2205,7 @@ class GameResultManager {
     const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [] };
     
     if (!session.notes || session.notes.length < 3) {
-      this.showMusicMessage('需要更多游戏数据来生成频谱分析');
+      this.showMusicMessage('Need more session data to generate spectrogram');
       return;
     }
 
@@ -2226,7 +2226,7 @@ class GameResultManager {
         generateBtn.disabled = true;
         generateBtn.innerHTML = `
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
-          生成中...
+          Generating...
         `;
       }
 
@@ -2247,11 +2247,11 @@ class GameResultManager {
       comparison.drawComparison(canvas, this.lastSpectrumData);
       this.hideSpectrumMetrics();
 
-      console.log('[Spectrum] 频谱分析生成完成');
+      console.log('[Spectrum] Spectrogram generation completed');
 
     } catch (error) {
-      console.error('[Spectrum] 生成失败:', error);
-      this.showMusicMessage('频谱分析生成失败: ' + error.message);
+      console.error('[Spectrum] Generate failed:', error);
+      this.showMusicMessage('Spectrogram generation failed: ' + error.message);
     } finally {
       // 恢复状态
       if (loading) loading.classList.add('hidden');
@@ -2260,7 +2260,7 @@ class GameResultManager {
         generateBtn.disabled = false;
         generateBtn.innerHTML = `
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-          生成对比
+          Generate
         `;
       }
     }

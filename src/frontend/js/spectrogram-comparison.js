@@ -31,7 +31,7 @@ class SpectrogramComparison {
    */
   async generateComparisonData(session) {
     if (!session || !session.notes || session.notes.length < 2) {
-      throw new Error('需要有效的游戏会话数据');
+      throw new Error('Valid session data required');
     }
 
     const GenCtor = (typeof window.AdvancedMusicGenerator === 'function')
