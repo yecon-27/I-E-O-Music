@@ -2294,6 +2294,13 @@ class GameResultManager {
 
     if (lraRawEl && data.unconstrained) lraRawEl.textContent = `${data.unconstrained.lra?.toFixed(1) || '--'} LU`;
     if (lraSafeEl && data.constrained) lraSafeEl.textContent = `${data.constrained.lra?.toFixed(1) || '--'} LU`;
+    const lraFactorEl = document.getElementById('spectrum-lra-factor');
+    if (lraFactorEl && data.unconstrained && data.constrained) {
+      const raw = Number(data.unconstrained.lra || 0);
+      const safe = Number(data.constrained.lra || 0);
+      const factor = safe > 0 ? (raw / safe) : 0;
+      lraFactorEl.textContent = factor > 0 ? `×${factor.toFixed(1)}` : '';
+    }
     if (deRawEl && data.unconstrained?.metrics) deRawEl.textContent = data.unconstrained.metrics.energyChangeRate?.toFixed(2) || '--';
     if (deSafeEl && data.constrained?.metrics) deSafeEl.textContent = data.constrained.metrics.energyChangeRate?.toFixed(2) || '--';
     if (avgRawEl && data.unconstrained?.metrics) avgRawEl.textContent = `${data.unconstrained.metrics.avgLoudness?.toFixed(1) || '--'} LUFS`;

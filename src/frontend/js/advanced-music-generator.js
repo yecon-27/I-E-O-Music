@@ -33,7 +33,7 @@ const REWARD_SETTINGS = {
   // 安全范围由 SafetyEnvelope 控制，这里只定义绝对边界
   absoluteMinBpm: 100,
   absoluteMaxBpm: 140,
-  baseBpm: 130,
+  baseBpm: 125,
   pentatonic: ["C4", "D4", "E4", "G4", "A4"],
 };
 
@@ -259,7 +259,7 @@ class AdvancedMusicGenerator {
     } else {
       // 没有 SafetyEnvelope，使用硬编码安全范围
       const safeRanges = {
-        tempo: { min: 100, max: 140 },
+        tempo: { min: 120, max: 130 },
         volume: { min: 0.3, max: 0.8 },
         contrast: { min: 0, max: 0.2 },
       };

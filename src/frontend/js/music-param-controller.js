@@ -9,7 +9,7 @@ class MusicParamController {
         
         // 默认安全区间定义
         this.safeRanges = {
-            tempo: { min: 100, max: 140, absMin: 100, absMax: 140, unit: 'BPM' },
+            tempo: { min: 120, max: 130, absMin: 100, absMax: 140, unit: 'BPM' },
             contrast: { min: 0, max: 20, absMin: 0, absMax: 50, unit: '%' },
             volume: { min: 60, max: 80, absMin: 0, absMax: 100, unit: '%' },
             density: { min: 30, max: 70, absMin: 0, absMax: 100, unit: '%' },
@@ -22,7 +22,7 @@ class MusicParamController {
         
         // 当前参数
         this.currentParams = {
-            tempo: 130,
+            tempo: 125,
             contrast: 10,
             volume: 70,
             harmony: 'I-V',
@@ -102,7 +102,7 @@ class MusicParamController {
             if (tempoLabel) {
                 const span = tempoLabel.querySelector('span:first-child');
                 if (span) {
-                    span.innerHTML = `${this.t('expert.tempo')} <span class="param-safe-range">${this.t('expert.safeRange')}100-140</span>`;
+                    span.innerHTML = `${this.t('expert.tempo')} <span class="param-safe-range">${this.t('expert.safeRange')}${this.safeRanges.tempo.min}-${this.safeRanges.tempo.max}</span>`;
                 }
                 const warning = tempoLabel.querySelector('.param-warning-badge');
                 if (warning) warning.textContent = this.t('expert.warning.unsafe');
@@ -673,9 +673,9 @@ class MusicParamController {
                     slider.min = String(range.absMin);
                     slider.max = String(range.absMax);
                     // 如果当前值越界，则重置到默认值
-                    const v = parseInt(slider.value || '130', 10);
+                    const v = parseInt(slider.value || '125', 10);
                     if (v < range.absMin || v > range.absMax) {
-                        slider.value = String(this.currentParams.tempo || 130);
+                        slider.value = String(this.currentParams.tempo || 125);
                     }
                 }
             }
@@ -1099,9 +1099,9 @@ class MusicParamController {
         if (tempoSlider) {
             tempoSlider.min = String(this.safeRanges.tempo.absMin);
             tempoSlider.max = String(this.safeRanges.tempo.absMax);
-            tempoSlider.value = 130;
-            document.getElementById('report-param-tempo-value').textContent = '130';
-            this.updateSliderStyle(tempoSlider, 'tempo', 130);
+            tempoSlider.value = 125;
+            document.getElementById('report-param-tempo-value').textContent = '125';
+            this.updateSliderStyle(tempoSlider, 'tempo', 125);
         }
         
         if (contrastSlider) {

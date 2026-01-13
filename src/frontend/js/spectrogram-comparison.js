@@ -381,8 +381,8 @@ class SpectrogramComparison {
     ctx.fillRect(0, 0, width, height);
     
     const halfWidth = width / 2;
-    const specHeight = height * 0.55;
-    const loudnessHeight = height * 0.35;
+    const specHeight = height * 0.40;
+    const loudnessHeight = height * 0.45;
     const padding = 10;
     const labelHeight = 30;
     
