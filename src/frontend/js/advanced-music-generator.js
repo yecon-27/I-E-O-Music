@@ -14,7 +14,7 @@ const LANE_DEFS = [
 const DEFAULT_SESSION_CONFIG = {
   volumeLevel: "medium", // low | medium | high
   rhythmDensity: "normal", // sparse | normal
-  timbre: "soft", // soft | bright
+  timbre: "piano", // piano | epiano | guitar
   feedbackLatencyMs: 0, // 0 | 500
   immediateToneMode: "full", // full | visual | off
   rewardEnabled: true,
@@ -24,7 +24,7 @@ const DEFAULT_SESSION_CONFIG = {
   // 新增参数
   dynamicContrast: 0.1, // 0-0.5, 动态对比度
   harmonyType: 'I-V', // 和声组合: 'I-V', 'I-IV', 'I-vi', 'I-IV-V', 'I-vi-IV-V'
-  instrument: 'piano', // 乐器: 'piano', 'epiano', 'guitar', 'strings'
+  instrument: 'piano', // 乐器: 'piano', 'epiano', 'guitar'
 };
 
 const REWARD_SETTINGS = {
@@ -41,7 +41,6 @@ const INSTRUMENT_DEFS = {
   'piano': 0,    // Acoustic Grand Piano
   'epiano': 4,   // Electric Piano 1
   'guitar': 24,  // Acoustic Guitar (nylon)
-  'strings': 48, // String Ensemble 1
 };
 
 const NOTE_TO_SEMITONE = {
@@ -125,6 +124,17 @@ class AdvancedMusicGenerator {
 
   setSessionConfig(config = {}) {
     this.sessionConfig = { ...DEFAULT_SESSION_CONFIG, ...config };
+    // 将 timbre 映射到 instrument（兼容设置面板）
+    if (config.timbre && !config.instrument) {
+      const timbreToInstrument = {
+        'soft': 'piano',
+        'bright': 'piano',
+        'piano': 'piano',
+        'epiano': 'epiano',
+        'guitar': 'guitar'
+      };
+      this.sessionConfig.instrument = timbreToInstrument[config.timbre] || 'piano';
+    }
   }
 
   getSessionConfig() {
@@ -1118,19 +1128,15 @@ class AdvancedMusicGenerator {
         // Nylon Guitar range: E2(40) - B5(83). Cap high notes to avoid harshness.
         return clamp(midi, 40, 83);
       }
-      if (instr === 'strings') {
-        // String Ensemble: Avoid very high screechy notes.
-        return clamp(midi, 36, 84); // C2 - C6
-      }
       return midi;
     };
 
     const velocityFor = (vel, noteIndex = 0) => {
       // 根据动态对比度添加力度变化
       const variation = Math.sin(noteIndex * 0.5) * contrastRange;
-      // 弦乐/吉他稍微柔和一些
+      // 吉他稍微柔和一些
       let scale = timbreScale;
-      if (config.instrument === 'strings' || config.instrument === 'guitar') {
+      if (config.instrument === 'guitar') {
         scale *= 0.9;
       }
       return clamp(Math.round((vel + variation) * scale), 30, 110);

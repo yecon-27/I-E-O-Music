@@ -580,24 +580,53 @@ class MusicParamController {
         if (testBtn) {
             testBtn.addEventListener('click', () => {
                 this.setMode('test');
-                testBtn.classList.add('active');
-                convergeBtn?.classList.remove('active');
-                convergeArea?.classList.add('hidden');
-                // 显示测试模式的滑动条和操作按�?
-                paramsGrid?.classList.remove('hidden');
-                paramActions?.classList.remove('hidden');
-                // 隐藏测试模式的奖励时�?label �?
-                document.getElementById('duration-param-item')?.classList.add('hidden');
-                // 测试模式显示片段选择�?
-                document.querySelector('.segment-selector')?.classList.remove('hidden');
+                setActiveMode('test');
             });
         }
         
         if (convergeBtn) {
             convergeBtn.addEventListener('click', () => {
                 this.setMode('converge');
-                convergeBtn.classList.add('active');
-                testBtn?.classList.remove('active');
+                setActiveMode('converge');
+                this.updateConvergeSummary();
+                setTimeout(() => this.playConvergeAnimation(), 50);
+                
+                const selSlider = document.getElementById('converge-duration-selected');
+                const selVal = document.getElementById('converge-duration-selected-val');
+                const bounds = this.convergedParams?.duration || this.safeRanges.duration;
+                if (selSlider) {
+                    selSlider.min = String(bounds.min);
+                    selSlider.max = String(bounds.max);
+                    const initVal = Math.max(bounds.min, Math.min(bounds.max, this.selectedDuration || this.currentParams.durationSec || 15));
+                    selSlider.value = String(initVal);
+                    this.selectedDuration = initVal;
+                    if (selVal) selVal.textContent = String(initVal);
+                    if (!selSlider.__bound) {
+                        selSlider.addEventListener('input', (e) => {
+                            const v = parseInt(e.target.value, 10);
+                            const clamped = Math.max(bounds.min, Math.min(bounds.max, v));
+                            this.selectedDuration = clamped;
+                            if (selVal) selVal.textContent = String(clamped);
+                        });
+                        selSlider.__bound = true;
+                    }
+                }
+            });
+        }
+        
+        if (spectrumBtn) {
+            spectrumBtn.addEventListener('click', () => {
+                this.setMode('spectrum');
+                setActiveMode('spectrum');
+            });
+        }
+    }
+    
+    /**
+     * 绑定滑动条事件
+     */
+    bindSliders() {
+        const sliders = [
                 convergeArea?.classList.remove('hidden');
                 // 隐藏测试模式的滑动条和操作按�?
                 paramsGrid?.classList.add('hidden');

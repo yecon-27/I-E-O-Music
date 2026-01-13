@@ -43,7 +43,7 @@ class GameEngine {
         this.sessionConfig = {
             volumeLevel: 'medium',
             rhythmDensity: 'normal',
-            timbre: 'soft',
+            timbre: 'piano',
             feedbackLatencyMs: 0,
             immediateToneMode: 'full', // full | visual | off
             rewardEnabled: true,
@@ -96,7 +96,7 @@ class GameEngine {
         window.popSynth?.setVolume?.(gain);
         
         // 应用音色设置
-        const timbre = this.sessionConfig.timbre || 'soft';
+        const timbre = this.sessionConfig.timbre || 'piano';
         window.popSynth?.setTimbre?.(timbre);
         
         // 应用泡泡密度设置

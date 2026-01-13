@@ -138,6 +138,7 @@ const TRANSLATIONS = {
         'ui.timeRemaining': '时间: ',
         'ui.gamePaused': '游戏暂停',
         'ui.clickContinue': '点击恢复按钮继续',
+        'ui.resume': '继续',
         'ui.analyzing': '分析中...',
         'ui.waitingData': '等待数据...',
         'ui.saveSettings': '保存设置',
@@ -278,6 +279,7 @@ const TRANSLATIONS = {
         'ui.timeRemaining': 'Time: ',
         'ui.gamePaused': 'Game Paused',
         'ui.clickContinue': 'Click resume button to continue',
+        'ui.resume': 'Resume',
 
         // Header & Footer
         'header.mute': 'Mute',

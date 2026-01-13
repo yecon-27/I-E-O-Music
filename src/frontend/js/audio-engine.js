@@ -8,8 +8,8 @@
         this.master.connect(this.ctx.destination);
         this.startedAt = this.ctx.currentTime;
         
-        // 音色设置: 'piano' | 'epiano' | 'guitar' | 'strings'
-        // 兼容旧值: 'soft' -> 'piano', 'bright' -> 'strings'
+        // 音色设置: 'piano' | 'epiano' | 'guitar'
+        // 兼容旧值: 'soft' -> 'piano', 'bright' -> 'piano'
         this.timbre = 'piano';
       }
       
@@ -27,9 +27,9 @@
        */
       setTimbre(timbre) {
         if (timbre === 'soft') timbre = 'piano';
-        if (timbre === 'bright') timbre = 'strings';
+        if (timbre === 'bright') timbre = 'piano'; // 旧值兼容，改为钢琴
         
-        const validTimbres = ['piano', 'epiano', 'guitar', 'strings'];
+        const validTimbres = ['piano', 'epiano', 'guitar'];
         if (validTimbres.includes(timbre)) {
             this.timbre = timbre;
         } else {
@@ -45,9 +45,6 @@
                 break;
             case 'guitar':
                 this._playGuitar(freq, { when, vel, dur });
-                break;
-            case 'strings':
-                this._playStrings(freq, { when, vel, dur });
                 break;
             case 'piano':
             default:

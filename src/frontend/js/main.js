@@ -145,7 +145,7 @@ function updateUIText() {
 
     // Update Segmented Controls
     updateSelectOptions('session-volume', ['opt.low', 'opt.medium', 'opt.high']);
-    updateSelectOptions('session-timbre', ['opt.piano', 'opt.epiano', 'opt.guitar', 'opt.strings']);
+    updateSelectOptions('session-timbre', ['opt.piano', 'opt.epiano', 'opt.guitar']);
     updateSelectOptions('session-latency', ['opt.immediate', 'opt.delay']);
     updateSelectOptions('session-immediate', ['opt.full', 'opt.visual', 'opt.off']);
     updateSelectOptions('session-reward', ['opt.on', 'opt.off']);
