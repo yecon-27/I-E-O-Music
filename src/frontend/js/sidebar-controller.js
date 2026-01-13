@@ -60,7 +60,7 @@
                 rtLaneBars: document.getElementById('rt-lane-bars'),
                 rtPattern: document.getElementById('rt-pattern'),
                 rtRecentClicks: document.getElementById('rt-recent-clicks'),
-                devSessionReport: document.getElementById('dev-session-report'),
+                devSessionReport: null,
                 
                 // Static label containers (using querySelector within sidebar)
                 sidebarTitle: document.querySelector('.sidebar-title'),
@@ -148,7 +148,7 @@
                 this.onRoundEnded();
                 const session = ev.detail;
                 const data = this.buildSessionReportData(session);
-                this.renderDevSessionReport(data);
+                this.consoleLogSessionReport(data);
             });
         }
 
@@ -325,18 +325,24 @@
             return { traceId, configHash, envelopeId, compliance, params, explanation };
         }
 
-        renderDevSessionReport(data) {
-            const el = this.elements.devSessionReport;
-            if (!el) return;
+        consoleLogSessionReport(data) {
             const lines = [
-                `traceId: ${data.traceId}`,
-                `configHash: ${data.configHash}`,
-                `envelopeId: ${data.envelopeId}`,
-                `compliance: ${data.compliance}`,
+                `[SessionReport] traceId=${data.traceId}`,
+                `configHash=${data.configHash} envelopeId=${data.envelopeId}`,
+                `compliance=${data.compliance}`,
                 `params: tempo=${data.params.tempo} BPM, contrast=${data.params.contrast ?? '--'}, duration=${data.params.duration ?? '--'}s`,
                 `changelog: ${data.explanation}`
             ];
-            el.textContent = lines.join('\n');
+            console.log(lines.join(' | '));
+            console.table({
+                traceId: data.traceId,
+                configHash: data.configHash,
+                envelopeId: data.envelopeId,
+                compliance: data.compliance,
+                tempo: data.params.tempo,
+                contrast: data.params.contrast ?? '--',
+                duration: data.params.duration ?? '--'
+            });
         }
 
         estimateBPM() {
