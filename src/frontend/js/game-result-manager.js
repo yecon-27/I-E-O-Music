@@ -1613,36 +1613,131 @@ class GameResultManager {
   }
 
   /**
-   * 使用 Web Audio API 播放序列（备用方案）
+   * 使用 Web Audio API 播放序列（备用方案，支持多音色）
    */
   playSequenceWithWebAudio(sequence) {
     if (!sequence || !sequence.notes || sequence.notes.length === 0) return;
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
+    const now = audioCtx.currentTime;
+
     sequence.notes.forEach(note => {
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      
-      osc.frequency.value = 440 * Math.pow(2, (note.pitch - 69) / 12);
-      osc.type = 'sine';
-      
+      const startTime = now + note.startTime;
+      const duration = note.endTime - note.startTime;
       const velocity = (note.velocity || 80) / 127;
-      gain.gain.value = velocity * 0.3;
+      const freq = 440 * Math.pow(2, (note.pitch - 69) / 12);
       
-      const startTime = audioCtx.currentTime + note.startTime;
-      const endTime = audioCtx.currentTime + note.endTime;
-      
-      osc.start(startTime);
-      osc.stop(endTime);
-      
-      // 淡出
-      gain.gain.setValueAtTime(velocity * 0.3, endTime - 0.05);
-      gain.gain.linearRampToValueAtTime(0, endTime);
+      // 根据 program 判断乐器类型
+      // 0=Piano, 4=EPiano, 24=Guitar, 40=Violin/Strings
+      const program = note.program || 0;
+      let type = 'piano';
+      if (program >= 4 && program <= 5) type = 'epiano';
+      else if (program >= 24 && program <= 31) type = 'guitar';
+      else if (program >= 40 && program <= 55) type = 'strings';
+
+      this._playNote(audioCtx, type, freq, startTime, duration, velocity);
     });
+  }
+
+  _playNote(ctx, type, freq, startTime, duration, velocity) {
+      const masterGain = ctx.createGain();
+      masterGain.connect(ctx.destination);
+      masterGain.gain.value = 0;
+
+      if (type === 'epiano') {
+          // FM Synthesis for Electric Piano
+          const carrier = ctx.createOscillator();
+          const modulator = ctx.createOscillator();
+          const modGain = ctx.createGain();
+
+          carrier.type = 'sine';
+          carrier.frequency.setValueAtTime(freq, startTime);
+
+          modulator.type = 'sine';
+          modulator.frequency.setValueAtTime(freq * 4, startTime);
+
+          modGain.gain.setValueAtTime(freq * 0.5, startTime);
+          modGain.gain.exponentialRampToValueAtTime(1, startTime + duration);
+
+          modulator.connect(modGain);
+          modGain.connect(carrier.frequency);
+          carrier.connect(masterGain);
+
+          masterGain.gain.setValueAtTime(0, startTime);
+          masterGain.gain.linearRampToValueAtTime(velocity * 0.6, startTime + 0.02);
+          masterGain.gain.exponentialRampToValueAtTime(0.001, startTime + duration + 0.3);
+
+          carrier.start(startTime);
+          modulator.start(startTime);
+          carrier.stop(startTime + duration + 0.4);
+          modulator.stop(startTime + duration + 0.4);
+      } else if (type === 'guitar') {
+          // Guitar: Triangle + Lowpass
+          const osc = ctx.createOscillator();
+          const filter = ctx.createBiquadFilter();
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, startTime);
+
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(freq * 3, startTime);
+          filter.Q.value = 0.5;
+
+          osc.connect(filter);
+          filter.connect(masterGain);
+
+          masterGain.gain.setValueAtTime(0, startTime);
+          masterGain.gain.linearRampToValueAtTime(velocity * 0.8, startTime + 0.005);
+          masterGain.gain.exponentialRampToValueAtTime(0.001, startTime + Math.min(duration, 0.4) + 0.1);
+
+          osc.start(startTime);
+          osc.stop(startTime + duration + 0.2);
+      } else if (type === 'strings') {
+          // Strings: Sawtooth + Slow Attack
+           const osc = ctx.createOscillator();
+           osc.type = 'sawtooth';
+           osc.frequency.setValueAtTime(freq, startTime);
+           
+           const filter = ctx.createBiquadFilter();
+           filter.type = 'lowpass';
+           filter.frequency.setValueAtTime(freq * 2, startTime);
+           
+           osc.connect(filter);
+           filter.connect(masterGain);
+           
+           masterGain.gain.setValueAtTime(0, startTime);
+           masterGain.gain.linearRampToValueAtTime(velocity * 0.4, startTime + 0.1);
+           masterGain.gain.setValueAtTime(velocity * 0.3, startTime + duration * 0.5);
+           masterGain.gain.linearRampToValueAtTime(0, startTime + duration + 0.2);
+           
+           osc.start(startTime);
+           osc.stop(startTime + duration + 0.3);
+      } else {
+          // Piano (Default): Sine + Triangle
+          const osc1 = ctx.createOscillator();
+          const osc2 = ctx.createOscillator();
+          const mix = ctx.createGain();
+          
+          osc1.type = 'sine';
+          osc2.type = 'triangle';
+          osc1.frequency.setValueAtTime(freq, startTime);
+          osc2.frequency.setValueAtTime(freq * 1.005, startTime);
+          
+          mix.gain.value = 0.5;
+          
+          osc1.connect(masterGain);
+          osc2.connect(mix);
+          mix.connect(masterGain);
+          
+          masterGain.gain.setValueAtTime(0, startTime);
+          masterGain.gain.linearRampToValueAtTime(velocity * 0.7, startTime + 0.01);
+          masterGain.gain.exponentialRampToValueAtTime(0.001, startTime + duration + 0.1);
+          
+          osc1.start(startTime);
+          osc2.start(startTime);
+          osc1.stop(startTime + duration + 0.2);
+          osc2.stop(startTime + duration + 0.2);
+      }
   }
 
   /**
