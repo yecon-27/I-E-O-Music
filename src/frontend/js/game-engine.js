@@ -705,10 +705,7 @@ class GameEngine {
         
         try { this.onRoundEnd?.(session); } catch(e) { console.warn(e); }
         window.dispatchEvent(new CustomEvent('round:ended', { detail: session }));
-        const report = window.sessionLogger?.stopRecording();
-        if (report && window.auditDashboard) {
-          try { window.auditDashboard.show(report); } catch(e) { console.warn('[AuditDashboard] show failed:', e); }
-        }
+        window.sessionLogger?.stopRecording();
         
         // 移除结束提示
         // window.gameApp?.showEncouragementMessage?.(this.t('game.samplingCompleted', { count: session.notes.length }), 1200);

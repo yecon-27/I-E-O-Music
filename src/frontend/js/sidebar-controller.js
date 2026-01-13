@@ -60,6 +60,7 @@
                 rtLaneBars: document.getElementById('rt-lane-bars'),
                 rtPattern: document.getElementById('rt-pattern'),
                 rtRecentClicks: document.getElementById('rt-recent-clicks'),
+                devSessionReport: document.getElementById('dev-session-report'),
                 
                 // Static label containers (using querySelector within sidebar)
                 sidebarTitle: document.querySelector('.sidebar-title'),
@@ -143,7 +144,12 @@
             
             // 监听游戏回合事件
             window.addEventListener('round:started', () => this.resetStats());
-            window.addEventListener('round:ended', () => this.onRoundEnded());
+            window.addEventListener('round:ended', (ev) => {
+                this.onRoundEnded();
+                const session = ev.detail;
+                const data = this.buildSessionReportData(session);
+                this.renderDevSessionReport(data);
+            });
         }
 
         toggleSidebar() {
@@ -287,8 +293,50 @@
                 const color = laneColors[click.laneId] || '#999';
                 return `<span class="click-item" style="background: ${color};">${click.note}</span>`;
             }).join('');
-
             this.elements.rtRecentClicks.innerHTML = html;
+        }
+
+        buildSessionReportData(session) {
+            const traceId = window.sessionLogger?.sessionId || `legacy_${Date.now()}`;
+            const cfg = { ...(window.sessionConfig || {}) };
+            const hash = (obj) => {
+                try {
+                    const s = JSON.stringify(obj || {});
+                    let h = 0;
+                    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+                    return h.toString(16);
+                } catch { return '00000000'; }
+            };
+            const configHash = hash(cfg);
+            const envelopeId = hash(window.safetyEnvelope?.safeRanges || {});
+            const gen = window._lastMusicGenerator || null;
+            const raw = gen?.lastRawParams || null;
+            const constrained = gen?.lastConstrainedParams || null;
+            const clampLog = constrained?.clampLog || [];
+            const compliance = clampLog.length === 0 ? 'PASS' : 'CLAMPED';
+            const params = {
+                tempo: constrained?.safeBpm ?? raw?.rawBpm ?? cfg.rewardBpm ?? 125,
+                contrast: constrained?.safeContrast ?? raw?.rawContrast ?? cfg.dynamicContrast ?? null,
+                duration: session?.durationSec ?? cfg.rewardDurationSec ?? null,
+            };
+            const explanation = clampLog.length
+                ? clampLog.map(c => `${c.param} ${c.original} → ${c.clamped} (${c.rule})`).join('; ')
+                : 'None';
+            return { traceId, configHash, envelopeId, compliance, params, explanation };
+        }
+
+        renderDevSessionReport(data) {
+            const el = this.elements.devSessionReport;
+            if (!el) return;
+            const lines = [
+                `traceId: ${data.traceId}`,
+                `configHash: ${data.configHash}`,
+                `envelopeId: ${data.envelopeId}`,
+                `compliance: ${data.compliance}`,
+                `params: tempo=${data.params.tempo} BPM, contrast=${data.params.contrast ?? '--'}, duration=${data.params.duration ?? '--'}s`,
+                `changelog: ${data.explanation}`
+            ];
+            el.textContent = lines.join('\n');
         }
 
         estimateBPM() {
