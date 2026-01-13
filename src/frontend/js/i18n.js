@@ -257,9 +257,8 @@ const TRANSLATIONS = {
         'music.download': ' 下载音乐文件',
         'music.error': '没有找到生成的音乐，请先完成一局游戏',
         'music.muted': '当前为静音状态，请先点击“恢复声音”',
-        'music.playerNotReady': '音乐播放器未准备好，请稍后再试'
-        
-        ,
+        'music.playerNotReady': '音乐播放器未准备好，请稍后再试',
+        'music.loadingSamples': '正在加载乐器采样...',
         'spectro.title.left': '无约束基线',
         'spectro.title.right': '约束优先输出',
         'spectro.label.spec': 'Log-Mel 频谱图 (dB)',
@@ -490,8 +489,6 @@ const TRANSLATIONS = {
         'music.muted': 'Currently muted, please click "Unmute"',
         'music.playerNotReady': 'Music player not ready, please try again later',
         'music.loadingSamples': 'Loading instrument samples...',
-        
-        ,
         'spectro.title.left': 'Unconstrained Baseline',
         'spectro.title.right': 'Constraint-First Output',
         'spectro.label.spec': 'Log-Mel Spectrogram (dB)',

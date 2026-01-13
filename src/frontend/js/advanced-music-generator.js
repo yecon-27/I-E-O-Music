@@ -204,7 +204,7 @@ class AdvancedMusicGenerator {
       rawIntervals: intervals,
       rawVolume,
       medianInterval,
-      cv,
+      robustCv,
       hitsPerSec,
       derivationMethod: 'behavior',
     };
