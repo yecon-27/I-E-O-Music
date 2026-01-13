@@ -540,9 +540,11 @@ class SpectrogramComparison {
     
     if (i >= colors.length - 1) return `rgb(${colors[colors.length - 1].join(',')})`;
     
-    const c1 = colors[i];
-    const c2 = colors[i + 1];
+    const c1 = colors[i] || colors[0];
+    const c2 = colors[i + 1] || colors[colors.length - 1];
     
+    if (!c1) return 'rgb(0,0,0)'; // Safety fallback
+
     const r = Math.round(c1[0] + f * (c2[0] - c1[0]));
     const g = Math.round(c1[1] + f * (c2[1] - c1[1]));
     const b = Math.round(c1[2] + f * (c2[2] - c1[2]));
