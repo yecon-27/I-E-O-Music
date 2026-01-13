@@ -46,11 +46,17 @@ class SpectrogramComparison {
     }
 
     const actions = generator.buildActionTraceFromSession(session);
+    const baseCfg = window.sessionConfig ? { ...window.sessionConfig } : {};
+    const uncCfg = { ...baseCfg, randomSeed: this.fixedSeed, expertMode: true, expertOverride: true };
+    generator.setSessionConfig(uncCfg);
 
     // 生成无约束版本
     const unconstrainedResult = generator.generateReward(actions, generator.getSessionConfig(), { skipEnvelope: true });
     
     // 生成约束版本
+    const conCfg = { ...baseCfg, randomSeed: this.fixedSeed, expertMode: false, expertOverride: false };
+    delete conCfg.dynamicContrast;
+    generator.setSessionConfig(conCfg);
     const constrainedResult = generator.generateReward(actions, generator.getSessionConfig(), { skipEnvelope: false });
 
     // 渲染为音频
