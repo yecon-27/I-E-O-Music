@@ -609,6 +609,7 @@ class AdvancedMusicGenerator {
   generateReward(actions, sessionConfig = {}, options = {}) {
     const config = { ...DEFAULT_SESSION_CONFIG, ...sessionConfig };
     const skipEnvelope = options.skipEnvelope || false;
+    window._lastMusicGenerator = this;
 
     if (!config.rewardEnabled) {
       const actionTrace = actions || [];

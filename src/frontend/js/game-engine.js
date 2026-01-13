@@ -671,6 +671,7 @@ class GameEngine {
         this.roundEndAt = this.roundStart + this.roundDurationMs;
         this.roundRemainingMs = this.roundDurationMs; // 初始剩余=总时长
         this.roundPausedAt = 0;
+        window.sessionLogger?.startRecording();
 
         // 移除开始提示，避免干扰
         // window.gameApp?.showEncouragementMessage?.(this.t('game.samplingStarted', { seconds }), 1000);
@@ -701,9 +702,10 @@ class GameEngine {
         };
       
         if (save) window.Sessions.push(session);
-      
+        
         try { this.onRoundEnd?.(session); } catch(e) { console.warn(e); }
         window.dispatchEvent(new CustomEvent('round:ended', { detail: session }));
+        window.sessionLogger?.stopRecording();
         
         // 移除结束提示
         // window.gameApp?.showEncouragementMessage?.(this.t('game.samplingCompleted', { count: session.notes.length }), 1200);

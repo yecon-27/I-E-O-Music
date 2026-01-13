@@ -326,7 +326,7 @@ class ExpertSideDrawer {
                 border: 1px solid rgba(99, 102, 241, 0.2);
                 border-right: none;
                 border-radius: 16px 0 0 16px;
-                z-index: 2500;
+                z-index: 5000;
                 transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
                 display: flex;
                 flex-direction: column;
@@ -369,6 +369,7 @@ class ExpertSideDrawer {
                 border: 1px solid rgba(99, 102, 241, 0.3);
                 border-right: none;
                 transition: all 0.2s ease;
+                z-index: 5001;
             }
             
             .drawer-handle:hover {
