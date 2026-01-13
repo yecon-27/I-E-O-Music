@@ -18,8 +18,8 @@ const DEFAULT_SESSION_CONFIG = {
   feedbackLatencyMs: 0, // 0 | 500
   immediateToneMode: "full", // full | visual | off
   rewardEnabled: true,
-  rewardBpm: 72,
-  rewardDurationSec: 20,
+  rewardBpm: 125,
+  rewardDurationSec: 10,
   expertMode: false,
   // 新增参数
   dynamicContrast: 0.1, // 0-0.5, 动态对比度

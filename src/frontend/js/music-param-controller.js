@@ -27,9 +27,9 @@ class MusicParamController {
             volume: 70,
             harmony: 'I-V',
             instrument: 'piano',
-            durationSec: 15,
+            durationSec: 10,
             segmentStartSec: 0,
-            segmentEndSec: 15
+            segmentEndSec: 10
         };
         
         // 收敛后的参数（用于提交到数据库）
@@ -421,7 +421,7 @@ class MusicParamController {
         
         // 初始化
         const savedStart = parseFloat(localStorage.getItem('expert.segmentStartSec') || '0');
-        const savedEnd = parseFloat(localStorage.getItem('expert.segmentEndSec') || '15');
+        const savedEnd = parseFloat(localStorage.getItem('expert.segmentEndSec') || '10');
         this.currentParams.segmentStartSec = Math.max(0, Math.min(20, savedStart));
         this.currentParams.segmentEndSec = Math.max(8, Math.min(20, savedEnd));
         enforceBounds('init');
@@ -704,10 +704,14 @@ class MusicParamController {
             });
             
             // 初始化样式
-            this.updateSliderStyle(slider, param, parseInt(slider.value));
+            // 初始化显示值为当前滑块值（若已被重置为默认）
+            const initVal = parseInt(slider.value);
+            if (valueEl) {
+                valueEl.textContent = param === 'tempo' ? initVal : initVal + '%';
+            }
+            this.updateSliderStyle(slider, param, initVal);
             // 初始化警告状态
-            const initialValue = parseInt(slider.value);
-            const isUnsafe = this.isOutOfSafeRange(param, initialValue);
+            const isUnsafe = this.isOutOfSafeRange(param, initVal);
             this.updateWarning(warningEl, isUnsafe);
         });
     }
