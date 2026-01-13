@@ -102,7 +102,7 @@ class MusicParamController {
             if (tempoLabel) {
                 const span = tempoLabel.querySelector('span:first-child');
                 if (span) {
-                    span.innerHTML = `${this.t('expert.tempo')} <span class="param-safe-range">${this.t('expert.safeRange')}60-80</span>`;
+                    span.innerHTML = `${this.t('expert.tempo')} <span class="param-safe-range">${this.t('expert.safeRange')}120-130</span>`;
                 }
                 const warning = tempoLabel.querySelector('.param-warning-badge');
                 if (warning) warning.textContent = this.t('expert.warning.unsafe');
