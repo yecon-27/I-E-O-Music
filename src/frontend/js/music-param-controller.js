@@ -640,12 +640,12 @@ class MusicParamController {
             let warningEl = document.getElementById(warningId);
             
             if (!slider) {
-                console.warn(`[MusicParamController] 婊戝姩锟?${id} 涓嶅瓨鍦╜);
+                console.warn(`[MusicParamController] Slider ${id} not found`);
                 return;
             }
             
             if (!warningEl) {
-                console.warn(`[MusicParamController] 璀﹀憡鍏冪礌 ${warningId} 涓嶅瓨鍦紝灏濊瘯鍒涘缓`);
+                console.warn(`[MusicParamController] Warning element ${warningId} not found, creating one`);
                 const item = slider.closest('.param-item');
                 const labelEl = item?.querySelector('label');
                 if (labelEl) {
@@ -657,7 +657,7 @@ class MusicParamController {
                 }
             }
             
-            // 璁剧疆婊戝姩鏉＄殑瀹夊叏鍖洪棿鏁版嵁灞烇拷?
+            // Set safe range data attributes
             const range = this.safeRanges[param];
             if (range) {
                 slider.dataset.safeMin = range.min;
@@ -668,33 +668,33 @@ class MusicParamController {
                 const value = parseInt(e.target.value);
                 this.currentParams[param] = value;
                 
-                // 鏇存柊鏄剧ず锟?
+                // Update display
                 if (valueEl) {
                     valueEl.textContent = param === 'tempo' ? value : value + '%';
                 }
                 
-                // 妫€鏌ユ槸鍚﹁秴鍑哄畨鍏ㄥ尯锟?
+                // Check if out of safe range
                 const isUnsafe = this.isOutOfSafeRange(param, value);
-                console.log(`[MusicParamController] ${param} = ${value}, 瓒呭嚭瀹夊叏鍖洪棿: ${isUnsafe}`);
+                console.log(`[MusicParamController] ${param} = ${value}, Unsafe: ${isUnsafe}`);
                 this.updateWarning(warningEl, isUnsafe);
                 this.updateSliderStyle(slider, param, value);
                 
-                // 瑙﹀彂鍥炶皟
+                // Trigger callback
                 this.onParamChange?.({ param, value, isUnsafe });
                 
-                // 濡傛灉鍦ㄦ敹鏁涙ā寮忥紝鏇存柊鎽樿
+                // Update summary if in converge mode
                 if (this.mode === 'converge') {
                     this.updateConvergeSummary();
                 }
             });
             
-            // 鍒濆鍖栨牱锟?
+            // Initialize style
             this.updateSliderStyle(slider, param, parseInt(slider.value));
-            // 鍒濆鍖栬鍛婄姸锟?
+            // Initialize warning status
             const initialValue = parseInt(slider.value);
             const isUnsafe = this.isOutOfSafeRange(param, initialValue);
             this.updateWarning(warningEl, isUnsafe);
-            console.log(`[MusicParamController] 鍒濆锟?${param}: 锟?${initialValue}, 瓒呭嚭瀹夊叏鍖洪棿=${isUnsafe}, 璀﹀憡鍏冪礌瀛樺湪=${!!warningEl}`);
+            console.log(`[MusicParamController] Init ${param}: val=${initialValue}, unsafe=${isUnsafe}, warningEl=${!!warningEl}`);
         });
     }
 
