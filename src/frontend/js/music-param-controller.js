@@ -672,11 +672,12 @@ class MusicParamController {
                 if (param === 'tempo') {
                     slider.min = String(range.absMin);
                     slider.max = String(range.absMax);
-                    // 如果当前值越界，则重置到默认值
-                    const v = parseInt(slider.value || '125', 10);
-                    if (v < range.absMin || v > range.absMax) {
-                        slider.value = String(this.currentParams.tempo || 125);
-                    }
+                    // 无条件覆盖初始值，避免HTML默认值残留
+                    slider.value = String(this.currentParams.tempo || 125);
+                }
+                // 非tempo参数也强制与当前参数对齐
+                if (param !== 'tempo') {
+                    slider.value = String(this.currentParams[param]);
                 }
             }
             

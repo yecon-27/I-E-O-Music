@@ -1396,7 +1396,7 @@ const MAGENTA = {
     try {
       if (typeof AdvancedMusicGenerator !== 'function') {
         console.warn('AdvancedMusicGenerator not ready, returning empty sequence');
-        return { notes: [], tempos: [{ time: 0, qpm: 72 }], totalTime: 0 };
+        return { notes: [], tempos: [{ time: 0, qpm: 125 }], totalTime: 0 };
       }
       const generator = new AdvancedMusicGenerator();
       if (window.sessionConfig) {
@@ -1407,7 +1407,7 @@ const MAGENTA = {
       return sequence;
     } catch (e) {
       console.warn('Fallback createRichTestMusic failed:', e);
-      return { notes: [], tempos: [{ time: 0, qpm: 72 }], totalTime: 0 };
+      return { notes: [], tempos: [{ time: 0, qpm: 125 }], totalTime: 0 };
     }
   }
   

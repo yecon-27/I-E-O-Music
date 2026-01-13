@@ -8,7 +8,7 @@
 // ============================================
 const ExpertSettingsContext = {
     state: {
-        tempo: 72,
+        tempo: 125,
         volume: 0.7,
         density: 1.0,
         isUnsafeMode: false,
@@ -18,7 +18,7 @@ const ExpertSettingsContext = {
     
     // 初始安全预设值
     safePreset: {
-        tempo: 72,
+        tempo: 125,
         volume: 0.7,
         density: 1.0,
         isUnsafeMode: false,
@@ -297,17 +297,19 @@ class ExpertSideDrawer {
                     <h4></h4>
                     <div class="tempo-control">
                         <div class="tempo-display">
-                            <span id="param-tempo-value" class="tempo-value">72</span>
+                            <span id="param-tempo-value" class="tempo-value">125</span>
                             <div id="param-tempo-warning" class="param-warning hidden" style="margin-left: 10px;">⚠️</div>
                         </div>
                         <div class="tempo-slider-wrap">
-                            <span class="tempo-label">40</span>
-                            <input type="range" id="param-tempo" min="40" max="120" value="72" class="tempo-slider">
-                            <span class="tempo-label">120</span>
+                            <span class="tempo-label">100</span>
+                            <input type="range" id="param-tempo" min="100" max="140" value="125" class="tempo-slider">
+                            <span class="tempo-label">140</span>
                         </div>
                         <div class="tempo-markers">
-                            <span class="marker snap" style="left: 40%;">72</span>
-                            <span class="marker safe" style="left: 50%;">80</span>
+                            <span class="marker snap" style="left: 31.25%;">125</span>
+                            <span class="marker safe" style="left: 25%;">120</span>
+                            <span class="marker safe" style="left: 31.25%;">125</span>
+                            <span class="marker safe" style="left: 33.75%;">130</span>
                         </div>
                     </div>
                 </div>
@@ -822,8 +824,8 @@ class ExpertSideDrawer {
         const slider = this.element.querySelector('#param-tempo');
         const valueEl = this.element.querySelector('#param-tempo-value');
         const warningEl = this.element.querySelector('#param-tempo-warning');
-        const SNAP_VALUE = 72;
-        const SNAP_THRESHOLD = 3;
+        const SNAP_VALUE = 125;
+        const SNAP_THRESHOLD = 2;
         
         let isDragging = false;
         
@@ -844,8 +846,8 @@ class ExpertSideDrawer {
             // 即时 UI 反馈
             valueEl.textContent = value;
             
-            // 越界警告：超过 80 显示警告
-            const isOverLimit = value > 80;
+            // 越界警告：超过安全区间显示警告（120-130）
+            const isOverLimit = value < 120 || value > 130;
             if (isOverLimit) {
                 warningEl.textContent = this.t('expert.warning.unsafe');
                 warningEl.style.fontSize = "12px";

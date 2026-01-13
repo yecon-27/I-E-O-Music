@@ -100,7 +100,7 @@ class SessionLogger {
             if (!this.isRecording) return;
             
             const elapsed = (performance.now() - this.startTime) / 1000;
-            const currentBPM = window.sessionConfig?.rewardBpm || 72;
+            const currentBPM = window.sessionConfig?.rewardBpm || 125;
             const clickFrequency = this.clicksThisSecond;
             
             this.timeline.causalAlignment.push({
@@ -242,8 +242,8 @@ class SessionLogger {
     }
     
     checkTempo(spec) {
-        const bpm = spec?.bpm || window.sessionConfig?.rewardBpm || 72;
-        const safeRange = { min: 60, max: 80 };
+        const bpm = spec?.bpm || window.sessionConfig?.rewardBpm || 125;
+        const safeRange = { min: 120, max: 130 };
         
         return {
             passed: bpm >= safeRange.min && bpm <= safeRange.max,

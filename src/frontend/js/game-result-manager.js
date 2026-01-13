@@ -482,8 +482,8 @@ class GameResultManager {
     const tempoSlider = document.getElementById("tempo-slider");
     const tempoDisplay = document.getElementById("tempo-display");
     if (tempoSlider && tempoDisplay) {
-      tempoSlider.value = 72;
-      tempoDisplay.textContent = "72";
+      tempoSlider.value = 125;
+      tempoDisplay.textContent = "125";
     }
 
     // 重置音量
@@ -1329,7 +1329,7 @@ class GameResultManager {
                           isDrum: n.isDrum || false
                       })),
                       totalTime: sequence.totalTime || sequence.notes.reduce((max, n) => Math.max(max, n.endTime), 0),
-                      tempos: sequence.tempos || [{ time: 0, qpm: 72 }],
+                      tempos: sequence.tempos || [{ time: 0, qpm: 125 }],
                       timeSignatures: sequence.timeSignatures || [{ time: 0, numerator: 4, denominator: 4 }],
                       quantizationInfo: { stepsPerQuarter: 4 }
                   };
@@ -1346,7 +1346,7 @@ class GameResultManager {
                   notes: sequence.notes,
                   totalTime: sequence.totalTime,
                   tempos: sequence.tempos,
-                  bpm: sequence.tempos?.[0]?.qpm || 72
+                  bpm: sequence.tempos?.[0]?.qpm || 125
               }, null, 2);
               const blob = new Blob([jsonData], { type: 'application/json' });
               const url = URL.createObjectURL(blob);
@@ -1407,7 +1407,7 @@ class GameResultManager {
       const wavBlob = await this.renderSequenceToWav(sequence);
       
       // 获取 BPM 信息
-      const bpm = sequence.tempos?.[0]?.qpm || 72;
+      const bpm = sequence.tempos?.[0]?.qpm || 125;
       
       // 下载
       const url = URL.createObjectURL(wavBlob);
@@ -2157,6 +2157,7 @@ class GameResultManager {
   bindSpectrumAnalysisButtons() {
     const generateBtn = document.getElementById('spectrum-generate-btn');
     const exportPngBtn = document.getElementById('spectrum-export-png-btn');
+    const exportPaperBtn = document.getElementById('spectrum-export-paper-btn');
     const exportJsonBtn = document.getElementById('spectrum-export-json-btn');
 
     if (generateBtn) {
@@ -2168,6 +2169,11 @@ class GameResultManager {
     if (exportPngBtn) {
       exportPngBtn.addEventListener('click', () => {
         this.exportSpectrumPNG();
+      });
+    }
+    if (exportPaperBtn) {
+      exportPaperBtn.addEventListener('click', () => {
+        this.exportSpectrumPaperPNG();
       });
     }
 
@@ -2265,7 +2271,7 @@ class GameResultManager {
       rawContrastEl.textContent = `对比度: ${contrast !== undefined && contrast !== null ? (contrast * 100).toFixed(0) + '%' : '--'}`;
     }
     if (safeBpmEl && data.constrained?.sequence?.tempos) {
-      safeBpmEl.textContent = `BPM: ${data.constrained.sequence.tempos[0]?.qpm || 72}`;
+      safeBpmEl.textContent = `BPM: ${data.constrained.sequence.tempos[0]?.qpm || 125}`;
     }
     if (safeContrastEl) {
       let finalContrast = undefined;
@@ -2321,6 +2327,18 @@ class GameResultManager {
     const timestamp = Date.now();
     comparison.exportAsPNG(canvas, `spectrum_analysis_${timestamp}.png`);
     this.showMusicMessage('频谱图已导出为 PNG');
+  }
+
+  exportSpectrumPaperPNG() {
+    if (!this.lastSpectrumData) {
+      this.showMusicMessage('没有可导出的对比数据');
+      return;
+    }
+    const comparison = new window.SpectrogramComparison();
+    comparison.maxFrames = 600;
+    const timestamp = Date.now();
+    comparison.exportPaperPNG(this.lastSpectrumData, `spectrogram_paper_${timestamp}.png`, { scale: window.devicePixelRatio || 1, width: 1600, height: 900 });
+    this.showMusicMessage('论文版对比图已导出为 PNG');
   }
 
   /**

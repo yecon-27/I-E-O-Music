@@ -489,7 +489,7 @@ class AdvancedMusicGenerator {
       detectedMotifs.push(["C", "D", "E", "G", "A"]);
     }
 
-    const sequentialPass = hitStrict >= 2 && coverage >= 0.8 && laneDiversity >= 4;
+    const sequentialPass = hitStrict >= 2 && coverage >= 0.25 && laneDiversity >= 4;
     const repetitivePass =
       dominantLaneRatio >= 0.6 &&
       (maxRunLen >= 4 || avgRunLen >= 2.2) &&
@@ -501,7 +501,7 @@ class AdvancedMusicGenerator {
       !sequentialPass &&
       !repetitivePass;
 
-    const seqScore = clamp(Math.min(hitStrict / 3, coverage / 0.8, laneDiversity / 5), 0, 1);
+    const seqScore = clamp(Math.min(hitStrict / 3, coverage / 0.3, laneDiversity / 5), 0, 1);
     const runScore = clamp(Math.max(maxRunLen / 4, avgRunLen / 2.2), 0, 1);
     const repScore = clamp(
       0.4 * dominantLaneRatio + 0.3 * runScore + 0.3 * (1 - transitionEntropy),
