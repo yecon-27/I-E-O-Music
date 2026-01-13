@@ -447,6 +447,15 @@ class SpectrogramComparison {
     ctx.font = '10px system-ui';
     ctx.textAlign = 'left';
     ctx.fillText('Log-Mel Spectrogram (dB)', x, y - 5);
+
+    // Safety fallback for white spectrogram bug
+    if (minDb === maxDb) {
+         ctx.fillStyle = '#000'; // Draw black if silence
+         ctx.fillRect(x, y, width, height);
+         ctx.fillStyle = '#666';
+         ctx.textAlign = 'center';
+         ctx.fillText('Silence / No Data', x + width/2, y + height/2);
+    }
   }
 
   /**
