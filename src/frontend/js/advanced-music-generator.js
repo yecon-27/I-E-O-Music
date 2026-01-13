@@ -246,7 +246,7 @@ class AdvancedMusicGenerator {
       }
 
       // 对比度目前 SafetyEnvelope 没有直接支持，用硬编码安全范围
-      const contrastSafeMax = 0.2;
+      const contrastSafeMax = 0.1;
       if (rawParams.rawContrast > contrastSafeMax) {
         safeContrast = contrastSafeMax;
         clampLog.push({
@@ -261,7 +261,7 @@ class AdvancedMusicGenerator {
       const safeRanges = {
         tempo: { min: 120, max: 130 },
         volume: { min: 0.3, max: 0.8 },
-        contrast: { min: 0, max: 0.2 },
+        contrast: { min: 0, max: 0.1 },
       };
 
       if (rawParams.rawBpm < safeRanges.tempo.min || rawParams.rawBpm > safeRanges.tempo.max) {

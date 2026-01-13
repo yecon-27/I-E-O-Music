@@ -215,6 +215,13 @@ class GameResultManager {
           this.updateWithIcon(reportSections[0], this.t('report.behaviorPattern'));
           if (reportSections[1]) this.updateWithIcon(reportSections[1], this.t('report.musicParams'));
       }
+      
+      const spectroGenerateBtn = document.getElementById('spectrum-generate-btn');
+      const spectroExportPngBtn = document.getElementById('spectrum-export-png-btn');
+      const spectroExportJsonBtn = document.getElementById('spectrum-export-json-btn');
+      if (spectroGenerateBtn) spectroGenerateBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> ${this.t('spectro.btn.generate')}`;
+      if (spectroExportPngBtn) spectroExportPngBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg> ${this.t('spectro.btn.exportPng')}`;
+      if (spectroExportJsonBtn) spectroExportJsonBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect></svg> ${this.t('spectro.btn.exportJson')}`;
 
       // Report Params - 不再在这里设置，由 music-param-controller.js 统一管理
       // const reportParamLabels = document.querySelectorAll('.music-params-grid label');
@@ -930,8 +937,8 @@ class GameResultManager {
     }
     const sequentialCoverage = letters.length ? covered.size / letters.length : 0;
     
-    // 计算三种模式的原始分数 (0-1)
-    const seqRaw = Math.min(1, (sequentialCoverage / 0.8) * 0.7 + (laneDiversity / 5) * 0.3);
+    // 计算三种模式的原始分数 (0-1) —— 放宽顺序型判定
+    const seqRaw = Math.min(1, (sequentialCoverage / 0.3) * 0.7 + (laneDiversity / 5) * 0.3);
     const repRaw = Math.min(1, dominantRatio / 0.6);
     const expRaw = Math.min(1, (laneDiversity / 5) * 0.6 + (1 - dominantRatio) * 0.4);
     // 归一化为比例分布（总和 = 100%）
@@ -944,29 +951,33 @@ class GameResultManager {
     }
     const scores = { sequential: seqScore, repetitive: repScore, exploratory: expScore };
     
-    // 判断主导模式
+    // 判断主导模式（不再使用 mixed，始终选出最接近的模式）
     let patternType, icon, name, rule;
+    const rawScores = [
+      { type: "sequential", value: seqRaw },
+      { type: "repetitive", value: repRaw },
+      { type: "exploratory", value: expRaw },
+    ].sort((a, b) => b.value - a.value);
+    // 顺序型优先：若与最高分差距在0.05内，偏向顺序型
+    const top = rawScores[0];
+    const preferSequential = (top.type !== "sequential" && (rawScores.find(s => s.type === "sequential")?.value || 0) >= top.value - 0.05);
+    const chosen = preferSequential ? { type: "sequential", value: rawScores.find(s => s.type === "sequential")?.value || top.value } : top;
     
-    if (sequentialCoverage >= 0.8 && laneDiversity >= 4) {
+    if (chosen.type === "sequential") {
       patternType = "sequential";
       icon = PATTERN_ICONS.sequential;
       name = this.t('pat.sequential');
       rule = this.t('pat.rule.sequential', { ratio: Math.round(sequentialCoverage * 100), diversity: laneDiversity });
-    } else if (dominantRatio > 0.6) {
+    } else if (chosen.type === "repetitive") {
       patternType = "repetitive";
       icon = PATTERN_ICONS.repetitive;
       name = this.t('pat.repetitive');
       rule = this.t('pat.rule.repetitive', { ratio: Math.round(dominantRatio * 100), lane: dominantLane });
-    } else if (laneDiversity >= 4) {
+    } else {
       patternType = "exploratory";
       icon = PATTERN_ICONS.exploratory;
       name = this.t('pat.exploratory');
       rule = this.t('pat.rule.exploratory', { diversity: laneDiversity, ratio: Math.round(dominantRatio * 100) });
-    } else {
-      patternType = "mixed";
-      icon = PATTERN_ICONS.mixed;
-      name = this.t('pat.mixed');
-      rule = this.t('pat.rule.mixed');
     }
     
     const description = `${rule}`;
@@ -2071,8 +2082,8 @@ class GameResultManager {
             <circle cx="12" cy="12" r="10"></circle>
             <path d="M12 6v6l4 2"></path>
           </svg>
-          <span>正在生成声纹对比图...</span>
-          <span style="font-size: 0.8rem; color: #6b7280; margin-top: 8px;">这可能需要几秒钟</span>
+          <span>${this.t('spectro.loading.title')}</span>
+          <span style="font-size: 0.8rem; color: #6b7280; margin-top: 8px;">${this.t('spectro.loading.sub')}</span>
         </div>
       `;
     }
@@ -2116,7 +2127,7 @@ class GameResultManager {
               <line x1="15" y1="9" x2="9" y2="15"></line>
               <line x1="9" y1="9" x2="15" y2="15"></line>
             </svg>
-            <span>生成失败: ${error.message}</span>
+            <span>${this.t('spectro.fail.title')}: ${error.message}</span>
           </div>
         `;
       }
@@ -2228,9 +2239,7 @@ class GameResultManager {
       
       // 绘制频谱图
       comparison.drawComparison(canvas, this.lastSpectrumData);
-      
-      // 更新指标显示
-      this.updateSpectrumMetrics(this.lastSpectrumData);
+      this.hideSpectrumMetrics();
 
       console.log('[Spectrum] 频谱分析生成完成');
 
@@ -2261,14 +2270,14 @@ class GameResultManager {
     const safeContrastEl = document.getElementById('spectrum-safe-contrast');
 
     if (rawBpmEl && data.unconstrained?.rawParams) {
-      rawBpmEl.textContent = `BPM: ${data.unconstrained.rawParams.rawBpm || '--'}`;
+      rawBpmEl.textContent = `${this.t('ui.bpm')}: ${data.unconstrained.rawParams.rawBpm || '--'}`;
     }
     if (rawContrastEl && data.unconstrained?.rawParams) {
       const contrast = data.unconstrained.rawParams.rawContrast;
-      rawContrastEl.textContent = `对比度: ${contrast !== undefined && contrast !== null ? (contrast * 100).toFixed(0) + '%' : '--'}`;
+      rawContrastEl.textContent = `${this.t('ui.contrast')}: ${contrast !== undefined && contrast !== null ? (contrast * 100).toFixed(0) + '%' : '--'}`;
     }
     if (safeBpmEl && data.constrained?.sequence?.tempos) {
-      safeBpmEl.textContent = `BPM: ${data.constrained.sequence.tempos[0]?.qpm || 125}`;
+      safeBpmEl.textContent = `${this.t('ui.bpm')}: ${data.constrained.sequence.tempos[0]?.qpm || 125}`;
     }
     if (safeContrastEl) {
       let finalContrast = undefined;
@@ -2280,7 +2289,7 @@ class GameResultManager {
       } else {
         finalContrast = data.unconstrained?.rawParams?.rawContrast;
       }
-      safeContrastEl.textContent = `对比度: ${finalContrast !== undefined && finalContrast !== null ? (finalContrast * 100).toFixed(0) + '%' : '--'}`;
+      safeContrastEl.textContent = `${this.t('ui.contrast')}: ${finalContrast !== undefined && finalContrast !== null ? (finalContrast * 100).toFixed(0) + '%' : '--'}`;
     }
   }
 
@@ -2325,6 +2334,27 @@ class GameResultManager {
     const timestamp = Date.now();
     comparison.exportPaperPNG(this.lastSpectrumData, `spectrum_analysis_${timestamp}.png`, { scale: window.devicePixelRatio || 1, width: 1600, height: 900 });
     this.showMusicMessage('频谱图已导出为 PNG');
+  }
+
+  hideSpectrumMetrics() {
+    const selectors = [
+      '#spectrum-metrics',
+      '.spectrum-metric-card',
+      '#spectrum-lra-raw',
+      '#spectrum-lra-safe',
+      '#spectrum-de-raw',
+      '#spectrum-de-safe',
+      '#spectrum-avg-raw',
+      '#spectrum-avg-safe',
+      '#spectrum-lra-factor',
+      '#spectrum-lra-summary'
+    ];
+    selectors.forEach(sel => {
+      document.querySelectorAll(sel).forEach(el => {
+        el.classList.add('hidden');
+        el.style.display = 'none';
+      });
+    });
   }
   
   ensureSessionReportUI() {

@@ -268,6 +268,18 @@ const TRANSLATIONS = {
         'spectro.metrics.line': 'LRA: {lra} LU | Avg: {avg} LUFS | ΔE: {dE}'
         ,
         'spectro.summary.lra': '响度范围 (LRA): {raw} → {safe} LU (×{factor} 降幅)'
+        ,
+        'spectro.rawParams': '原始参数（行为派生）',
+        'spectro.safeParams': '约束后参数',
+        'ui.bpm': 'BPM',
+        'ui.contrast': '对比度',
+        'spectro.loading.title': '正在生成声纹对比图...',
+        'spectro.loading.sub': '这可能需要几秒钟',
+        'spectro.fail.title': '生成失败',
+        'spectro.btn.generate': '生成对比',
+        'spectro.btn.exportPng': '导出 PNG',
+        'spectro.btn.exportJson': '导出 JSON',
+        'spectro.msg.exportPngDone': '对比图已导出为 PNG'
     },
     en: {
         // Main UI (Restored)
@@ -487,6 +499,18 @@ const TRANSLATIONS = {
         'spectro.metrics.line': 'LRA: {lra} LU | Avg: {avg} LUFS | ΔE: {dE}'
         ,
         'spectro.summary.lra': 'Loudness Range (LRA): {raw} → {safe} LU (×{factor} reduction)'
+        ,
+        'spectro.rawParams': 'Raw Params (behavior-derived)',
+        'spectro.safeParams': 'Constrained Params',
+        'ui.bpm': 'BPM',
+        'ui.contrast': 'Contrast',
+        'spectro.loading.title': 'Generating spectrogram comparison...',
+        'spectro.loading.sub': 'This may take a few seconds',
+        'spectro.fail.title': 'Generation failed',
+        'spectro.btn.generate': 'Generate Comparison',
+        'spectro.btn.exportPng': 'Export PNG',
+        'spectro.btn.exportJson': 'Export JSON',
+        'spectro.msg.exportPngDone': 'Comparison exported as PNG'
     }
 };
 

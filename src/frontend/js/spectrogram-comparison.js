@@ -307,7 +307,7 @@ class SpectrogramComparison {
       times.push(i / this.sampleRate);
     }
     const integrated = raw.length ? (raw.reduce((a,b)=>a+b,0) / raw.length) : -70;
-    const gate = integrated - 10;
+    const gate = integrated - 8;
     const gated = raw.filter(v => v >= gate);
     const alpha = 0.3;
     const smoothed = [];
