@@ -588,83 +588,21 @@
                                 
                                 <!-- 频谱分析区域 -->
                                 <div id="spectrum-analysis-area" class="spectrum-analysis-area hidden">
-                                    <div class="spectrum-header">
-                                        <h4 class="spectrum-title">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                                            Unconstrained vs Constrained 对比
-                                        </h4>
-                                        <p class="spectrum-desc">基于相同 actionTrace 生成两版音乐，对比安全包络的约束效果</p>
-                                    </div>
-                                    
-                                    <!-- 原始参数显示 -->
-                                    <div class="spectrum-params">
-                                        <div class="spectrum-param-group">
-                                            <span class="spectrum-param-label">原始参数 (行为派生)</span>
-                                            <div class="spectrum-param-badges">
-                                                <span class="spectrum-badge" id="spectrum-raw-bpm">BPM: --</span>
-                                                <span class="spectrum-badge" id="spectrum-raw-contrast">对比度: --</span>
-                                            </div>
-                                        </div>
-                                        <div class="spectrum-param-group">
-                                            <span class="spectrum-param-label">约束后参数</span>
-                                            <div class="spectrum-param-badges">
-                                                <span class="spectrum-badge safe" id="spectrum-safe-bpm">BPM: --</span>
-                                                <span class="spectrum-badge safe" id="spectrum-safe-contrast">对比度: --</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- 频谱图画布 -->
                                     <div class="spectrum-canvas-wrapper">
                                         <canvas id="spectrum-comparison-canvas" width="560" height="320"></canvas>
-                                        <div id="spectrum-loading" class="spectrum-loading hidden">
-                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
-                                            <span>生成中...</span>
-                                        </div>
                                     </div>
-                                    
-                                        <!-- 指标对比 -->
-                                        <div class="spectrum-metrics">
-                                            <div class="spectrum-metric">
-                                                <span class="metric-label">LRA (响度范围)</span>
-                                                <div class="metric-compare">
-                                                    <span class="metric-value unconstrained" id="spectrum-lra-raw">-- LU</span>
-                                                    <span class="metric-arrow">→</span>
-                                                    <span class="metric-value constrained" id="spectrum-lra-safe">-- LU</span>
-                                                    <span class="lra-factor" id="spectrum-lra-factor"></span>
-                                                </div>
-                                            </div>
-                                            <div class="spectrum-metric">
-                                                <span class="metric-label">ΔE (能量变化率)</span>
-                                                <div class="metric-compare">
-                                                <span class="metric-value unconstrained" id="spectrum-de-raw">--</span>
-                                                <span class="metric-arrow">→</span>
-                                                <span class="metric-value constrained" id="spectrum-de-safe">--</span>
-                                            </div>
-                                        </div>
-                                        <div class="spectrum-metric">
-                                            <span class="metric-label">平均响度</span>
-                                            <div class="metric-compare">
-                                                <span class="metric-value unconstrained" id="spectrum-avg-raw">-- LUFS</span>
-                                                <span class="metric-arrow">→</span>
-                                                <span class="metric-value constrained" id="spectrum-avg-safe">-- LUFS</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- 操作按钮 -->
                                     <div class="spectrum-actions">
                                         <button id="spectrum-generate-btn" class="param-btn primary">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                                            生成对比
+                                            Generate
                                         </button>
                                         <button id="spectrum-export-png-btn" class="param-btn secondary">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                                            导出 PNG
+                                            Export PNG
                                         </button>
                                         <button id="spectrum-export-json-btn" class="param-btn secondary">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                                            导出 JSON
+                                            Export JSON
                                         </button>
                                     </div>
                                 </div>

@@ -183,12 +183,14 @@ class AdvancedMusicGenerator {
     const medianInterval = sortedIntervals[Math.floor(sortedIntervals.length / 2)];
     const rawBpm = Math.round(60000 / medianInterval);
 
-    // 计算变异系数 → 原始对比度
-    const mean = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-    const variance = intervals.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / intervals.length;
-    const stdDev = Math.sqrt(variance);
-    const cv = mean > 0 ? stdDev / mean : 0;
-    const rawContrast = clamp(cv, 0, 1);
+    // 稳健对比度: 使用 MAD/median，并上限压缩
+    const sortedIntervals = [...intervals].sort((a, b) => a - b);
+    const medianInterval2 = sortedIntervals[Math.floor(sortedIntervals.length / 2)];
+    const absDevs = intervals.map(v => Math.abs(v - medianInterval2)).sort((a, b) => a - b);
+    const mad = absDevs[Math.floor(absDevs.length / 2)] || 0;
+    const robustCv = medianInterval2 > 0 ? (mad / medianInterval2) : 0;
+    let rawContrast = clamp(robustCv * 0.8, 0, 0.4);
+    if (intervals.length < 5) rawContrast = 0.1;
 
     // 计算点击密度 → 原始音量
     const totalDuration = ordered[ordered.length - 1].timeOffset - ordered[0].timeOffset;

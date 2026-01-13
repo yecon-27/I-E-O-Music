@@ -2324,15 +2324,33 @@ class GameResultManager {
    * 导出频谱图为 PNG
    */
   exportSpectrumPNG() {
-    if (!this.lastSpectrumData) {
-      this.showMusicMessage('请先生成频谱分析');
+    const canvas = document.getElementById('spectrum-comparison-canvas');
+    if (!canvas) {
+      this.showMusicMessage('Please generate the spectrogram first');
       return;
     }
-    const comparison = new window.SpectrogramComparison();
-    comparison.maxFrames = 600;
-    const timestamp = Date.now();
-    comparison.exportPaperPNG(this.lastSpectrumData, `spectrum_analysis_${timestamp}.png`, { scale: window.devicePixelRatio || 1, width: 1600, height: 900 });
-    this.showMusicMessage('频谱图已导出为 PNG');
+    const off = document.createElement('canvas');
+    off.width = canvas.width;
+    off.height = canvas.height;
+    const ctx = off.getContext('2d');
+    ctx.drawImage(canvas, 0, 0);
+    const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [] };
+    const pat = this.analyzePattern(session.notes || []);
+    const labelMap = { sequential: 'Sequential', repetitive: 'Repetitive', exploratory: 'Exploratory', mixed: 'Mixed' };
+    const modeLabel = labelMap[pat.patternType] || 'Unknown';
+    const text = `Mode: ${modeLabel}`;
+    const pad = 10;
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(pad, pad, ctx.measureText ? (ctx.measureText(text).width + 20) : 160, 26);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 14px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(text, pad + 10, pad + 18);
+    const a = document.createElement('a');
+    a.download = `spectrum_canvas_${Date.now()}.png`;
+    a.href = off.toDataURL('image/png');
+    a.click();
+    this.showMusicMessage('PNG exported');
   }
 
   hideSpectrumMetrics() {

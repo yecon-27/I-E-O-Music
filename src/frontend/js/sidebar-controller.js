@@ -351,7 +351,24 @@
                 }
                 if (ok) { idxs.forEach(k => covered.add(k)); }
             }
-            const seqRatio = covered.size / lanes.length;
+            let coveredDown = new Set();
+            for (let i = 0; i < lanes.length; i++) {
+                if (lanes[i] !== 5) continue;
+                let last = i;
+                let ok = true;
+                const idxs = [i];
+                for (let step = 4; step >= 1; step--) {
+                    let found = -1;
+                    for (let j = last + 1; j < lanes.length && j <= last + 6; j++) {
+                        if (lanes[j] === step) { found = j; break; }
+                    }
+                    if (found < 0) { ok = false; break; }
+                    idxs.push(found);
+                    last = found;
+                }
+                if (ok) { idxs.forEach(k => coveredDown.add(k)); }
+            }
+            const seqRatio = Math.max(covered.size, coveredDown.size) / lanes.length;
 
             // 检测重复模式
             const laneCounts = {};
@@ -389,8 +406,10 @@
             const entries = Object.entries(probs).sort((a, b) => b[1] - a[1]);
             const [topKey, topProb] = entries[0];
             const typeMap = { seq: 'sequential', rep: 'repetitive', exp: 'exploratory' };
-            const type = topProb >= 0.6 && seqRatio >= 0.8 ? typeMap[topKey] : 'mixed';
-            return { type, confidence: topProb };
+            const forceSequential = seqRatio >= 0.7;
+            const type = forceSequential ? 'sequential' : (topProb >= 0.6 ? typeMap[topKey] : 'mixed');
+            const confidence = forceSequential ? Math.max(topProb, seqRatio) : topProb;
+            return { type, confidence };
         }
     }
 
