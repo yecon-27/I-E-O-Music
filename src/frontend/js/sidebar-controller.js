@@ -13,8 +13,10 @@
             this.totalAttempts = 0;  // 总尝试次数（包括未命中）
             this.successfulClicks = 0;  // 成功命中次数
             this.recentClicks = [];
-            this.maxRecentClicks = 12;  // 显示最近12个点击
+            this.maxRecentClicks = 16;  // 扩大窗口，降低抖动
             this.prevPatternProbs = { seq: 0.33, rep: 0.33, exp: 0.33 };
+            this.lastPatternType = 'mixed';
+            this.hysteresis = { seqOn: 0.7, seqOff: 0.5 }; // 顺子开启/保持阈值
             
             this.elements = {};
             this.init();
@@ -395,7 +397,7 @@
                 exp: expRaw / total,
             };
             
-            const alpha = 0.3;
+            const alpha = 0.6; // 加强平滑，避免频繁跳转
             probs = {
                 seq: alpha * this.prevPatternProbs.seq + (1 - alpha) * probs.seq,
                 rep: alpha * this.prevPatternProbs.rep + (1 - alpha) * probs.rep,
@@ -406,9 +408,11 @@
             const entries = Object.entries(probs).sort((a, b) => b[1] - a[1]);
             const [topKey, topProb] = entries[0];
             const typeMap = { seq: 'sequential', rep: 'repetitive', exp: 'exploratory' };
-            const forceSequential = seqRatio >= 0.7;
-            const type = forceSequential ? 'sequential' : (topProb >= 0.6 ? typeMap[topKey] : 'mixed');
+            const forceSequential = (seqRatio >= this.hysteresis.seqOn) ||
+                                    (this.lastPatternType === 'sequential' && seqRatio >= this.hysteresis.seqOff);
+            const type = forceSequential ? 'sequential' : (topProb >= 0.65 ? typeMap[topKey] : 'mixed');
             const confidence = forceSequential ? Math.max(topProb, seqRatio) : topProb;
+            this.lastPatternType = type;
             return { type, confidence };
         }
     }

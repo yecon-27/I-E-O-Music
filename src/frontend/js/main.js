@@ -1394,11 +1394,14 @@ const MAGENTA = {
    */
   function createRichTestMusic(session) {
     try {
-      if (typeof AdvancedMusicGenerator !== 'function') {
+      const GenCtor = (typeof window.AdvancedMusicGenerator === 'function')
+        ? window.AdvancedMusicGenerator
+        : (typeof AdvancedMusicGenerator === 'function' ? AdvancedMusicGenerator : null);
+      if (!GenCtor) {
         console.warn('AdvancedMusicGenerator not ready, returning empty sequence');
         return { notes: [], tempos: [{ time: 0, qpm: 125 }], totalTime: 0 };
       }
-      const generator = new AdvancedMusicGenerator();
+      const generator = new GenCtor();
       if (window.sessionConfig) {
         generator.setSessionConfig(window.sessionConfig);
       }
