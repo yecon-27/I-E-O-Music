@@ -182,6 +182,14 @@
                                 </svg>
                                 播放
                             </button>
+                            <button id="download-wav-btn" class="result-btn secondary" title="下载WAV音频文件">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                WAV
+                            </button>
                             <button id="result-mute-btn" class="result-btn secondary panic-btn">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
@@ -225,7 +233,15 @@
                                 </button>
                                 <button id="download-unconstrained-btn" class="unconstrained-btn secondary" title="下载无约束音乐的MIDI文件">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                    <span>下载 MIDI</span>
+                                    <span>MIDI</span>
+                                </button>
+                                <button id="download-unconstrained-wav-btn" class="unconstrained-btn secondary" title="下载无约束音乐的WAV文件">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                                    <span>WAV</span>
+                                </button>
+                                <button id="generate-comparison-btn" class="unconstrained-btn" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);" title="生成声纹图对比">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                                    <span>声纹对比</span>
                                 </button>
                                 <div id="unconstrained-params-display" class="unconstrained-params">
                                     <span class="param-badge" id="raw-bpm-badge">BPM: --</span>
@@ -242,6 +258,50 @@
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
                                 刷新专家模式
                             </button>
+                        </div>
+                        
+                        <!-- 声纹对比弹窗 -->
+                        <div id="spectrogram-comparison-modal" class="spectrogram-modal hidden">
+                            <div class="spectrogram-modal-content">
+                                <div class="spectrogram-modal-header">
+                                    <h3>
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                                        Unconstrained vs Constrained 声纹对比
+                                    </h3>
+                                    <div class="spectrogram-modal-actions">
+                                        <button id="export-comparison-png" class="spectrogram-export-btn" title="导出为PNG">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                            PNG
+                                        </button>
+                                        <button id="export-comparison-json" class="spectrogram-export-btn" title="导出数据为JSON">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                            JSON
+                                        </button>
+                                        <button id="close-comparison-modal" class="spectrogram-close-btn" title="关闭">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="spectrogram-canvas-container">
+                                    <canvas id="spectrogram-comparison-canvas" width="1200" height="600"></canvas>
+                                </div>
+                                <div class="spectrogram-legend">
+                                    <div class="legend-item">
+                                        <span class="legend-color" style="background: #4ecdc4;"></span>
+                                        <span>Loudness Contour</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="legend-color" style="background: #ff6b6b; opacity: 0.5;"></span>
+                                        <span>Envelope Bounds (虚线)</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="legend-label">LRA = Loudness Range (95th - 10th percentile)</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="legend-label">ΔE = Energy Change Rate (响度变化率)</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
                         <!-- 主内容区 - 左右分栏 -->
@@ -838,6 +898,7 @@
     <script src="js/audio-engine.js"></script>
     <script src="js/note-log.js"></script>
     <script src="js/advanced-music-generator.js"></script>
+    <script src="js/spectrogram-comparison.js"></script>
     <script src="js/autism-friendly-features.js"></script>
     
     <!-- Expert Audit Mode Scripts -->

@@ -133,6 +133,14 @@ class GameResultManager {
         this.playGeneratedMusic();
       });
     }
+
+    // 绑定 WAV 下载按钮
+    const downloadWavBtn = document.getElementById('download-wav-btn');
+    if (downloadWavBtn) {
+      downloadWavBtn.addEventListener('click', () => {
+        this.downloadConstrainedWav();
+      });
+    }
     
     // 监听语言切换事件
     if (window.i18n) {
@@ -1344,6 +1352,70 @@ class GameResultManager {
           this.showMusicError(this.t('music.error'));
       }
   }
+
+  /**
+   * 下载约束版音乐的 WAV 文件
+   */
+  async downloadConstrainedWav() {
+    const sequence = window.lastGeneratedSequence || window.rewardSequence;
+    
+    if (!sequence || !sequence.notes || sequence.notes.length === 0) {
+      this.showMusicError('没有可下载的音乐');
+      return;
+    }
+
+    const downloadBtn = document.getElementById('download-wav-btn');
+    
+    try {
+      // 更新按钮状态
+      if (downloadBtn) {
+        downloadBtn.disabled = true;
+        const originalText = downloadBtn.textContent;
+        downloadBtn.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 6v6l4 2"></path>
+          </svg>
+          渲染中...
+        `;
+      }
+
+      // 渲染为 WAV
+      const wavBlob = await this.renderSequenceToWav(sequence);
+      
+      // 获取 BPM 信息
+      const bpm = sequence.tempos?.[0]?.qpm || 72;
+      
+      // 下载
+      const url = URL.createObjectURL(wavBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `musibubbles_bpm${bpm}_${Date.now()}.wav`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      this.showMusicMessage(`已下载 WAV (BPM: ${bpm})`);
+
+    } catch (error) {
+      console.error('[WAV] 下载失败:', error);
+      this.showMusicError('WAV下载失败: ' + error.message);
+    } finally {
+      // 恢复按钮状态
+      if (downloadBtn) {
+        downloadBtn.disabled = false;
+        downloadBtn.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          WAV
+        `;
+      }
+    }
+  }
   
   createTestMusicSequence() { /* ... */ return {}; }
 
@@ -1380,6 +1452,7 @@ class GameResultManager {
     const rawBpmBadge = document.getElementById('raw-bpm-badge');
     const rawContrastBadge = document.getElementById('raw-contrast-badge');
     const clampIndicator = document.getElementById('clamp-indicator');
+    const downloadWavBtn = document.getElementById('download-unconstrained-wav-btn');
 
     if (playBtn) {
       playBtn.addEventListener('click', () => {
@@ -1390,6 +1463,42 @@ class GameResultManager {
     if (downloadBtn) {
       downloadBtn.addEventListener('click', () => {
         this.downloadUnconstrainedMidi();
+      });
+    }
+
+    if (downloadWavBtn) {
+      downloadWavBtn.addEventListener('click', () => {
+        this.downloadUnconstrainedWav();
+      });
+    }
+
+    // 声纹对比按钮
+    const comparisonBtn = document.getElementById('generate-comparison-btn');
+    if (comparisonBtn) {
+      comparisonBtn.addEventListener('click', () => {
+        this.generateSpectrogramComparison();
+      });
+    }
+
+    // 声纹对比弹窗按钮
+    const closeComparisonBtn = document.getElementById('close-comparison-modal');
+    if (closeComparisonBtn) {
+      closeComparisonBtn.addEventListener('click', () => {
+        document.getElementById('spectrogram-comparison-modal')?.classList.add('hidden');
+      });
+    }
+
+    const exportPngBtn = document.getElementById('export-comparison-png');
+    if (exportPngBtn) {
+      exportPngBtn.addEventListener('click', () => {
+        this.exportComparisonPNG();
+      });
+    }
+
+    const exportJsonBtn = document.getElementById('export-comparison-json');
+    if (exportJsonBtn) {
+      exportJsonBtn.addEventListener('click', () => {
+        this.exportComparisonJSON();
       });
     }
   }
@@ -1604,6 +1713,182 @@ class GameResultManager {
   }
 
   /**
+   * 下载无约束音乐的 WAV 文件
+   */
+  async downloadUnconstrainedWav() {
+    const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [] };
+    
+    if (!session.notes || session.notes.length === 0) {
+      this.showMusicMessage('没有游戏数据，请先完成一局游戏');
+      return;
+    }
+
+    const downloadBtn = document.getElementById('download-unconstrained-wav-btn');
+    
+    try {
+      // 更新按钮状态
+      if (downloadBtn) {
+        downloadBtn.disabled = true;
+        const span = downloadBtn.querySelector('span');
+        if (span) span.textContent = '渲染中...';
+      }
+
+      // 生成无约束音乐
+      const result = window.createUnconstrainedMusic(session);
+      const sequence = result.sequence;
+      const rawParams = result.rawParams;
+
+      if (!sequence || !sequence.notes || sequence.notes.length === 0) {
+        this.showMusicMessage('生成的音乐为空');
+        return;
+      }
+
+      // 渲染为 WAV
+      const wavBlob = await this.renderSequenceToWav(sequence);
+      
+      // 下载
+      const url = URL.createObjectURL(wavBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `unconstrained_bpm${rawParams?.rawBpm || 'unknown'}_${Date.now()}.wav`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      this.showMusicMessage(`已下载 WAV (BPM: ${rawParams?.rawBpm})`);
+
+    } catch (error) {
+      console.error('[Unconstrained] WAV下载失败:', error);
+      this.showMusicMessage('WAV下载失败: ' + error.message);
+    } finally {
+      // 恢复按钮状态
+      if (downloadBtn) {
+        downloadBtn.disabled = false;
+        const span = downloadBtn.querySelector('span');
+        if (span) span.textContent = 'WAV';
+      }
+    }
+  }
+
+  /**
+   * 将音乐序列渲染为 WAV 格式
+   * @param {Object} sequence - Magenta 格式的音乐序列
+   * @returns {Promise<Blob>} WAV 文件的 Blob
+   */
+  async renderSequenceToWav(sequence) {
+    const sampleRate = 44100;
+    const duration = sequence.totalTime + 1; // 额外 1 秒淡出
+    const numSamples = Math.ceil(sampleRate * duration);
+    
+    // 创建离线音频上下文
+    const offlineCtx = new OfflineAudioContext(2, numSamples, sampleRate);
+    
+    // 为每个音符创建振荡器
+    for (const note of sequence.notes) {
+      const freq = 440 * Math.pow(2, (note.pitch - 69) / 12);
+      const velocity = (note.velocity || 80) / 127;
+      const startTime = note.startTime;
+      const endTime = note.endTime;
+      const noteDuration = endTime - startTime;
+      
+      // 创建振荡器
+      const osc = offlineCtx.createOscillator();
+      const gainNode = offlineCtx.createGain();
+      
+      osc.connect(gainNode);
+      gainNode.connect(offlineCtx.destination);
+      
+      // 使用正弦波 + 少量泛音模拟钢琴音色
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      
+      // ADSR 包络
+      const attackTime = 0.01;
+      const decayTime = 0.1;
+      const sustainLevel = 0.7;
+      const releaseTime = 0.2;
+      
+      const peakGain = velocity * 0.3;
+      
+      gainNode.gain.setValueAtTime(0, startTime);
+      gainNode.gain.linearRampToValueAtTime(peakGain, startTime + attackTime);
+      gainNode.gain.linearRampToValueAtTime(peakGain * sustainLevel, startTime + attackTime + decayTime);
+      gainNode.gain.setValueAtTime(peakGain * sustainLevel, endTime - releaseTime);
+      gainNode.gain.linearRampToValueAtTime(0, endTime);
+      
+      osc.start(startTime);
+      osc.stop(endTime + 0.01);
+    }
+    
+    // 渲染音频
+    const audioBuffer = await offlineCtx.startRendering();
+    
+    // 转换为 WAV
+    return this.audioBufferToWav(audioBuffer);
+  }
+
+  /**
+   * 将 AudioBuffer 转换为 WAV Blob
+   * @param {AudioBuffer} buffer - 音频缓冲区
+   * @returns {Blob} WAV 文件的 Blob
+   */
+  audioBufferToWav(buffer) {
+    const numChannels = buffer.numberOfChannels;
+    const sampleRate = buffer.sampleRate;
+    const format = 1; // PCM
+    const bitDepth = 16;
+    
+    const bytesPerSample = bitDepth / 8;
+    const blockAlign = numChannels * bytesPerSample;
+    
+    const dataLength = buffer.length * blockAlign;
+    const bufferLength = 44 + dataLength;
+    
+    const arrayBuffer = new ArrayBuffer(bufferLength);
+    const view = new DataView(arrayBuffer);
+    
+    // WAV 文件头
+    const writeString = (offset, string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+    
+    writeString(0, 'RIFF');
+    view.setUint32(4, bufferLength - 8, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true); // fmt chunk size
+    view.setUint16(20, format, true);
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * blockAlign, true);
+    view.setUint16(32, blockAlign, true);
+    view.setUint16(34, bitDepth, true);
+    writeString(36, 'data');
+    view.setUint32(40, dataLength, true);
+    
+    // 写入音频数据
+    const channels = [];
+    for (let i = 0; i < numChannels; i++) {
+      channels.push(buffer.getChannelData(i));
+    }
+    
+    let offset = 44;
+    for (let i = 0; i < buffer.length; i++) {
+      for (let ch = 0; ch < numChannels; ch++) {
+        const sample = Math.max(-1, Math.min(1, channels[ch][i]));
+        const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+        view.setInt16(offset, intSample, true);
+        offset += 2;
+      }
+    }
+    
+    return new Blob([arrayBuffer], { type: 'audio/wav' });
+  }
+
+  /**
    * 更新无约束参数显示（在专家视图打开时调用）
    */
   updateUnconstrainedParamsDisplay() {
@@ -1632,6 +1917,120 @@ class GameResultManager {
                                  (rawParams.rawContrast > 0.2);
       clampIndicator.style.display = wouldBeConstrained ? 'inline-flex' : 'none';
     }
+  }
+
+  /**
+   * 生成声纹对比图
+   */
+  async generateSpectrogramComparison() {
+    const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [] };
+    
+    if (!session.notes || session.notes.length < 3) {
+      this.showMusicMessage('需要更多游戏数据来生成对比图');
+      return;
+    }
+
+    const modal = document.getElementById('spectrogram-comparison-modal');
+    const canvas = document.getElementById('spectrogram-comparison-canvas');
+    const canvasContainer = canvas?.parentElement;
+    
+    if (!modal || !canvas) {
+      console.error('[Comparison] 找不到弹窗元素');
+      return;
+    }
+
+    // 显示弹窗
+    modal.classList.remove('hidden');
+    
+    // 显示加载状态
+    if (canvasContainer) {
+      canvasContainer.innerHTML = `
+        <div class="spectrogram-generating">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 6v6l4 2"></path>
+          </svg>
+          <span>正在生成声纹对比图...</span>
+          <span style="font-size: 0.8rem; color: #6b7280; margin-top: 8px;">这可能需要几秒钟</span>
+        </div>
+      `;
+    }
+
+    try {
+      // 确保 SpectrogramComparison 已加载
+      if (!window.SpectrogramComparison) {
+        throw new Error('SpectrogramComparison 模块未加载');
+      }
+
+      const comparison = new window.SpectrogramComparison();
+      
+      // 生成对比数据
+      this.lastComparisonData = await comparison.generateComparisonData(session);
+      
+      // 恢复 canvas
+      if (canvasContainer) {
+        canvasContainer.innerHTML = '<canvas id="spectrogram-comparison-canvas" width="1200" height="600"></canvas>';
+      }
+      
+      const newCanvas = document.getElementById('spectrogram-comparison-canvas');
+      if (newCanvas) {
+        // 绘制对比图
+        comparison.drawComparison(newCanvas, this.lastComparisonData);
+      }
+
+      console.log('[Comparison] 声纹对比图生成完成:', {
+        unconstrainedLRA: this.lastComparisonData.unconstrained.lra,
+        constrainedLRA: this.lastComparisonData.constrained.lra,
+        lraDiff: this.lastComparisonData.unconstrained.lra - this.lastComparisonData.constrained.lra,
+      });
+
+    } catch (error) {
+      console.error('[Comparison] 生成失败:', error);
+      
+      if (canvasContainer) {
+        canvasContainer.innerHTML = `
+          <div class="spectrogram-generating" style="color: #fca5a5;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="15" y1="9" x2="9" y2="15"></line>
+              <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            <span>生成失败: ${error.message}</span>
+          </div>
+        `;
+      }
+    }
+  }
+
+  /**
+   * 导出对比图为 PNG
+   */
+  exportComparisonPNG() {
+    const canvas = document.getElementById('spectrogram-comparison-canvas');
+    if (!canvas) {
+      this.showMusicMessage('没有可导出的对比图');
+      return;
+    }
+
+    const comparison = new window.SpectrogramComparison();
+    const timestamp = Date.now();
+    comparison.exportAsPNG(canvas, `spectrogram_comparison_${timestamp}.png`);
+    this.showMusicMessage('对比图已导出为 PNG');
+  }
+
+  /**
+   * 导出对比数据为 JSON
+   */
+  exportComparisonJSON() {
+    if (!this.lastComparisonData) {
+      this.showMusicMessage('没有可导出的对比数据');
+      return;
+    }
+
+    const comparison = new window.SpectrogramComparison();
+    const timestamp = Date.now();
+    comparison.exportDataAsJSON(this.lastComparisonData, `comparison_data_${timestamp}.json`);
+    this.showMusicMessage('对比数据已导出为 JSON');
   }
   
   getGameData() {
