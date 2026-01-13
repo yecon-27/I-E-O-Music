@@ -350,31 +350,38 @@
             const repRatio = maxRepeat / lanes.length;
 
             // 检测探索模式
+            // 降低阈值：从 5 降低到 4 (只要用到 4 种音符就算探索)
             const uniqueLanes = new Set(lanes).size;
             const expRatio = uniqueLanes / 5;
 
             // 归一化分数（与报告面板一致）
+            // 调整权重，提高探索型的相对得分
             const seqRaw = Math.min(1, (seqRatio / 0.4) * 0.6 + (uniqueLanes / 5) * 0.4);
             const repRaw = Math.min(1, repRatio / 0.6);
-            const expRaw = Math.min(1, (uniqueLanes / 5) * 0.6 + (1 - repRatio) * 0.4);
+            // 提高 laneDiversity 权重 (0.6 -> 0.7) 降低 repRatio 惩罚 (0.4 -> 0.3)
+            const expRaw = Math.min(1, (uniqueLanes / 5) * 0.7 + (1 - repRatio) * 0.3);
+            
             const total = seqRaw + repRaw + expRaw || 1;
             let probs = {
                 seq: seqRaw / total,
                 rep: repRaw / total,
                 exp: expRaw / total,
             };
-            // EMA 平滑，降低波动与夸张
-            const alpha = 0.5;
+            
+            // 调整 EMA 平滑系数，让显示响应更快 (0.5 -> 0.3)
+            const alpha = 0.3;
             probs = {
                 seq: alpha * this.prevPatternProbs.seq + (1 - alpha) * probs.seq,
                 rep: alpha * this.prevPatternProbs.rep + (1 - alpha) * probs.rep,
                 exp: alpha * this.prevPatternProbs.exp + (1 - alpha) * probs.exp,
             };
             this.prevPatternProbs = { ...probs };
+            
             const entries = Object.entries(probs).sort((a, b) => b[1] - a[1]);
             const [topKey, topProb] = entries[0];
             const typeMap = { seq: 'sequential', rep: 'repetitive', exp: 'exploratory' };
-            const type = topProb >= 0.4 ? typeMap[topKey] : 'mixed';
+            // 降低阈值，让模式更容易显示 (0.4 -> 0.35)
+            const type = topProb >= 0.35 ? typeMap[topKey] : 'mixed';
             return { type, confidence: topProb };
         }
     }

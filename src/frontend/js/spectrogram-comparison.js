@@ -140,7 +140,7 @@ class SpectrogramComparison {
   }
 
   /**
-   * 计算 Log-Mel Spectrogram（优化版：使用简化的能量计算）
+   * 计算 Log-Mel Spectrogram
    */
   computeLogMelSpectrogram(audioBuffer) {
     const data = audioBuffer.getChannelData(0);
@@ -154,38 +154,29 @@ class SpectrogramComparison {
     const spectrogram = [];
     const window = this.createHannWindow(this.fftSize);
     
-    // 预计算 Mel 频率边界对应的 bin 索引
-    const melBinRanges = this.createMelBinRanges();
+    const melFilters = this.createMelFilterbank();
+    const numBins = this.fftSize / 2 + 1;
     
     for (let i = 0; i < numFrames; i += frameStep) {
       const start = i * this.hopSize;
-      
-      // 计算每个 Mel bin 的能量（简化方法：直接在时域分段计算能量）
-      const melSpec = new Float32Array(this.numMelBins);
-      
-      // 使用简化的频带能量估计
-      for (let m = 0; m < this.numMelBins; m++) {
-        const { lowBin, highBin } = melBinRanges[m];
-        
-        // 对应的时域采样范围（简化近似）
-        const binWidth = this.fftSize / 2;
-        const lowSample = Math.floor(start + (lowBin / binWidth) * this.fftSize * 0.5);
-        const highSample = Math.floor(start + (highBin / binWidth) * this.fftSize * 0.5);
-        
-        let energy = 0;
-        const sampleCount = Math.max(1, highSample - lowSample);
-        
-        for (let j = lowSample; j < highSample && j < data.length; j++) {
-          if (j >= 0) {
-            energy += data[j] * data[j] * window[Math.min(j - start, this.fftSize - 1)] || 0;
-          }
-        }
-        
-        energy = energy / sampleCount;
-        // 转换为 dB
-        melSpec[m] = 10 * Math.log10(Math.max(energy, 1e-10));
+      const frame = new Float32Array(this.fftSize);
+      for (let j = 0; j < this.fftSize; j++) {
+        const idx = start + j;
+        frame[j] = (idx >= 0 && idx < data.length ? data[idx] : 0) * window[j];
       }
-      
+      const { re, im } = this.fft(frame);
+      const power = new Float32Array(numBins);
+      for (let k = 0; k < numBins; k++) {
+        const r = re[k], ii = im[k];
+        power[k] = r * r + ii * ii;
+      }
+      const melSpec = new Float32Array(this.numMelBins);
+      for (let m = 0; m < this.numMelBins; m++) {
+        const filt = melFilters[m];
+        let e = 0;
+        for (let k = 0; k < numBins; k++) e += filt[k] * power[k];
+        melSpec[m] = 10 * Math.log10(Math.max(e, 1e-12));
+      }
       spectrogram.push(melSpec);
     }
     
@@ -236,11 +227,37 @@ class SpectrogramComparison {
   }
 
   /**
-   * 创建 Mel 滤波器组（保留用于精确计算，但默认不使用）
+   * 创建 Mel 滤波器组
    */
   createMelFilterbank() {
-    // 简化版本，只返回空数组，实际使用 createMelBinRanges
-    return [];
+    const melMin = this.hzToMel(this.minFreq);
+    const melMax = this.hzToMel(this.maxFreq);
+    const numBins = this.fftSize / 2 + 1;
+    const melPoints = new Float32Array(this.numMelBins + 2);
+    for (let i = 0; i < melPoints.length; i++) {
+      melPoints[i] = melMin + (melMax - melMin) * (i / (this.numMelBins + 1));
+    }
+    const hzPoints = new Float32Array(melPoints.length);
+    for (let i = 0; i < hzPoints.length; i++) hzPoints[i] = this.melToHz(melPoints[i]);
+    const binPoints = new Int32Array(hzPoints.length);
+    for (let i = 0; i < binPoints.length; i++) {
+      binPoints[i] = Math.max(0, Math.min(numBins - 1, Math.floor(hzPoints[i] / this.sampleRate * this.fftSize)));
+    }
+    const filters = new Array(this.numMelBins);
+    for (let m = 0; m < this.numMelBins; m++) {
+      const f = new Float32Array(numBins);
+      const left = binPoints[m];
+      const center = binPoints[m + 1];
+      const right = binPoints[m + 2];
+      for (let k = left; k <= center; k++) {
+        f[k] = (center === left) ? 0 : (k - left) / (center - left);
+      }
+      for (let k = center; k <= right; k++) {
+        f[k] = (right === center) ? 0 : (right - k) / (right - center);
+      }
+      filters[m] = f;
+    }
+    return filters;
   }
 
   hzToMel(hz) {
@@ -375,19 +392,14 @@ class SpectrogramComparison {
     ctx.fillText('Unconstrained Baseline', halfWidth / 2, 20);
     ctx.fillText('Constraint-First Output', halfWidth + halfWidth / 2, 20);
     
-    // 计算统一的 dB 范围
-    const allSpecData = [
-      ...comparisonData.unconstrained.spectrogram.data.flat(),
-      ...comparisonData.constrained.spectrogram.data.flat()
-    ];
-    const minDb = Math.min(...allSpecData);
-    const maxDb = Math.max(...allSpecData);
+    const rangeUnc = this.getDisplayRange(comparisonData.unconstrained.spectrogram);
+    const rangeCon = this.getDisplayRange(comparisonData.constrained.spectrogram);
     
     // 绘制频谱图
     this.drawSpectrogram(ctx, comparisonData.unconstrained.spectrogram, 
-      padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, minDb, maxDb);
+      padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, rangeUnc.min, rangeUnc.max);
     this.drawSpectrogram(ctx, comparisonData.constrained.spectrogram,
-      halfWidth + padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, minDb, maxDb);
+      halfWidth + padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, rangeCon.min, rangeCon.max);
     
     // 绘制响度轮廓
     const loudnessY = specHeight + 20;
@@ -448,16 +460,72 @@ class SpectrogramComparison {
     ctx.textAlign = 'left';
     ctx.fillText('Log-Mel Spectrogram (dB)', x, y - 5);
 
-    // Safety fallback for white spectrogram bug
-    if (minDb === maxDb) {
+    if ((maxDb - minDb) <= 1e-3) {
          ctx.fillStyle = '#000'; // Draw black if silence
          ctx.fillRect(x, y, width, height);
          ctx.fillStyle = '#666';
          ctx.textAlign = 'center';
-         ctx.fillText('Silence / No Data', x + width/2, y + height/2);
+    ctx.fillText('Silence / No Data', x + width/2, y + height/2);
     }
   }
 
+  fft(signal) {
+    const N = signal.length;
+    const re = new Float32Array(N);
+    const im = new Float32Array(N);
+    for (let i = 0; i < N; i++) { re[i] = signal[i]; im[i] = 0; }
+    let j = 0;
+    for (let i = 0; i < N; i++) {
+      if (i < j) { const tr = re[i]; const ti = im[i]; re[i] = re[j]; im[i] = im[j]; re[j] = tr; im[j] = ti; }
+      let m = N >> 1;
+      while (m >= 1 && j >= m) { j -= m; m >>= 1; }
+      j += m;
+    }
+    for (let s = 1; (1 << s) <= N; s++) {
+      const m = 1 << s;
+      const m2 = m >> 1;
+      const ang = -2 * Math.PI / m;
+      const wmr = Math.cos(ang);
+      const wmi = Math.sin(ang);
+      for (let k = 0; k < N; k += m) {
+        let wr = 1, wi = 0;
+        for (let t = 0; t < m2; t++) {
+          const u_r = re[k + t], u_i = im[k + t];
+          const v_r = re[k + t + m2], v_i = im[k + t + m2];
+          const tr = wr * v_r - wi * v_i;
+          const ti = wr * v_i + wi * v_r;
+          re[k + t] = u_r + tr;
+          im[k + t] = u_i + ti;
+          re[k + t + m2] = u_r - tr;
+          im[k + t + m2] = u_i - ti;
+          const tmp = wr;
+          wr = tmp * wmr - wi * wmi;
+          wi = tmp * wmi + wi * wmr;
+        }
+      }
+    }
+    return { re, im };
+  }
+
+  getDisplayRange(spec) {
+    const flat = [];
+    for (let i = 0; i < spec.data.length; i++) {
+      const row = spec.data[i];
+      for (let j = 0; j < row.length; j++) flat.push(row[j]);
+    }
+    if (!flat.length) return { min: -80, max: -20 };
+    const p5 = this.percentile(flat, 0.05);
+    const p95 = this.percentile(flat, 0.95);
+    const span = p95 - p5;
+    if (span < 20) return { min: -80, max: -20 };
+    return { min: p5, max: p95 };
+  }
+
+  percentile(arr, q) {
+    const a = arr.slice().sort((x, y) => x - y);
+    const idx = Math.max(0, Math.min(a.length - 1, Math.floor(q * (a.length - 1))));
+    return a[idx];
+  }
   /**
    * 绘制响度轮廓
    */
