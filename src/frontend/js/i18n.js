@@ -266,6 +266,8 @@ const TRANSLATIONS = {
         'spectro.label.loudness': '响度轮廓 (LUFS)',
         'spectro.label.silence': '静音 / 无数据',
         'spectro.metrics.line': 'LRA: {lra} LU | Avg: {avg} LUFS | ΔE: {dE}'
+        ,
+        'spectro.summary.lra': '响度范围 (LRA): {raw} → {safe} LU (×{factor} 降幅)'
     },
     en: {
         // Main UI (Restored)
@@ -483,6 +485,8 @@ const TRANSLATIONS = {
         'spectro.label.loudness': 'Loudness Contour (LUFS)',
         'spectro.label.silence': 'Silence / No Data',
         'spectro.metrics.line': 'LRA: {lra} LU | Avg: {avg} LUFS | ΔE: {dE}'
+        ,
+        'spectro.summary.lra': 'Loudness Range (LRA): {raw} → {safe} LU (×{factor} reduction)'
     }
 };
 
