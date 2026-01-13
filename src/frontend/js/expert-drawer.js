@@ -279,7 +279,6 @@ class ExpertSideDrawer {
         const drawer = document.createElement('div');
         drawer.id = 'expert-drawer';
         drawer.className = 'expert-drawer';
-        // HTML structure with placeholders, text will be populated by updateTexts()
         drawer.innerHTML = `
             <div class="drawer-handle">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -292,43 +291,11 @@ class ExpertSideDrawer {
                     <h3></h3>
                     <button class="drawer-close">×</button>
                 </div>
-                
-                <div class="drawer-section tempo-section">
-                    <h4></h4>
-                    <div class="tempo-control">
-                        <div class="tempo-display">
-                            <span id="param-tempo-value" class="tempo-value">125</span>
-                            <div id="param-tempo-warning" class="param-warning hidden" style="margin-left: 10px;">⚠️</div>
-                        </div>
-                        <div class="tempo-slider-wrap">
-                            <span class="tempo-label">100</span>
-                            <input type="range" id="param-tempo" min="100" max="140" value="125" class="tempo-slider">
-                            <span class="tempo-label">140</span>
-                        </div>
-                        <div class="tempo-markers">
-                            <span class="marker snap" style="left: 31.25%;">125</span>
-                            <span class="marker safe" style="left: 25%;">120</span>
-                            <span class="marker safe" style="left: 31.25%;">125</span>
-                            <span class="marker safe" style="left: 33.75%;">130</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="drawer-section">
-                    <h4></h4>
-                    <div class="param-sliders">
-                        <div class="param-row">
-                            <label for="param-volume"></label>
-                            <input type="range" id="param-volume" min="0" max="100" value="70">
-                            <span id="param-volume-value" class="param-value">70%</span>
-                            <span id="param-volume-warning" class="param-warning hidden">⚠️</span>
-                        </div>
-                        <div class="param-row">
-                            <label for="param-density"></label>
-                            <input type="range" id="param-density" min="10" max="500" value="100">
-                            <span id="param-density-value" class="param-value">1.0</span>
-                            <span id="param-density-warning" class="param-warning hidden">⚠️</span>
-                        </div>
+                <div class="drawer-section" id="dev-session-report-section">
+                    <h4>Developer Session Report</h4>
+                    <pre id="dev-session-report-text" class="dev-report"></pre>
+                    <div class="drawer-actions">
+                        <button id="dev-report-download" class="drawer-btn">Download JSON</button>
                     </div>
                 </div>
             </div>
@@ -716,6 +683,32 @@ class ExpertSideDrawer {
                 font-size: 14px;
             }
             
+            #dev-session-report-section .dev-report {
+                background: rgba(17, 24, 39, 0.6);
+                border: 1px solid rgba(148, 163, 184, 0.15);
+                color: #E5E7EB;
+                padding: 10px 12px;
+                border-radius: 8px;
+                white-space: pre-wrap;
+                word-break: break-word;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                font-size: 12px;
+                line-height: 1.5;
+            }
+            .drawer-actions {
+                display: flex;
+                gap: 8px;
+                margin-top: 8px;
+            }
+            .drawer-btn {
+                background: #4F46E5;
+                color: #FFFFFF;
+                border: none;
+                border-radius: 8px;
+                padding: 6px 10px;
+                cursor: pointer;
+            }
+            
             /* 确认框 */
             .confirm-box {
                 background: rgba(239, 68, 68, 0.15);
@@ -811,13 +804,27 @@ class ExpertSideDrawer {
         // 抽屉开关
         this.element.querySelector('.drawer-handle').addEventListener('click', () => this.toggle());
         this.element.querySelector('.drawer-close').addEventListener('click', () => this.close());
-        
-        // Tempo Slider - 带吸附逻辑
-        this.bindTempoSlider();
-        
-        // 其他参数滑块
-        this.bindSlider('volume', (v) => v / 100, (v) => `${v}%`, 'SET_VOLUME');
-        this.bindSlider('density', (v) => v / 100, (v) => (v / 100).toFixed(1), 'SET_DENSITY');
+
+        const downloadBtn = this.element.querySelector('#dev-report-download');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => {
+                const data = this._buildSessionReportData(window.game?.getLastSession?.() || null);
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `session_report_${data.traceId}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+        }
+
+        window.addEventListener('round:ended', (ev) => {
+            const session = ev.detail;
+            const data = this._buildSessionReportData(session);
+            this._renderDevSessionReport(data);
+            this.open();
+        });
     }
 
     bindTempoSlider() {
@@ -874,6 +881,60 @@ class ExpertSideDrawer {
         // 触摸设备优化
         slider.addEventListener('touchstart', () => { isDragging = true; }, { passive: true });
         slider.addEventListener('touchend', () => { isDragging = false; }, { passive: true });
+    }
+
+    _hashConfig(obj) {
+        try {
+            const s = JSON.stringify(obj || {});
+            let h = 0;
+            for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+            return h.toString(16);
+        } catch { return '00000000'; }
+    }
+
+    _buildSessionReportData(session) {
+        const traceId = window.sessionLogger?.sessionId || `legacy_${Date.now()}`;
+        const cfg = { ...(window.sessionConfig || {}) };
+        const configHash = this._hashConfig(cfg);
+        const envelopeId = this._hashConfig(window.safetyEnvelope?.safeRanges || {});
+        const lastGen = window._lastMusicGenerator || null;
+        const raw = lastGen?.lastRawParams || null;
+        const constrained = lastGen?.lastConstrainedParams || null;
+        const clampLog = constrained?.clampLog || [];
+        const compliance = clampLog.length === 0 ? 'PASS' : 'CLAMPED';
+        const params = {
+            tempo: constrained?.safeBpm ?? raw?.rawBpm ?? cfg.rewardBpm ?? 125,
+            contrast: constrained?.safeContrast ?? raw?.rawContrast ?? cfg.dynamicContrast ?? null,
+            duration: session?.durationSec ?? cfg.rewardDurationSec ?? null,
+            avgLoudness: window._spectroInstance?._lastData?.constrained?.metrics?.avgLoudness ?? null
+        };
+        const explanation = clampLog.length
+            ? clampLog.map(c => `${c.param} clamped ${c.original} → ${c.clamped} (${c.rule})`).join('; ')
+            : 'None';
+        return {
+            traceId,
+            configHash,
+            envelopeId,
+            compliance,
+            params,
+            changelog: clampLog,
+            explanation,
+            generatedAt: new Date().toISOString()
+        };
+    }
+
+    _renderDevSessionReport(data) {
+        const pre = this.element.querySelector('#dev-session-report-text');
+        if (!pre) return;
+        const lines = [
+            `traceId: ${data.traceId}`,
+            `configHash: ${data.configHash}`,
+            `envelopeId: ${data.envelopeId}`,
+            `compliance: ${data.compliance}`,
+            `params: tempo=${data.params.tempo} BPM, contrast=${data.params.contrast ?? '--'}, duration=${data.params.duration ?? '--'}s, avgLoudness=${data.params.avgLoudness ?? '--'} LUFS`,
+            `changelog: ${data.explanation}`
+        ];
+        pre.textContent = lines.join('\n');
     }
     
     bindSlider(name, toInternal, toDisplay, actionType) {
@@ -958,19 +1019,9 @@ class ExpertSideDrawer {
     }
 }
 
-// 初始化 - 默认隐藏抽屉（音乐参数已整合到报告面板）
 document.addEventListener('DOMContentLoaded', () => {
-    // 不再自动创建 expert-drawer，音乐参数控件已移至报告面板
-    // window.expertDrawer = new ExpertSideDrawer();
-    
-    // 仅保留 Context 供其他模块使用
+    window.expertDrawer = new ExpertSideDrawer();
     window.ExpertSettingsContext = ExpertSettingsContext;
-    
-    // 移除可能已存在的 expert-drawer 元素
-    const existingDrawer = document.getElementById('expert-drawer');
-    if (existingDrawer) {
-        existingDrawer.remove();
-    }
 });
 
 window.ExpertSideDrawer = ExpertSideDrawer;

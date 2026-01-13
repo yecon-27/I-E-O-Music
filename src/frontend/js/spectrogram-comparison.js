@@ -411,7 +411,7 @@ class SpectrogramComparison {
     const specHeight = height * 0.40;
     const loudnessHeight = height * 0.45;
     const padding = 10;
-    const labelHeight = 30;
+    const labelHeight = 46;
     
     // 绘制标题
     ctx.fillStyle = '#ffffff';
@@ -497,7 +497,7 @@ class SpectrogramComparison {
     ctx.fillStyle = '#aaaaaa';
     ctx.font = '10px system-ui';
     ctx.textAlign = 'left';
-    ctx.fillText(window.i18n ? window.i18n.t('spectro.label.spec') : 'Log-Mel Spectrogram (dB)', x, y - 5);
+    ctx.fillText(window.i18n ? window.i18n.t('spectro.label.spec') : 'Log-Mel Spectrogram (dB)', x, y + 12);
 
     if ((maxDb - minDb) <= 1e-3) {
          ctx.fillStyle = '#000'; // Draw black if silence
@@ -630,7 +630,7 @@ class SpectrogramComparison {
     ctx.fillStyle = '#aaaaaa';
     ctx.font = '10px system-ui';
     ctx.textAlign = 'left';
-    ctx.fillText(window.i18n ? window.i18n.t('spectro.label.loudness') : 'Loudness Contour (LUFS)', x, y - 5);
+    ctx.fillText(window.i18n ? window.i18n.t('spectro.label.loudness') : 'Loudness Contour (LUFS)', x, y + 12);
   }
 
   /**
