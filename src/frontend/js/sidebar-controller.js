@@ -16,7 +16,7 @@
             this.maxRecentClicks = 16;  // 扩大窗口，降低抖动
             this.prevPatternProbs = { seq: 0.33, rep: 0.33, exp: 0.33 };
             this.lastPatternType = 'mixed';
-            this.hysteresis = { seqOn: 0.7, seqOff: 0.5 }; // 顺子开启/保持阈值
+            this.hysteresis = { seqOn: 0.7, seqOff: 0.4 }; // 顺子开启/保持阈值
             
             this.elements = {};
             this.init();
@@ -410,7 +410,14 @@
             const typeMap = { seq: 'sequential', rep: 'repetitive', exp: 'exploratory' };
             const forceSequential = (seqRatio >= this.hysteresis.seqOn) ||
                                     (this.lastPatternType === 'sequential' && seqRatio >= this.hysteresis.seqOff);
-            const type = forceSequential ? 'sequential' : (topProb >= 0.65 ? typeMap[topKey] : 'mixed');
+            let type = 'exploratory';
+            if (forceSequential) {
+                type = 'sequential';
+            } else if (topKey === 'rep' || (repRatio >= 0.6 && probs.rep >= 0.5)) {
+                type = 'repetitive';
+            } else {
+                type = 'exploratory';
+            }
             const confidence = forceSequential ? Math.max(topProb, seqRatio) : topProb;
             this.lastPatternType = type;
             return { type, confidence };

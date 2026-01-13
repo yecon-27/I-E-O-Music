@@ -485,10 +485,11 @@ const TRANSLATIONS = {
         
         // Music Player
         'music.playing': ' Playing...',
-        'music.download': ' Download MIDI',
-        'music.error': 'No music found, please finish a game first',
-        'music.muted': 'Currently muted, please click "Unmute" first',
-        'music.playerNotReady': 'Music player not ready, please try again later'
+        'music.download': ' Download Music',
+        'music.error': 'No music generated, please finish a game first',
+        'music.muted': 'Currently muted, please click "Unmute"',
+        'music.playerNotReady': 'Music player not ready, please try again later',
+        'music.loadingSamples': 'Loading instrument samples...',
         
         ,
         'spectro.title.left': 'Unconstrained Baseline',

@@ -184,7 +184,7 @@ class AdvancedMusicGenerator {
     const rawBpm = Math.round(60000 / medianInterval);
 
     // 稳健对比度: 使用 MAD/median，并上限压缩
-    const sortedIntervals = [...intervals].sort((a, b) => a - b);
+    // const sortedIntervals = [...intervals].sort((a, b) => a - b); // Removed duplicate declaration
     const medianInterval2 = sortedIntervals[Math.floor(sortedIntervals.length / 2)];
     const absDevs = intervals.map(v => Math.abs(v - medianInterval2)).sort((a, b) => a - b);
     const mad = absDevs[Math.floor(absDevs.length / 2)] || 0;

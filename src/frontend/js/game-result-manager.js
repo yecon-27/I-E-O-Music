@@ -2343,8 +2343,8 @@ class GameResultManager {
     ctx.drawImage(canvas, 0, 0);
     const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [] };
     const pat = this.analyzePattern(session.notes || []);
-    const labelMap = { sequential: 'Sequential', repetitive: 'Repetitive', exploratory: 'Exploratory', mixed: 'Mixed' };
-    const modeLabel = labelMap[pat.patternType] || 'Unknown';
+    const labelMap = { sequential: 'Sequential', repetitive: 'Repetitive', exploratory: 'Exploratory' };
+    const modeLabel = labelMap[pat.patternType] || 'Exploratory';
     const text = `Mode: ${modeLabel}`;
     const pad = 10;
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
