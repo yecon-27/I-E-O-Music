@@ -16,7 +16,7 @@ class SafetyEnvelope {
         
         // 安全范围定义
         this.safeRanges = {
-            tempo: { min: 120, max: 130, unsafeMin: 100, unsafeMax: 140 },
+            tempo: { min: 100, max: 140, unsafeMin: 100, unsafeMax: 140 },
             volume: { min: 0.3, max: 0.8, unsafeMin: 0, unsafeMax: 1.0 },
             density: { min: 0.5, max: 2.0, unsafeMin: 0.1, unsafeMax: 5.0 },
             noteRange: { min: 48, max: 84, unsafeMin: 24, unsafeMax: 108 }, // MIDI

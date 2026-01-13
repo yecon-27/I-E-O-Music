@@ -9,7 +9,7 @@ class MusicParamController {
         
         // 默认安全区间定义
         this.safeRanges = {
-            tempo: { min: 60, max: 80, absMin: 40, absMax: 120, unit: 'BPM' },
+            tempo: { min: 100, max: 140, absMin: 100, absMax: 140, unit: 'BPM' },
             contrast: { min: 0, max: 20, absMin: 0, absMax: 50, unit: '%' },
             volume: { min: 60, max: 80, absMin: 0, absMax: 100, unit: '%' },
             density: { min: 30, max: 70, absMin: 0, absMax: 100, unit: '%' },
@@ -22,7 +22,7 @@ class MusicParamController {
         
         // 当前参数
         this.currentParams = {
-            tempo: 72,
+            tempo: 130,
             contrast: 10,
             volume: 70,
             harmony: 'I-V',
@@ -102,7 +102,7 @@ class MusicParamController {
             if (tempoLabel) {
                 const span = tempoLabel.querySelector('span:first-child');
                 if (span) {
-                    span.innerHTML = `${this.t('expert.tempo')} <span class="param-safe-range">${this.t('expert.safeRange')}120-130</span>`;
+                    span.innerHTML = `${this.t('expert.tempo')} <span class="param-safe-range">${this.t('expert.safeRange')}100-140</span>`;
                 }
                 const warning = tempoLabel.querySelector('.param-warning-badge');
                 if (warning) warning.textContent = this.t('expert.warning.unsafe');
@@ -668,6 +668,16 @@ class MusicParamController {
             if (range) {
                 slider.dataset.safeMin = range.min;
                 slider.dataset.safeMax = range.max;
+                // 同步滑动条绝对区间（Tempo）
+                if (param === 'tempo') {
+                    slider.min = String(range.absMin);
+                    slider.max = String(range.absMax);
+                    // 如果当前值越界，则重置到默认值
+                    const v = parseInt(slider.value || '130', 10);
+                    if (v < range.absMin || v > range.absMax) {
+                        slider.value = String(this.currentParams.tempo || 130);
+                    }
+                }
             }
             
             slider.addEventListener('input', (e) => {
@@ -1071,7 +1081,7 @@ class MusicParamController {
      */
     resetToDefaults() {
         this.currentParams = {
-            tempo: 72,
+            tempo: 130,
             contrast: 10,
             volume: 70,
             harmony: 'I-V',
@@ -1087,9 +1097,11 @@ class MusicParamController {
         const volumeSlider = document.getElementById('report-param-volume');
         
         if (tempoSlider) {
-            tempoSlider.value = 72;
-            document.getElementById('report-param-tempo-value').textContent = '72';
-            this.updateSliderStyle(tempoSlider, 'tempo', 72);
+            tempoSlider.min = String(this.safeRanges.tempo.absMin);
+            tempoSlider.max = String(this.safeRanges.tempo.absMax);
+            tempoSlider.value = 130;
+            document.getElementById('report-param-tempo-value').textContent = '130';
+            this.updateSliderStyle(tempoSlider, 'tempo', 130);
         }
         
         if (contrastSlider) {
@@ -1141,8 +1153,8 @@ class MusicParamController {
      */
     async submitConvergedParams() {
         // 收集上下界参数
-        const tempoMin = parseInt(document.getElementById('converge-tempo-min')?.value) || 60;
-        const tempoMax = parseInt(document.getElementById('converge-tempo-max')?.value) || 80;
+        const tempoMin = parseInt(document.getElementById('converge-tempo-min')?.value) || 100;
+        const tempoMax = parseInt(document.getElementById('converge-tempo-max')?.value) || 140;
         const contrastMin = parseInt(document.getElementById('converge-contrast-min')?.value) || 0;
         const contrastMax = parseInt(document.getElementById('converge-contrast-max')?.value) || 20;
         const volumeMin = parseInt(document.getElementById('converge-volume-min')?.value) || 60;
@@ -1256,6 +1268,11 @@ class MusicParamController {
             const trackFill = container.querySelector('.daw-track-fill');
             const param = container.dataset.param;
             const scope = container.dataset.scope || 'converge';
+            // 覆盖数据集范围以适配最新安全区间
+            if (param === 'tempo') {
+                container.dataset.min = String(this.safeRanges.tempo.absMin);
+                container.dataset.max = String(this.safeRanges.tempo.absMax);
+            }
             const rangeMin = parseInt(container.dataset.min);
             const rangeMax = parseInt(container.dataset.max);
             
@@ -1310,6 +1327,14 @@ class MusicParamController {
             });
             
             // 初始化
+            if (param === 'tempo') {
+                minSlider.min = String(rangeMin);
+                minSlider.max = String(rangeMax);
+                maxSlider.min = String(rangeMin);
+                maxSlider.max = String(rangeMax);
+                minSlider.value = String(this.safeRanges.tempo.min);
+                maxSlider.value = String(this.safeRanges.tempo.max);
+            }
             updateTrackFill();
         });
         

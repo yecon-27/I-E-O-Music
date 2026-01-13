@@ -332,16 +332,26 @@
                 return { type: 'unknown', confidence: 0 };
             }
 
-            const lanes = this.recentClicks.slice(0, 10).map(c => c.laneId);
+            const lanes = this.recentClicks.slice(0, 12).map(c => c.laneId);
             
-            // 检测顺序模式
-            let seqScore = 0;
-            for (let i = 1; i < lanes.length; i++) {
-                if (lanes[i] === lanes[i-1] + 1 || lanes[i] === lanes[i-1] - 1) {
-                    seqScore++;
+            let covered = new Set();
+            for (let i = 0; i < lanes.length; i++) {
+                if (lanes[i] !== 1) continue;
+                let last = i;
+                let ok = true;
+                const idxs = [i];
+                for (let step = 2; step <= 5; step++) {
+                    let found = -1;
+                    for (let j = last + 1; j < lanes.length && j <= last + 6; j++) {
+                        if (lanes[j] === step) { found = j; break; }
+                    }
+                    if (found < 0) { ok = false; break; }
+                    idxs.push(found);
+                    last = found;
                 }
+                if (ok) { idxs.forEach(k => covered.add(k)); }
             }
-            const seqRatio = seqScore / (lanes.length - 1);
+            const seqRatio = covered.size / lanes.length;
 
             // 检测重复模式
             const laneCounts = {};
@@ -356,7 +366,7 @@
 
             // 归一化分数（与报告面板一致）
             // 调整权重，提高探索型的相对得分
-            const seqRaw = Math.min(1, (seqRatio / 0.4) * 0.6 + (uniqueLanes / 5) * 0.4);
+            const seqRaw = Math.min(1, (seqRatio / 0.8) * 0.7 + (uniqueLanes / 5) * 0.3);
             const repRaw = Math.min(1, repRatio / 0.6);
             // 提高 laneDiversity 权重 (0.6 -> 0.7) 降低 repRatio 惩罚 (0.4 -> 0.3)
             const expRaw = Math.min(1, (uniqueLanes / 5) * 0.7 + (1 - repRatio) * 0.3);
@@ -368,7 +378,6 @@
                 exp: expRaw / total,
             };
             
-            // 调整 EMA 平滑系数，让显示响应更快 (0.5 -> 0.3)
             const alpha = 0.3;
             probs = {
                 seq: alpha * this.prevPatternProbs.seq + (1 - alpha) * probs.seq,
@@ -380,8 +389,7 @@
             const entries = Object.entries(probs).sort((a, b) => b[1] - a[1]);
             const [topKey, topProb] = entries[0];
             const typeMap = { seq: 'sequential', rep: 'repetitive', exp: 'exploratory' };
-            // 降低阈值，让模式更容易显示 (0.4 -> 0.35)
-            const type = topProb >= 0.35 ? typeMap[topKey] : 'mixed';
+            const type = topProb >= 0.6 && seqRatio >= 0.8 ? typeMap[topKey] : 'mixed';
             return { type, confidence: topProb };
         }
     }

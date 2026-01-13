@@ -258,6 +258,14 @@ const TRANSLATIONS = {
         'music.error': '没有找到生成的音乐，请先完成一局游戏',
         'music.muted': '当前为静音状态，请先点击“恢复声音”',
         'music.playerNotReady': '音乐播放器未准备好，请稍后再试'
+        
+        ,
+        'spectro.title.left': '无约束基线',
+        'spectro.title.right': '约束优先输出',
+        'spectro.label.spec': 'Log-Mel 频谱图 (dB)',
+        'spectro.label.loudness': '响度轮廓 (LUFS)',
+        'spectro.label.silence': '静音 / 无数据',
+        'spectro.metrics.line': 'LRA: {lra} LU | Avg: {avg} LUFS | ΔE: {dE}'
     },
     en: {
         // Main UI (Restored)
@@ -467,6 +475,14 @@ const TRANSLATIONS = {
         'music.error': 'No music found, please finish a game first',
         'music.muted': 'Currently muted, please click "Unmute" first',
         'music.playerNotReady': 'Music player not ready, please try again later'
+        
+        ,
+        'spectro.title.left': 'Unconstrained Baseline',
+        'spectro.title.right': 'Constraint-First Output',
+        'spectro.label.spec': 'Log-Mel Spectrogram (dB)',
+        'spectro.label.loudness': 'Loudness Contour (LUFS)',
+        'spectro.label.silence': 'Silence / No Data',
+        'spectro.metrics.line': 'LRA: {lra} LU | Avg: {avg} LUFS | ΔE: {dE}'
     }
 };
 

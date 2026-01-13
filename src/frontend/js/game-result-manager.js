@@ -906,22 +906,29 @@ class GameResultManager {
     const dominantLane = Object.entries(laneCounts).find(([k, v]) => v === maxCount)?.[0];
     const dominantRatio = maxCount / notes.length;
     
-    // 检测顺序模式 (CDEGA)
-    let sequentialHits = 0;
     const expectedOrder = ["C", "D", "E", "G", "A"];
-    for (let i = 1; i < notes.length; i++) {
-      const prevNote = notes[i-1].name?.[0] || "";
-      const currNote = notes[i].name?.[0] || "";
-      const prevIdx = expectedOrder.indexOf(prevNote);
-      const currIdx = expectedOrder.indexOf(currNote);
-      if (prevIdx >= 0 && currIdx >= 0 && currIdx === prevIdx + 1) {
-        sequentialHits++;
+    const letters = notes.map(n => n.name?.[0] || "");
+    const covered = new Set();
+    for (let i = 0; i < letters.length; i++) {
+      if (letters[i] !== "C") continue;
+      let lastIdx = i;
+      let ok = true;
+      const indices = [i];
+      for (let t = 1; t < expectedOrder.length; t++) {
+        let found = -1;
+        for (let j = lastIdx + 1; j < letters.length && j <= lastIdx + 6; j++) {
+          if (letters[j] === expectedOrder[t]) { found = j; break; }
+        }
+        if (found < 0) { ok = false; break; }
+        indices.push(found);
+        lastIdx = found;
       }
+      if (ok) { indices.forEach(idx => covered.add(idx)); }
     }
-    const sequentialRatio = notes.length > 1 ? sequentialHits / (notes.length - 1) : 0;
+    const sequentialCoverage = letters.length ? covered.size / letters.length : 0;
     
     // 计算三种模式的原始分数 (0-1)
-    const seqRaw = Math.min(1, (sequentialRatio / 0.4) * 0.6 + (laneDiversity / 5) * 0.4);
+    const seqRaw = Math.min(1, (sequentialCoverage / 0.8) * 0.7 + (laneDiversity / 5) * 0.3);
     const repRaw = Math.min(1, dominantRatio / 0.6);
     const expRaw = Math.min(1, (laneDiversity / 5) * 0.6 + (1 - dominantRatio) * 0.4);
     // 归一化为比例分布（总和 = 100%）
@@ -937,11 +944,11 @@ class GameResultManager {
     // 判断主导模式
     let patternType, icon, name, rule;
     
-    if (sequentialRatio > 0.4 && laneDiversity >= 4) {
+    if (sequentialCoverage >= 0.8 && laneDiversity >= 4) {
       patternType = "sequential";
       icon = PATTERN_ICONS.sequential;
       name = this.t('pat.sequential');
-      rule = this.t('pat.rule.sequential', { ratio: Math.round(sequentialRatio * 100), diversity: laneDiversity });
+      rule = this.t('pat.rule.sequential', { ratio: Math.round(sequentialCoverage * 100), diversity: laneDiversity });
     } else if (dominantRatio > 0.6) {
       patternType = "repetitive";
       icon = PATTERN_ICONS.repetitive;
@@ -2255,15 +2262,22 @@ class GameResultManager {
     }
     if (rawContrastEl && data.unconstrained?.rawParams) {
       const contrast = data.unconstrained.rawParams.rawContrast;
-      rawContrastEl.textContent = `对比度: ${contrast ? (contrast * 100).toFixed(0) + '%' : '--'}`;
+      rawContrastEl.textContent = `对比度: ${contrast !== undefined && contrast !== null ? (contrast * 100).toFixed(0) + '%' : '--'}`;
     }
     if (safeBpmEl && data.constrained?.sequence?.tempos) {
       safeBpmEl.textContent = `BPM: ${data.constrained.sequence.tempos[0]?.qpm || 72}`;
     }
-    if (safeContrastEl && data.constrained?.clampLog) {
-      const contrastClamp = data.constrained.clampLog.find(c => c.param === 'contrast');
-      const finalContrast = contrastClamp ? contrastClamp.clamped : (data.unconstrained?.rawParams?.rawContrast || 0);
-      safeContrastEl.textContent = `对比度: ${(finalContrast * 100).toFixed(0)}%`;
+    if (safeContrastEl) {
+      let finalContrast = undefined;
+      if (data.constrained?.safeParams?.safeContrast !== undefined) {
+        finalContrast = data.constrained.safeParams.safeContrast;
+      } else if (data.constrained?.clampLog) {
+        const contrastClamp = data.constrained.clampLog.find(c => c.param === 'contrast');
+        finalContrast = contrastClamp ? contrastClamp.clamped : data.unconstrained?.rawParams?.rawContrast;
+      } else {
+        finalContrast = data.unconstrained?.rawParams?.rawContrast;
+      }
+      safeContrastEl.textContent = `对比度: ${finalContrast !== undefined && finalContrast !== null ? (finalContrast * 100).toFixed(0) + '%' : '--'}`;
     }
   }
 

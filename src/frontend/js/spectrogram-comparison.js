@@ -80,6 +80,7 @@ class SpectrogramComparison {
       constrained: {
         sequence: constrainedResult.sequence,
         clampLog: constrainedResult.clampLog,
+        safeParams: generator.lastConstrainedParams || null,
         audio: constrainedAudio,
         spectrogram: constrainedSpec,
         loudness: constrainedLoudness,
@@ -389,8 +390,8 @@ class SpectrogramComparison {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 14px system-ui';
     ctx.textAlign = 'center';
-    ctx.fillText('Unconstrained Baseline', halfWidth / 2, 20);
-    ctx.fillText('Constraint-First Output', halfWidth + halfWidth / 2, 20);
+    ctx.fillText(window.i18n ? window.i18n.t('spectro.title.left') : 'Unconstrained Baseline', halfWidth / 2, 20);
+    ctx.fillText(window.i18n ? window.i18n.t('spectro.title.right') : 'Constraint-First Output', halfWidth + halfWidth / 2, 20);
     
     const rangeUnc = this.getDisplayRange(comparisonData.unconstrained.spectrogram);
     const rangeCon = this.getDisplayRange(comparisonData.constrained.spectrogram);
@@ -417,8 +418,24 @@ class SpectrogramComparison {
     const uncMetrics = comparisonData.unconstrained.metrics;
     const conMetrics = comparisonData.constrained.metrics;
     
-    ctx.fillText(`LRA: ${comparisonData.unconstrained.lra.toFixed(1)} LU | Avg: ${uncMetrics.avgLoudness.toFixed(1)} LUFS | ΔE: ${uncMetrics.energyChangeRate.toFixed(2)}`, padding, metricsY);
-    ctx.fillText(`LRA: ${comparisonData.constrained.lra.toFixed(1)} LU | Avg: ${conMetrics.avgLoudness.toFixed(1)} LUFS | ΔE: ${conMetrics.energyChangeRate.toFixed(2)}`, halfWidth + padding, metricsY);
+    ctx.fillText(
+      window.i18n ? window.i18n.t('spectro.metrics.line', {
+        lra: comparisonData.unconstrained.lra.toFixed(1),
+        avg: uncMetrics.avgLoudness.toFixed(1),
+        dE: uncMetrics.energyChangeRate.toFixed(2)
+      }) : `LRA: ${comparisonData.unconstrained.lra.toFixed(1)} LU | Avg: ${uncMetrics.avgLoudness.toFixed(1)} LUFS | ΔE: ${uncMetrics.energyChangeRate.toFixed(2)}`,
+      padding,
+      metricsY
+    );
+    ctx.fillText(
+      window.i18n ? window.i18n.t('spectro.metrics.line', {
+        lra: comparisonData.constrained.lra.toFixed(1),
+        avg: conMetrics.avgLoudness.toFixed(1),
+        dE: conMetrics.energyChangeRate.toFixed(2)
+      }) : `LRA: ${comparisonData.constrained.lra.toFixed(1)} LU | Avg: ${conMetrics.avgLoudness.toFixed(1)} LUFS | ΔE: ${conMetrics.energyChangeRate.toFixed(2)}`,
+      halfWidth + padding,
+      metricsY
+    );
     
     // 绘制分隔线
     ctx.strokeStyle = '#4a4a6a';
@@ -458,14 +475,14 @@ class SpectrogramComparison {
     ctx.fillStyle = '#aaaaaa';
     ctx.font = '10px system-ui';
     ctx.textAlign = 'left';
-    ctx.fillText('Log-Mel Spectrogram (dB)', x, y - 5);
+    ctx.fillText(window.i18n ? window.i18n.t('spectro.label.spec') : 'Log-Mel Spectrogram (dB)', x, y - 5);
 
     if ((maxDb - minDb) <= 1e-3) {
          ctx.fillStyle = '#000'; // Draw black if silence
          ctx.fillRect(x, y, width, height);
          ctx.fillStyle = '#666';
          ctx.textAlign = 'center';
-    ctx.fillText('Silence / No Data', x + width/2, y + height/2);
+    ctx.fillText(window.i18n ? window.i18n.t('spectro.label.silence') : 'Silence / No Data', x + width/2, y + height/2);
     }
   }
 
@@ -591,7 +608,7 @@ class SpectrogramComparison {
     ctx.fillStyle = '#aaaaaa';
     ctx.font = '10px system-ui';
     ctx.textAlign = 'left';
-    ctx.fillText('Loudness Contour (LUFS)', x, y - 5);
+    ctx.fillText(window.i18n ? window.i18n.t('spectro.label.loudness') : 'Loudness Contour (LUFS)', x, y - 5);
   }
 
   /**
