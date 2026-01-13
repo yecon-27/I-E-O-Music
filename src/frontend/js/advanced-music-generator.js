@@ -524,8 +524,13 @@ class AdvancedMusicGenerator {
       { type: "exploratory", score: exploratoryPass ? expScore : 0 },
     ].sort((a, b) => b.score - a.score);
 
+    // 放宽模式判断阈值，让更多情况能被识别为有模式
+    // 原来要求 score >= 0.6 且差距 >= 0.15，现在放宽到 score >= 0.4 且差距 >= 0.1
     let patternType = "mixed";
-    if (scores[0].score >= 0.6 && scores[0].score - scores[1].score >= 0.15) {
+    if (scores[0].score >= 0.4 && scores[0].score - scores[1].score >= 0.1) {
+      patternType = scores[0].type;
+    } else if (scores[0].score >= 0.3) {
+      // 即使差距不够，只要有一定分数也使用该模式
       patternType = scores[0].type;
     }
 
@@ -786,19 +791,16 @@ class AdvancedMusicGenerator {
    * 基于用户行为的旋律生成（使用量化后的节奏）
    */
   generateBehaviorDrivenMelody(styleType, pitchPool, actions, quantizedIntervals, secondsPerBeat, beatsTotal, patternSummary, rhythmDensity) {
-    // 如果有足够的量化间隔数据，使用它们来驱动节奏
-    if (quantizedIntervals && quantizedIntervals.length >= 3) {
-      return this.generateMelodyFromQuantizedIntervals(
-        pitchPool,
-        actions,
-        quantizedIntervals,
-        secondsPerBeat,
-        beatsTotal,
-        patternSummary
-      );
+    // 修复：如果检测到明显的模式（非混合），优先使用风格化生成，以增强“模式感”
+    // 用户反馈“没有明显的模式感”，说明纯行为驱动（模仿用户节奏）在有明确模式时反而削弱了音乐性
+    const hasStrongPattern = patternSummary && 
+      ['sequential_pentatonic', 'repetitive', 'exploratory'].includes(patternSummary.patternType);
+
+    if (hasStrongPattern) {
+       return this.generateStyleMelody(styleType, pitchPool, beatsTotal, secondsPerBeat, patternSummary, rhythmDensity);
     }
 
-    // 否则回退到原有的模板生成
+    // 始终使用风格化模板生成，确保有模式感
     return this.generateStyleMelody(styleType, pitchPool, beatsTotal, secondsPerBeat, patternSummary, rhythmDensity);
   }
 
