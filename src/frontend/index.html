@@ -182,14 +182,6 @@
                                 </svg>
                                 播放
                             </button>
-                            <button id="download-wav-btn" class="result-btn secondary" title="下载WAV音频文件">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                                </svg>
-                                WAV
-                            </button>
                             <button id="result-mute-btn" class="result-btn secondary panic-btn">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
@@ -225,31 +217,6 @@
                                 <span>专家模式</span>
                             </div>
                             
-                            <!-- 无约束音乐对比区域 -->
-                            <div class="unconstrained-music-section">
-                                <button id="play-unconstrained-btn" class="unconstrained-btn" title="播放基于用户行为的原始音乐（未经安全约束）">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                                    <span>播放无约束音乐</span>
-                                </button>
-                                <button id="download-unconstrained-btn" class="unconstrained-btn secondary" title="下载无约束音乐的MIDI文件">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                    <span>MIDI</span>
-                                </button>
-                                <button id="download-unconstrained-wav-btn" class="unconstrained-btn secondary" title="下载无约束音乐的WAV文件">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
-                                    <span>WAV</span>
-                                </button>
-                                <button id="generate-comparison-btn" class="unconstrained-btn" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);" title="生成声纹图对比">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                                    <span>声纹对比</span>
-                                </button>
-                                <div id="unconstrained-params-display" class="unconstrained-params">
-                                    <span class="param-badge" id="raw-bpm-badge">BPM: --</span>
-                                    <span class="param-badge" id="raw-contrast-badge">对比度: --</span>
-                                    <span class="param-badge warning" id="clamp-indicator" style="display:none;">已约束</span>
-                                </div>
-                            </div>
-                            
                             <button id="exit-expert-btn" class="expert-exit-btn">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                                 退出专家模式
@@ -258,50 +225,6 @@
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
                                 刷新专家模式
                             </button>
-                        </div>
-                        
-                        <!-- 声纹对比弹窗 -->
-                        <div id="spectrogram-comparison-modal" class="spectrogram-modal hidden">
-                            <div class="spectrogram-modal-content">
-                                <div class="spectrogram-modal-header">
-                                    <h3>
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                                        Unconstrained vs Constrained 声纹对比
-                                    </h3>
-                                    <div class="spectrogram-modal-actions">
-                                        <button id="export-comparison-png" class="spectrogram-export-btn" title="导出为PNG">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                                            PNG
-                                        </button>
-                                        <button id="export-comparison-json" class="spectrogram-export-btn" title="导出数据为JSON">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                                            JSON
-                                        </button>
-                                        <button id="close-comparison-modal" class="spectrogram-close-btn" title="关闭">
-                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="spectrogram-canvas-container">
-                                    <canvas id="spectrogram-comparison-canvas" width="1200" height="600"></canvas>
-                                </div>
-                                <div class="spectrogram-legend">
-                                    <div class="legend-item">
-                                        <span class="legend-color" style="background: #4ecdc4;"></span>
-                                        <span>Loudness Contour</span>
-                                    </div>
-                                    <div class="legend-item">
-                                        <span class="legend-color" style="background: #ff6b6b; opacity: 0.5;"></span>
-                                        <span>Envelope Bounds (虚线)</span>
-                                    </div>
-                                    <div class="legend-item">
-                                        <span class="legend-label">LRA = Loudness Range (95th - 10th percentile)</span>
-                                    </div>
-                                    <div class="legend-item">
-                                        <span class="legend-label">ΔE = Energy Change Rate (响度变化率)</span>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                         
                         <!-- 主内容区 - 左右分栏 -->
@@ -419,6 +342,7 @@
                                 <div class="param-mode-toggle">
                                     <button id="param-mode-test" class="mode-btn active">测试模式</button>
                                     <button id="param-mode-converge" class="mode-btn">收敛模式</button>
+                                    <button id="param-mode-spectrum" class="mode-btn">频谱分析</button>
                                 </div>
                                 
                                 <div class="music-params-grid">
@@ -661,6 +585,88 @@
                                                 <p class="submit-note">数据库未配置</p>
                                             </div>
                                         </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 频谱分析区域 -->
+                                <div id="spectrum-analysis-area" class="spectrum-analysis-area hidden">
+                                    <div class="spectrum-header">
+                                        <h4 class="spectrum-title">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                                            Unconstrained vs Constrained 对比
+                                        </h4>
+                                        <p class="spectrum-desc">基于相同 actionTrace 生成两版音乐，对比安全包络的约束效果</p>
+                                    </div>
+                                    
+                                    <!-- 原始参数显示 -->
+                                    <div class="spectrum-params">
+                                        <div class="spectrum-param-group">
+                                            <span class="spectrum-param-label">原始参数 (行为派生)</span>
+                                            <div class="spectrum-param-badges">
+                                                <span class="spectrum-badge" id="spectrum-raw-bpm">BPM: --</span>
+                                                <span class="spectrum-badge" id="spectrum-raw-contrast">对比度: --</span>
+                                            </div>
+                                        </div>
+                                        <div class="spectrum-param-group">
+                                            <span class="spectrum-param-label">约束后参数</span>
+                                            <div class="spectrum-param-badges">
+                                                <span class="spectrum-badge safe" id="spectrum-safe-bpm">BPM: --</span>
+                                                <span class="spectrum-badge safe" id="spectrum-safe-contrast">对比度: --</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 频谱图画布 -->
+                                    <div class="spectrum-canvas-wrapper">
+                                        <canvas id="spectrum-comparison-canvas" width="560" height="320"></canvas>
+                                        <div id="spectrum-loading" class="spectrum-loading hidden">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+                                            <span>生成中...</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 指标对比 -->
+                                    <div class="spectrum-metrics">
+                                        <div class="spectrum-metric">
+                                            <span class="metric-label">LRA (响度范围)</span>
+                                            <div class="metric-compare">
+                                                <span class="metric-value unconstrained" id="spectrum-lra-raw">-- LU</span>
+                                                <span class="metric-arrow">→</span>
+                                                <span class="metric-value constrained" id="spectrum-lra-safe">-- LU</span>
+                                            </div>
+                                        </div>
+                                        <div class="spectrum-metric">
+                                            <span class="metric-label">ΔE (能量变化率)</span>
+                                            <div class="metric-compare">
+                                                <span class="metric-value unconstrained" id="spectrum-de-raw">--</span>
+                                                <span class="metric-arrow">→</span>
+                                                <span class="metric-value constrained" id="spectrum-de-safe">--</span>
+                                            </div>
+                                        </div>
+                                        <div class="spectrum-metric">
+                                            <span class="metric-label">平均响度</span>
+                                            <div class="metric-compare">
+                                                <span class="metric-value unconstrained" id="spectrum-avg-raw">-- LUFS</span>
+                                                <span class="metric-arrow">→</span>
+                                                <span class="metric-value constrained" id="spectrum-avg-safe">-- LUFS</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 操作按钮 -->
+                                    <div class="spectrum-actions">
+                                        <button id="spectrum-generate-btn" class="param-btn primary">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                            生成对比
+                                        </button>
+                                        <button id="spectrum-export-png-btn" class="param-btn secondary">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                                            导出 PNG
+                                        </button>
+                                        <button id="spectrum-export-json-btn" class="param-btn secondary">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                            导出 JSON
+                                        </button>
                                     </div>
                                 </div>
                             </div>

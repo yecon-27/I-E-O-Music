@@ -142,6 +142,9 @@ class GameResultManager {
       });
     }
     
+    // 绑定频谱分析按钮
+    this.bindSpectrumAnalysisButtons();
+    
     // 监听语言切换事件
     if (window.i18n) {
         window.i18n.subscribe(() => {
@@ -2031,6 +2034,179 @@ class GameResultManager {
     const timestamp = Date.now();
     comparison.exportDataAsJSON(this.lastComparisonData, `comparison_data_${timestamp}.json`);
     this.showMusicMessage('对比数据已导出为 JSON');
+  }
+
+  /**
+   * 绑定频谱分析按钮事件
+   */
+  bindSpectrumAnalysisButtons() {
+    const generateBtn = document.getElementById('spectrum-generate-btn');
+    const exportPngBtn = document.getElementById('spectrum-export-png-btn');
+    const exportJsonBtn = document.getElementById('spectrum-export-json-btn');
+
+    if (generateBtn) {
+      generateBtn.addEventListener('click', () => {
+        this.generateSpectrumAnalysis();
+      });
+    }
+
+    if (exportPngBtn) {
+      exportPngBtn.addEventListener('click', () => {
+        this.exportSpectrumPNG();
+      });
+    }
+
+    if (exportJsonBtn) {
+      exportJsonBtn.addEventListener('click', () => {
+        this.exportSpectrumJSON();
+      });
+    }
+  }
+
+  /**
+   * 生成频谱分析
+   */
+  async generateSpectrumAnalysis() {
+    const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [] };
+    
+    if (!session.notes || session.notes.length < 3) {
+      this.showMusicMessage('需要更多游戏数据来生成频谱分析');
+      return;
+    }
+
+    const canvas = document.getElementById('spectrum-comparison-canvas');
+    const loading = document.getElementById('spectrum-loading');
+    const generateBtn = document.getElementById('spectrum-generate-btn');
+    
+    if (!canvas) {
+      console.error('[Spectrum] 找不到画布元素');
+      return;
+    }
+
+    try {
+      // 显示加载状态
+      if (loading) loading.classList.remove('hidden');
+      if (canvas) canvas.style.opacity = '0.3';
+      if (generateBtn) {
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>
+          生成中...
+        `;
+      }
+
+      // 确保 SpectrogramComparison 已加载
+      if (!window.SpectrogramComparison) {
+        throw new Error('SpectrogramComparison 模块未加载');
+      }
+
+      const comparison = new window.SpectrogramComparison();
+      
+      // 生成对比数据
+      this.lastSpectrumData = await comparison.generateComparisonData(session);
+      
+      // 更新参数显示
+      this.updateSpectrumParams(this.lastSpectrumData);
+      
+      // 绘制频谱图
+      comparison.drawComparison(canvas, this.lastSpectrumData);
+      
+      // 更新指标显示
+      this.updateSpectrumMetrics(this.lastSpectrumData);
+
+      console.log('[Spectrum] 频谱分析生成完成');
+
+    } catch (error) {
+      console.error('[Spectrum] 生成失败:', error);
+      this.showMusicMessage('频谱分析生成失败: ' + error.message);
+    } finally {
+      // 恢复状态
+      if (loading) loading.classList.add('hidden');
+      if (canvas) canvas.style.opacity = '1';
+      if (generateBtn) {
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          生成对比
+        `;
+      }
+    }
+  }
+
+  /**
+   * 更新频谱参数显示
+   */
+  updateSpectrumParams(data) {
+    const rawBpmEl = document.getElementById('spectrum-raw-bpm');
+    const rawContrastEl = document.getElementById('spectrum-raw-contrast');
+    const safeBpmEl = document.getElementById('spectrum-safe-bpm');
+    const safeContrastEl = document.getElementById('spectrum-safe-contrast');
+
+    if (rawBpmEl && data.unconstrained?.rawParams) {
+      rawBpmEl.textContent = `BPM: ${data.unconstrained.rawParams.rawBpm || '--'}`;
+    }
+    if (rawContrastEl && data.unconstrained?.rawParams) {
+      const contrast = data.unconstrained.rawParams.rawContrast;
+      rawContrastEl.textContent = `对比度: ${contrast ? (contrast * 100).toFixed(0) + '%' : '--'}`;
+    }
+    if (safeBpmEl && data.constrained?.sequence?.tempos) {
+      safeBpmEl.textContent = `BPM: ${data.constrained.sequence.tempos[0]?.qpm || 72}`;
+    }
+    if (safeContrastEl && data.constrained?.clampLog) {
+      const contrastClamp = data.constrained.clampLog.find(c => c.param === 'contrast');
+      const finalContrast = contrastClamp ? contrastClamp.clamped : (data.unconstrained?.rawParams?.rawContrast || 0);
+      safeContrastEl.textContent = `对比度: ${(finalContrast * 100).toFixed(0)}%`;
+    }
+  }
+
+  /**
+   * 更新频谱指标显示
+   */
+  updateSpectrumMetrics(data) {
+    const lraRawEl = document.getElementById('spectrum-lra-raw');
+    const lraSafeEl = document.getElementById('spectrum-lra-safe');
+    const deRawEl = document.getElementById('spectrum-de-raw');
+    const deSafeEl = document.getElementById('spectrum-de-safe');
+    const avgRawEl = document.getElementById('spectrum-avg-raw');
+    const avgSafeEl = document.getElementById('spectrum-avg-safe');
+
+    if (lraRawEl && data.unconstrained) lraRawEl.textContent = `${data.unconstrained.lra?.toFixed(1) || '--'} LU`;
+    if (lraSafeEl && data.constrained) lraSafeEl.textContent = `${data.constrained.lra?.toFixed(1) || '--'} LU`;
+    if (deRawEl && data.unconstrained?.metrics) deRawEl.textContent = data.unconstrained.metrics.energyChangeRate?.toFixed(2) || '--';
+    if (deSafeEl && data.constrained?.metrics) deSafeEl.textContent = data.constrained.metrics.energyChangeRate?.toFixed(2) || '--';
+    if (avgRawEl && data.unconstrained?.metrics) avgRawEl.textContent = `${data.unconstrained.metrics.avgLoudness?.toFixed(1) || '--'} LUFS`;
+    if (avgSafeEl && data.constrained?.metrics) avgSafeEl.textContent = `${data.constrained.metrics.avgLoudness?.toFixed(1) || '--'} LUFS`;
+  }
+
+  /**
+   * 导出频谱图为 PNG
+   */
+  exportSpectrumPNG() {
+    const canvas = document.getElementById('spectrum-comparison-canvas');
+    if (!canvas || !this.lastSpectrumData) {
+      this.showMusicMessage('请先生成频谱分析');
+      return;
+    }
+
+    const comparison = new window.SpectrogramComparison();
+    const timestamp = Date.now();
+    comparison.exportAsPNG(canvas, `spectrum_analysis_${timestamp}.png`);
+    this.showMusicMessage('频谱图已导出为 PNG');
+  }
+
+  /**
+   * 导出频谱数据为 JSON
+   */
+  exportSpectrumJSON() {
+    if (!this.lastSpectrumData) {
+      this.showMusicMessage('请先生成频谱分析');
+      return;
+    }
+
+    const comparison = new window.SpectrogramComparison();
+    const timestamp = Date.now();
+    comparison.exportDataAsJSON(this.lastSpectrumData, `spectrum_data_${timestamp}.json`);
+    this.showMusicMessage('频谱数据已导出为 JSON');
   }
   
   getGameData() {
