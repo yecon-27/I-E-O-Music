@@ -821,6 +821,9 @@ class GameResultManager {
     
     // 更新无约束参数显示
     this.updateUnconstrainedParamsDisplay();
+    
+    this.ensureSessionReportUI();
+    this.updateSessionReportPanel(session);
   }
 
   /**
@@ -2157,7 +2160,6 @@ class GameResultManager {
   bindSpectrumAnalysisButtons() {
     const generateBtn = document.getElementById('spectrum-generate-btn');
     const exportPngBtn = document.getElementById('spectrum-export-png-btn');
-    const exportPaperBtn = document.getElementById('spectrum-export-paper-btn');
     const exportJsonBtn = document.getElementById('spectrum-export-json-btn');
 
     if (generateBtn) {
@@ -2169,11 +2171,6 @@ class GameResultManager {
     if (exportPngBtn) {
       exportPngBtn.addEventListener('click', () => {
         this.exportSpectrumPNG();
-      });
-    }
-    if (exportPaperBtn) {
-      exportPaperBtn.addEventListener('click', () => {
-        this.exportSpectrumPaperPNG();
       });
     }
 
@@ -2290,7 +2287,7 @@ class GameResultManager {
   /**
    * 更新频谱指标显示
    */
-    updateSpectrumMetrics(data) {
+  updateSpectrumMetrics(data) {
         const lraRawEl = document.getElementById('spectrum-lra-raw');
         const lraSafeEl = document.getElementById('spectrum-lra-safe');
         const deRawEl = document.getElementById('spectrum-de-raw');
@@ -2338,18 +2335,111 @@ class GameResultManager {
     comparison.exportAsPNG(canvas, `spectrum_analysis_${timestamp}.png`);
     this.showMusicMessage('频谱图已导出为 PNG');
   }
-
-  exportSpectrumPaperPNG() {
-    if (!this.lastSpectrumData) {
-      this.showMusicMessage('没有可导出的对比数据');
-      return;
+  
+  ensureSessionReportUI() {
+    const rightPanel = document.querySelector('.expert-right');
+    if (!rightPanel) return;
+    let panel = document.getElementById('session-report-panel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'session-report-panel';
+      panel.className = 'session-report-panel';
+      panel.innerHTML = `
+        <div class="expert-panel-title">Session Report</div>
+        <div class="session-report-body">
+          <canvas id="session-report-canvas" width="800" height="360"></canvas>
+        </div>
+        <div class="session-report-actions">
+          <button id="session-report-export-png" class="result-btn primary small">导出PNG</button>
+          <button id="session-report-save-db" class="result-btn secondary small">保存到数据库</button>
+        </div>
+      `;
+      rightPanel.appendChild(panel);
+      const exportBtn = panel.querySelector('#session-report-export-png');
+      const saveBtn = panel.querySelector('#session-report-save-db');
+      if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+          const canvas = document.getElementById('session-report-canvas');
+          if (!canvas) return;
+          const url = canvas.toDataURL('image/png');
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `session_report_${Date.now()}.png`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        });
+      }
+      if (saveBtn) {
+        saveBtn.addEventListener('click', async () => {
+          try {
+            const payload = this._lastSessionReportData || {};
+            const res = await fetch('/api/session-report', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            this.showMusicMessage('已保存到数据库');
+          } catch (e) {
+            this.showMusicMessage('数据库未配置，保存失败');
+          }
+        });
+      }
     }
-    const comparison = new window.SpectrogramComparison();
-    comparison.maxFrames = 600;
-    const timestamp = Date.now();
-    comparison.exportPaperPNG(this.lastSpectrumData, `spectrogram_paper_${timestamp}.png`, { scale: window.devicePixelRatio || 1, width: 1600, height: 900 });
-    this.showMusicMessage('论文版对比图已导出为 PNG');
   }
+  
+  updateSessionReportPanel(session) {
+    const canvas = document.getElementById('session-report-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const bounds = { tempo: window.safetyEnvelope?.getParamRange('tempo') || { min: 120, max: 130 } };
+    const comparison = this.lastSpectrumData || this.lastComparisonData || null;
+    const pattern = this.analyzePattern(session.notes || []);
+    const tempo = window.sessionConfig?.rewardBpm || comparison?.constrained?.sequence?.tempos?.[0]?.qpm || 125;
+    const loudAvg = comparison?.constrained?.metrics?.avgLoudness;
+    const lMax = window._spectroInstance?.envelopeBounds?.loudnessMax ?? -14;
+    const traceId = window.sessionLogger?.sessionId || `legacy_${Date.now()}`;
+    const patternLabel = pattern?.name || 'Mixed';
+    const duration = Number(session?.durationSec || comparison?.constrained?.sequence?.totalTime || 0).toFixed(1);
+    const tempoPass = tempo >= bounds.tempo.min && tempo <= bounds.tempo.max;
+    const loudPass = typeof loudAvg === 'number' ? (loudAvg <= lMax) : false;
+    const compliance = tempoPass && loudPass ? 'PASS' : 'WARN';
+    const tempoText = `${tempo} BPM (bound: ${bounds.tempo.min}-${bounds.tempo.max}) ${tempoPass ? '✓' : '✗'}`;
+    const loudText = `${typeof loudAvg === 'number' ? loudAvg.toFixed(1) : '--'} LUFS (bound: ≤${lMax}) ${loudPass ? '✓' : '✗'}`;
+    const lines = [
+      '─────────────────────────────',
+      `traceId:      ${traceId}`,
+      `patternLabel: ${patternLabel}`,
+      `tempo:        ${tempoText}`,
+      `loudness:     ${loudText}`,
+      `duration:     ${duration}s`,
+      `compliance:   ${compliance}`,
+      '─────────────────────────────'
+    ];
+    this._lastSessionReportData = {
+      traceId,
+      patternLabel,
+      tempo,
+      tempoBounds: bounds.tempo,
+      loudnessAvg: loudAvg,
+      loudnessBoundMax: lMax,
+      durationSec: Number(duration),
+      compliance
+    };
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#0f172a';
+    ctx.font = '14px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
+    let y = 40;
+    ctx.fillText('Session Report', canvas.width / 2, 24);
+    ctx.textAlign = 'left';
+    lines.forEach((line) => {
+      ctx.fillText(line, 24, y);
+      y += 28;
+    });
+  }
+
 
   /**
    * 导出频谱数据为 JSON
