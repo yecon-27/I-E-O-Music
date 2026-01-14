@@ -693,6 +693,8 @@ class SpectrogramComparison {
     ctx.moveTo(x, y);
     ctx.lineTo(x, y + height);
     ctx.lineTo(x + width, y + height);
+    ctx.moveTo(x + width, y);
+    ctx.lineTo(x + width, y + height);
     ctx.stroke();
     const yTicks = [0, -10, -20, -30, -40];
     ctx.textAlign = 'right';
@@ -915,10 +917,6 @@ class SpectrogramComparison {
       const yy = y + h - Math.round(t * h);
       ctx.fillRect(x, yy, w, Math.ceil(h / steps) + 1);
     }
-    ctx.fillStyle = '#111111';
-    ctx.font = '12px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Magnitude (dB)', x + w / 2, y - 10);
   }
 
   /**
