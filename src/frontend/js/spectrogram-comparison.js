@@ -12,6 +12,7 @@ class SpectrogramComparison {
     this.numMelBins = 64; // 减少 Mel bins
     this.minFreq = 20;
     this.maxFreq = 8000;
+    this.focusLowerRatio = 0.45; // 仅渲染底部 ~45% 频段，突出低区
     
     // 固定随机种子，确保可重现
     this.fixedSeed = 42;
@@ -475,10 +476,11 @@ class SpectrogramComparison {
     const { data, numFrames, numMelBins } = specData;
     
     const cellWidth = width / numFrames;
-    const cellHeight = height / numMelBins;
+    const visibleBins = Math.max(1, Math.floor(numMelBins * (this.focusLowerRatio || 1)));
+    const cellHeight = height / visibleBins;
     
     for (let i = 0; i < numFrames; i++) {
-      for (let j = 0; j < numMelBins; j++) {
+      for (let j = 0; j < visibleBins; j++) {
         const value = data[i][j];
         const normalized = (value - minDb) / (maxDb - minDb);
         const color = this.jetColormap(Math.max(0, Math.min(1, normalized)));
@@ -798,7 +800,7 @@ class SpectrogramComparison {
     this.drawLoudnessContour(ctx, comparisonData.unconstrained.loudness,
       padding + 4 * scale, loudnessY + 6 * scale, halfWidth - padding * 2 - 8 * scale, loudnessHeight - 12 * scale, comparisonData.envelopeBounds, false);
     this.drawLoudnessContour(ctx, comparisonData.constrained.loudness,
-      halfWidth + padding + 4 * scale, loudnessY + 6 * scale, halfWidth - padding * 2 - 8 * scale, loudnessHeight - 12 * scale, comparisonData.envelopeBounds, true);
+      halfWidth + padding + 4 * scale, loudnessY + 6 * scale, halfWidth - padding * 2 - 8 * scale, loudnessHeight - 12 * scale, comparisonData.envelopeBounds, false);
     const metricsY = height - 25 * scale;
     ctx.fillStyle = text;
     ctx.font = `${14 * scale}px monospace`;
