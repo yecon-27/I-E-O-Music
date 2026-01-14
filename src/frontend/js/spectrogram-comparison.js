@@ -406,21 +406,21 @@ class SpectrogramComparison {
     this._lastData = comparisonData;
     
     // 清空画布
-    ctx.fillStyle = '#1a1a2e';
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
     
     const halfWidth = width / 2;
     const specHeight = height * 0.40;
     const loudnessHeight = height * 0.45;
-    const padding = 10;
-    const labelHeight = 46;
+    const padding = 16;
+    const labelHeight = 30;
     
     // 绘制标题
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 14px system-ui';
+    ctx.fillStyle = '#111111';
+    ctx.font = '12px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText(window.i18n ? window.i18n.t('spectro.title.left') : 'Unconstrained Baseline', halfWidth / 2, 20);
-    ctx.fillText(window.i18n ? window.i18n.t('spectro.title.right') : 'Constraint-First Output', halfWidth + halfWidth / 2, 20);
+    ctx.fillText('(a) ' + (window.i18n ? window.i18n.t('spectro.title.left') : 'Unconstrained Baseline'), halfWidth / 2, 18);
+    ctx.fillText('(b) ' + (window.i18n ? window.i18n.t('spectro.title.right') : 'Constraint-First Output'), halfWidth + halfWidth / 2, 18);
     
     const rangeUnc = this.getDisplayRange(comparisonData.unconstrained.spectrogram);
     const rangeCon = this.getDisplayRange(comparisonData.constrained.spectrogram);
@@ -430,6 +430,9 @@ class SpectrogramComparison {
       padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, rangeUnc.min, rangeUnc.max);
     this.drawSpectrogram(ctx, comparisonData.constrained.spectrogram,
       halfWidth + padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, rangeCon.min, rangeCon.max);
+    // 色标尺
+    this.drawColorbar(ctx, halfWidth - padding - 24, labelHeight + 8, 12, specHeight - labelHeight - 16, rangeUnc.min, rangeUnc.max);
+    this.drawColorbar(ctx, width - padding - 24, labelHeight + 8, 12, specHeight - labelHeight - 16, rangeCon.min, rangeCon.max);
     
     // 绘制响度轮廓
     const loudnessY = specHeight + 20;
@@ -438,31 +441,15 @@ class SpectrogramComparison {
     this.drawLoudnessContour(ctx, comparisonData.constrained.loudness,
       halfWidth + padding, loudnessY, halfWidth - padding * 2, loudnessHeight, comparisonData.envelopeBounds, true);
     
-    // 绘制 LRA 数值
-    ctx.fillStyle = '#ffffff';
-    ctx.font = '12px monospace';
-    ctx.textAlign = 'left';
-    
-    const metricsY = height - 15;
-    const bpmUnc = comparisonData.unconstrained.sequence?.tempos?.[0]?.qpm || 0;
-    const bpmCon = comparisonData.constrained.sequence?.tempos?.[0]?.qpm || 0;
-    const rawContrast = comparisonData.unconstrained.rawParams?.rawContrast;
-    let safeContrast = undefined;
-    if (comparisonData.constrained.safeParams?.safeContrast !== undefined) {
-      safeContrast = comparisonData.constrained.safeParams.safeContrast;
-    } else if (comparisonData.constrained.clampLog) {
-      const cc = comparisonData.constrained.clampLog.find(c => c.param === 'contrast');
-      safeContrast = cc ? cc.clamped : rawContrast;
-    } else {
-      safeContrast = rawContrast;
-    }
-    const lineUnc = `LRA: ${comparisonData.unconstrained.lra.toFixed(1)} LU  |  BPM: ${Math.round(bpmUnc)}  |  Contrast: ${rawContrast !== undefined && rawContrast !== null ? Math.round(rawContrast * 100) + '%' : '--'}`;
-    const lineCon = `LRA: ${comparisonData.constrained.lra.toFixed(1)} LU  |  BPM: ${Math.round(bpmCon)}  |  Contrast: ${safeContrast !== undefined && safeContrast !== null ? Math.round(safeContrast * 100) + '%' : '--'}`;
-    ctx.fillText(lineUnc, padding, metricsY);
-    ctx.fillText(lineCon, halfWidth + padding, metricsY);
+    // 轴标签（共享 X）
+    ctx.fillStyle = '#111111';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Time (s)', halfWidth / 2, specHeight + loudnessHeight + 36);
+    ctx.fillText('Time (s)', halfWidth + halfWidth / 2, specHeight + loudnessHeight + 36);
     
     // 绘制分隔线
-    ctx.strokeStyle = '#4a4a6a';
+    ctx.strokeStyle = '#cccccc';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(halfWidth, 0);
@@ -497,10 +484,10 @@ class SpectrogramComparison {
     }
     
     // 绘制标签
-    ctx.fillStyle = '#aaaaaa';
-    ctx.font = '10px system-ui';
+    ctx.fillStyle = '#111111';
+    ctx.font = '11px Arial';
     ctx.textAlign = 'left';
-    ctx.fillText(window.i18n ? window.i18n.t('spectro.label.spec') : 'Log-Mel Spectrogram (dB)', x, y + 12);
+    ctx.fillText(window.i18n ? window.i18n.t('spectro.label.spec') : 'Log-Mel Spectrogram (dB)', x, y - 4);
 
     ctx.strokeStyle = '#e5e7eb';
     ctx.lineWidth = 1;
@@ -509,9 +496,9 @@ class SpectrogramComparison {
     ctx.lineTo(x, y + height);
     ctx.lineTo(x + width, y + height);
     ctx.stroke();
-    ctx.fillStyle = '#94a3b8';
+    ctx.fillStyle = '#111111';
     ctx.textAlign = 'right';
-    ctx.font = '11px system-ui';
+    ctx.font = '11px Arial';
     const melMin = this.hzToMel(this.minFreq);
     const melMax = this.hzToMel(this.maxFreq);
     const visMelMax = melMin + (melMax - melMin) * (this.focusLowerRatio || 1);
@@ -529,7 +516,7 @@ class SpectrogramComparison {
       ctx.fillText(reg.toFixed(1), x - 6, yy + 3);
     }
     ctx.textAlign = 'center';
-    ctx.font = '11px system-ui';
+    ctx.font = '11px Arial';
     const ticks = 6;
     for (let t = 1; t <= ticks; t++) {
       const xx = x + (t / ticks) * width;
@@ -843,8 +830,8 @@ class SpectrogramComparison {
       const yy = y + h - Math.round(t * h);
       ctx.fillRect(x, yy, w, Math.ceil(h / steps) + 1);
     }
-    ctx.fillStyle = '#6b7280';
-    ctx.font = '12px monospace';
+    ctx.fillStyle = '#111111';
+    ctx.font = '12px Arial';
     ctx.textAlign = 'left';
     ctx.fillText(`${minDb.toFixed(0)} dB`, x + w + 6, y + h - 2);
     ctx.fillText(`${maxDb.toFixed(0)} dB`, x + w + 6, y + 12);
