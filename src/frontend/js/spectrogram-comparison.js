@@ -465,15 +465,22 @@ class SpectrogramComparison {
   drawSpectrogram(ctx, specData, x, y, width, height, minDb, maxDb, durationSec = 0) {
     const { data, numFrames, numMelBins } = specData;
     
-    const cellWidth = width / numFrames;
+    const maxLabelSec = Math.max(1, Math.ceil(durationSec || 0));
+    const visibleFrac = durationSec > 0 ? (durationSec / maxLabelSec) : 1;
+    const drawWidth = width * visibleFrac;
+    const cellWidth = drawWidth / numFrames;
     const visibleBins = Math.max(1, Math.floor(numMelBins * (this.focusLowerRatio || 1)));
     const cellHeight = height / visibleBins;
     
     for (let i = 0; i < numFrames; i++) {
       for (let j = 0; j < visibleBins; j++) {
-        const value = data[i][j];
-        const normalized = (value - minDb) / (maxDb - minDb);
-        const color = this.jetColormap(Math.max(0, Math.min(1, normalized)));
+        const v0 = data[i][j];
+        const vL = data[Math.max(i - 1, 0)][j];
+        const vR = data[Math.min(i + 1, numFrames - 1)][j];
+        const value = (v0 + vL + vR) / 3;
+        const minDbEff = Math.max(minDb, -60);
+        const normalized = (value - minDbEff) / (maxDb - minDbEff);
+        const color = this.viridisColormap(Math.max(0, Math.min(1, normalized)));
         
         ctx.fillStyle = color;
         ctx.fillRect(
@@ -485,18 +492,14 @@ class SpectrogramComparison {
       }
     }
     
-    // 绘制标签
-    ctx.fillStyle = '#111111';
-    ctx.font = '11px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText(window.i18n ? window.i18n.t('spectro.label.spec') : 'Log-Mel Spectrogram (dB)', x, y - 4);
+    // 轴外标签已统一，不在图内绘制标题
 
-    ctx.strokeStyle = '#e5e7eb';
+    ctx.strokeStyle = '#111111';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(x, y + height);
-    ctx.lineTo(x + width, y + height);
+    ctx.lineTo(x + drawWidth, y + height);
     ctx.stroke();
     ctx.fillStyle = '#111111';
     ctx.textAlign = 'right';
@@ -515,7 +518,7 @@ class SpectrogramComparison {
     ctx.font = '11px Arial';
     const ticks = Math.max(1, Math.ceil(durationSec || 6));
     for (let t = 0; t <= ticks; t++) {
-      const xx = x + (t / ticks) * width;
+      const xx = x + (t / ticks) * drawWidth;
       ctx.beginPath();
       ctx.moveTo(xx, y + height);
       ctx.lineTo(xx, y + height + 4);
@@ -630,7 +633,7 @@ class SpectrogramComparison {
       ctx.fillText(`${bounds.loudnessMin} LUFS`, x + width - 60, lowerY + 14);
     }
     
-    ctx.strokeStyle = '#4ecdc4';
+    ctx.strokeStyle = '#111111';
     ctx.lineWidth = 2;
     ctx.beginPath();
     
@@ -652,11 +655,28 @@ class SpectrogramComparison {
     }
     ctx.stroke();
     
-    // 绘制标签
-    ctx.fillStyle = '#aaaaaa';
-    ctx.font = '10px system-ui';
-    ctx.textAlign = 'left';
-    ctx.fillText(window.i18n ? window.i18n.t('spectro.label.loudness') : 'Loudness Contour (LUFS)', x, y + 12);
+    // 坐标轴与刻度
+    ctx.strokeStyle = '#111111';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y + height);
+    ctx.lineTo(x + width, y + height);
+    ctx.stroke();
+    const yTicks = [0, -10, -20, -30, -40];
+    ctx.textAlign = 'right';
+    ctx.font = '11px Arial';
+    ctx.fillStyle = '#111111';
+    for (const tv of yTicks) {
+      if (tv <= maxLoudness && tv >= visMin) {
+        const ty = y + height - ((tv - visMin) / visRange) * height;
+        ctx.beginPath();
+        ctx.moveTo(x - 4, ty);
+        ctx.lineTo(x, ty);
+        ctx.stroke();
+        ctx.fillText(String(tv), x - 6, ty + 3);
+      }
+    }
   }
 
   /**
