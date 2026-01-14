@@ -427,12 +427,12 @@ class SpectrogramComparison {
     
     // 绘制频谱图
     this.drawSpectrogram(ctx, comparisonData.unconstrained.spectrogram, 
-      padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, rangeUnc.min, rangeUnc.max);
+      padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, -80, 0);
     this.drawSpectrogram(ctx, comparisonData.constrained.spectrogram,
-      halfWidth + padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, rangeCon.min, rangeCon.max);
+      halfWidth + padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, -80, 0);
     // 色标尺
-    this.drawColorbar(ctx, halfWidth - padding - 24, labelHeight + 8, 12, specHeight - labelHeight - 16, rangeUnc.min, rangeUnc.max);
-    this.drawColorbar(ctx, width - padding - 24, labelHeight + 8, 12, specHeight - labelHeight - 16, rangeCon.min, rangeCon.max);
+    this.drawColorbar(ctx, halfWidth - padding - 24, labelHeight + 8, 12, specHeight - labelHeight - 16, -80, 0);
+    this.drawColorbar(ctx, width - padding - 24, labelHeight + 8, 12, specHeight - labelHeight - 16, -80, 0);
     
     // 绘制响度轮廓
     const loudnessY = specHeight + 20;
@@ -499,21 +499,15 @@ class SpectrogramComparison {
     ctx.fillStyle = '#111111';
     ctx.textAlign = 'right';
     ctx.font = '11px Arial';
-    const melMin = this.hzToMel(this.minFreq);
-    const melMax = this.hzToMel(this.maxFreq);
-    const visMelMax = melMin + (melMax - melMin) * (this.focusLowerRatio || 1);
-    const yticks = 6;
+    const yticks = 5;
     for (let k = 0; k <= yticks; k++) {
       const frac = k / yticks;
       const yy = y + height - frac * height;
-      const mel = melMin + (visMelMax - melMin) * frac;
-      const hz = this.melToHz(mel);
-      const reg = Math.max(0, Math.log2(hz / 16.35));
       ctx.beginPath();
       ctx.moveTo(x - 4, yy);
       ctx.lineTo(x, yy);
       ctx.stroke();
-      ctx.fillText(reg.toFixed(1), x - 6, yy + 3);
+      ctx.fillText(String(k), x - 6, yy + 3);
     }
     ctx.textAlign = 'center';
     ctx.font = '11px Arial';
@@ -610,8 +604,8 @@ class SpectrogramComparison {
     const visRange = Math.max(1e-6, maxLoudness - visMin);
     
     if (showBounds) {
-      ctx.strokeStyle = '#ff6b6b';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#e11d48';
+      ctx.lineWidth = 1.5;
       ctx.setLineDash([5, 5]);
       
       const upperY = y + height - ((bounds.loudnessMax - visMin) / visRange) * height;
@@ -630,8 +624,8 @@ class SpectrogramComparison {
       
       ctx.fillStyle = '#ff6b6b';
       ctx.font = '9px system-ui';
-      ctx.fillText(`${bounds.loudnessMax} LUFS`, x + width - 50, upperY - 3);
-      ctx.fillText(`${bounds.loudnessMin} LUFS`, x + width - 50, lowerY + 10);
+      ctx.fillText(`${bounds.loudnessMax} LUFS`, x + width - 60, upperY - 6);
+      ctx.fillText(`${bounds.loudnessMin} LUFS`, x + width - 60, lowerY + 14);
     }
     
     ctx.strokeStyle = '#4ecdc4';
@@ -835,6 +829,9 @@ class SpectrogramComparison {
     ctx.textAlign = 'left';
     ctx.fillText(`${minDb.toFixed(0)} dB`, x + w + 6, y + h - 2);
     ctx.fillText(`${maxDb.toFixed(0)} dB`, x + w + 6, y + 12);
+    // Colorbar label
+    ctx.textAlign = 'center';
+    ctx.fillText('dB', x + w / 2, y - 6);
   }
 
   /**
