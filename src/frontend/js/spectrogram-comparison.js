@@ -954,6 +954,60 @@ class SpectrogramComparison {
   }
 }
 
+function _mmToPx(mm, dpi) {
+  return Math.round((mm / 25.4) * dpi);
+}
+
+SpectrogramComparison.prototype.exportPaperPNG300DPI = function(comparisonData, filename = 'spectrogram_paper_300dpi.png', size = {}) {
+  const dpi = size.dpi || 300;
+  let widthPx = size.widthPx;
+  let heightPx = size.heightPx;
+  if (!widthPx || !heightPx) {
+    if (size.widthInMM && size.heightInMM) {
+      widthPx = _mmToPx(size.widthInMM, dpi);
+      heightPx = _mmToPx(size.heightInMM, dpi);
+    } else if (size.widthInInches && size.heightInInches) {
+      widthPx = Math.round(size.widthInInches * dpi);
+      heightPx = Math.round(size.heightInInches * dpi);
+    } else {
+      widthPx = Math.round(8 * dpi);
+      heightPx = Math.round(4.5 * dpi);
+    }
+  }
+  this.exportPaperPNG(comparisonData, filename, { width: widthPx, height: heightPx, scale: 1 });
+};
+
+SpectrogramComparison.prototype.exportCurrentComparisonPNG300DPI = function(filename = 'spectrogram_comparison_300dpi.png', size = {}) {
+  const dpi = size.dpi || 300;
+  let widthPx = size.widthPx;
+  let heightPx = size.heightPx;
+  if (!widthPx || !heightPx) {
+    if (size.widthInMM && size.heightInMM) {
+      widthPx = _mmToPx(size.widthInMM, dpi);
+      heightPx = _mmToPx(size.heightInMM, dpi);
+    } else if (size.widthInInches && size.heightInInches) {
+      widthPx = Math.round(size.widthInInches * dpi);
+      heightPx = Math.round(size.heightInInches * dpi);
+    } else {
+      widthPx = Math.round(8 * dpi);
+      heightPx = Math.round(4.5 * dpi);
+    }
+  }
+  const off = document.createElement('canvas');
+  off.width = widthPx;
+  off.height = heightPx;
+  const ctx = off.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, widthPx, heightPx);
+  if (this._lastData) {
+    this.drawComparison(off, this._lastData);
+  }
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = off.toDataURL('image/png');
+  link.click();
+};
+
 // 监听语言切换事件，重绘频谱文本
 try {
   window.addEventListener('languageChanged', () => {
