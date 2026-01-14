@@ -432,12 +432,18 @@ class SpectrogramComparison {
       padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, -80, 0, durUnc);
     this.drawSpectrogram(ctx, comparisonData.constrained.spectrogram,
       halfWidth + padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, -80, 0, durCon);
-    // 移除色标尺
+    this.drawColorbar(ctx, halfWidth - padding - 40, labelHeight + 8, 12, specHeight - labelHeight - 16, -80, 0);
+    this.drawColorbar(ctx, width - padding - 40, labelHeight + 8, 12, specHeight - labelHeight - 16, -80, 0);
+    ctx.fillStyle = '#111111';
+    ctx.font = '11px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Magnitude (dB)', halfWidth - padding - 34, labelHeight - 2);
+    ctx.fillText('Magnitude (dB)', width - padding - 34, labelHeight - 2);
     ctx.save();
     ctx.fillStyle = '#111111';
     ctx.font = '12px Arial';
     ctx.textAlign = 'center';
-    ctx.translate(padding - 12, labelHeight + (specHeight - labelHeight) / 2);
+    ctx.translate(padding - 64, labelHeight + (specHeight - labelHeight) / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.fillText('Frequency (kHz)', 0, 0);
     ctx.restore();
@@ -453,7 +459,7 @@ class SpectrogramComparison {
     ctx.fillStyle = '#111111';
     ctx.font = '12px Arial';
     ctx.textAlign = 'center';
-    ctx.translate(padding - 12, loudnessY + loudnessHeight / 2);
+    ctx.translate(padding - 64, loudnessY + loudnessHeight / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.fillText('Loudness (LUFS)', 0, 0);
     ctx.restore();
@@ -619,10 +625,9 @@ class SpectrogramComparison {
     
     const minLoudness = Math.min(...values, bounds.loudnessMin);
     const maxLoudness = Math.max(...values, bounds.loudnessMax);
-    const range = maxLoudness - minLoudness;
-    const focus = this.loudnessFocusTopRatio || 1;
-    const visMin = maxLoudness - range * focus;
-    const visRange = Math.max(1e-6, maxLoudness - visMin);
+    const visMin = -30;
+    const visMax = -10;
+    const visRange = Math.max(1e-6, visMax - visMin);
     
     if (showBounds) {
       ctx.strokeStyle = '#e11d48';
@@ -669,7 +674,8 @@ class SpectrogramComparison {
     const len = Math.max(2, lastIdx + 1);
     for (let i = 0; i < len; i++) {
       const px = x + Math.min(1, (times[i] / capSec)) * width;
-      const py = y + height - ((values[i] - visMin) / visRange) * height;
+      const v = Math.max(visMin, Math.min(visMax, values[i]));
+      const py = y + height - ((v - visMin) / visRange) * height;
       
       if (i === 0) {
         ctx.moveTo(px, py);
@@ -689,19 +695,17 @@ class SpectrogramComparison {
     ctx.moveTo(x + width, y);
     ctx.lineTo(x + width, y + height);
     ctx.stroke();
-    const yTicks = [0, -10, -20, -30, -40];
+    const yTicks = [-10, -20, -30];
     ctx.textAlign = 'right';
     ctx.font = '11px Arial';
     ctx.fillStyle = '#111111';
     for (const tv of yTicks) {
-      if (tv <= maxLoudness && tv >= visMin) {
-        const ty = y + height - ((tv - visMin) / visRange) * height;
-        ctx.beginPath();
-        ctx.moveTo(x - 4, ty);
-        ctx.lineTo(x, ty);
-        ctx.stroke();
-        ctx.fillText(String(tv), x - 6, ty + 3);
-      }
+      const ty = y + height - ((tv - visMin) / visRange) * height;
+      ctx.beginPath();
+      ctx.moveTo(x - 4, ty);
+      ctx.lineTo(x, ty);
+      ctx.stroke();
+      ctx.fillText(String(tv), x - 8, ty + 3);
     }
   }
 
