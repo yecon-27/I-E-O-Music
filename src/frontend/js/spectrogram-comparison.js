@@ -426,10 +426,12 @@ class SpectrogramComparison {
     const rangeCon = this.getDisplayRange(comparisonData.constrained.spectrogram);
     
     // 绘制频谱图
+    const durUnc = (comparisonData.unconstrained?.loudness?.times?.[comparisonData.unconstrained.loudness.times.length - 1]) || 0;
+    const durCon = (comparisonData.constrained?.loudness?.times?.[comparisonData.constrained.loudness.times.length - 1]) || 0;
     this.drawSpectrogram(ctx, comparisonData.unconstrained.spectrogram, 
-      padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, -80, 0);
+      padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, -80, 0, durUnc);
     this.drawSpectrogram(ctx, comparisonData.constrained.spectrogram,
-      halfWidth + padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, -80, 0);
+      halfWidth + padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, -80, 0, durCon);
     // 色标尺
     this.drawColorbar(ctx, halfWidth - padding - 24, labelHeight + 8, 12, specHeight - labelHeight - 16, -80, 0);
     this.drawColorbar(ctx, width - padding - 24, labelHeight + 8, 12, specHeight - labelHeight - 16, -80, 0);
@@ -460,7 +462,7 @@ class SpectrogramComparison {
   /**
    * 绘制频谱图
    */
-  drawSpectrogram(ctx, specData, x, y, width, height, minDb, maxDb) {
+  drawSpectrogram(ctx, specData, x, y, width, height, minDb, maxDb, durationSec = 0) {
     const { data, numFrames, numMelBins } = specData;
     
     const cellWidth = width / numFrames;
@@ -511,8 +513,8 @@ class SpectrogramComparison {
     }
     ctx.textAlign = 'center';
     ctx.font = '11px Arial';
-    const ticks = 6;
-    for (let t = 1; t <= ticks; t++) {
+    const ticks = Math.max(1, Math.ceil(durationSec || 6));
+    for (let t = 0; t <= ticks; t++) {
       const xx = x + (t / ticks) * width;
       ctx.beginPath();
       ctx.moveTo(xx, y + height);
@@ -632,8 +634,14 @@ class SpectrogramComparison {
     ctx.lineWidth = 2;
     ctx.beginPath();
     
-    for (let i = 0; i < values.length; i++) {
-      const px = x + (i / (values.length - 1)) * width;
+    let cutIndex = values.length - 1;
+    const peak = Math.max(...values);
+    for (let i = values.length - 1; i >= 0; i--) {
+      if (values[i] > peak - 5) { cutIndex = i; break; }
+    }
+    const len = Math.max(2, cutIndex + 1);
+    for (let i = 0; i < len; i++) {
+      const px = x + (i / (len - 1)) * width;
       const py = y + height - ((values[i] - visMin) / visRange) * height;
       
       if (i === 0) {
