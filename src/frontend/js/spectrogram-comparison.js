@@ -412,7 +412,7 @@ class SpectrogramComparison {
     const halfWidth = width / 2;
     const specHeight = height * 0.40;
     const loudnessHeight = height * 0.45;
-    const padding = 32;
+    const padding = 48;
     const labelHeight = 30;
     
     // 绘制标题
@@ -432,18 +432,16 @@ class SpectrogramComparison {
       padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, -80, 0, durUnc);
     this.drawSpectrogram(ctx, comparisonData.constrained.spectrogram,
       halfWidth + padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, -80, 0, durCon);
-    this.drawColorbar(ctx, halfWidth - padding - 40, labelHeight + 8, 12, specHeight - labelHeight - 16, -80, 0);
-    this.drawColorbar(ctx, width - padding - 40, labelHeight + 8, 12, specHeight - labelHeight - 16, -80, 0);
+    this.drawColorbar(ctx, width - padding - 20, labelHeight + 8, 14, specHeight - labelHeight - 16, -80, 0);
     ctx.fillStyle = '#111111';
     ctx.font = '11px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('Magnitude (dB)', halfWidth - padding - 34, labelHeight - 2);
-    ctx.fillText('Magnitude (dB)', width - padding - 34, labelHeight - 2);
+    ctx.fillText('Magnitude (dB)', width - padding - 13, labelHeight - 2);
     ctx.save();
     ctx.fillStyle = '#111111';
     ctx.font = '12px Arial';
     ctx.textAlign = 'center';
-    ctx.translate(padding - 64, labelHeight + (specHeight - labelHeight) / 2);
+    ctx.translate(padding - 24, labelHeight + (specHeight - labelHeight) / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.fillText('Frequency (kHz)', 0, 0);
     ctx.restore();
@@ -459,7 +457,7 @@ class SpectrogramComparison {
     ctx.fillStyle = '#111111';
     ctx.font = '12px Arial';
     ctx.textAlign = 'center';
-    ctx.translate(padding - 64, loudnessY + loudnessHeight / 2);
+    ctx.translate(padding - 24, loudnessY + loudnessHeight / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.fillText('Loudness (LUFS)', 0, 0);
     ctx.restore();
