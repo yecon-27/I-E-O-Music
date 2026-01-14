@@ -481,7 +481,7 @@ class SpectrogramComparison {
       for (let j = 0; j < numMelBins; j++) {
         const value = data[i][j];
         const normalized = (value - minDb) / (maxDb - minDb);
-        const color = this.viridisColormap(Math.max(0, Math.min(1, normalized)));
+        const color = this.jetColormap(Math.max(0, Math.min(1, normalized)));
         
         ctx.fillStyle = color;
         ctx.fillRect(
@@ -498,6 +498,36 @@ class SpectrogramComparison {
     ctx.font = '10px system-ui';
     ctx.textAlign = 'left';
     ctx.fillText(window.i18n ? window.i18n.t('spectro.label.spec') : 'Log-Mel Spectrogram (dB)', x, y + 12);
+
+    ctx.strokeStyle = '#e5e7eb';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y + height);
+    ctx.lineTo(x + width, y + height);
+    ctx.stroke();
+    ctx.fillStyle = '#94a3b8';
+    ctx.textAlign = 'right';
+    ctx.font = '11px system-ui';
+    for (let k = 0; k <= 10; k++) {
+      const yy = y + height - (k / 10) * height;
+      ctx.beginPath();
+      ctx.moveTo(x - 4, yy);
+      ctx.lineTo(x, yy);
+      ctx.stroke();
+      ctx.fillText(String(k), x - 6, yy + 3);
+    }
+    ctx.textAlign = 'center';
+    ctx.font = '11px system-ui';
+    const ticks = 6;
+    for (let t = 1; t <= ticks; t++) {
+      const xx = x + (t / ticks) * width;
+      ctx.beginPath();
+      ctx.moveTo(xx, y + height);
+      ctx.lineTo(xx, y + height + 4);
+      ctx.stroke();
+      ctx.fillText(String(t), xx, y + height + 14);
+    }
 
     if ((maxDb - minDb) <= 1e-3) {
          ctx.fillStyle = '#000'; // Draw black if silence
@@ -665,6 +695,26 @@ class SpectrogramComparison {
     const g = Math.round(c1[1] + f * (c2[1] - c1[1]));
     const b = Math.round(c1[2] + f * (c2[2] - c1[2]));
     
+    return `rgb(${r},${g},${b})`;
+  }
+
+  jetColormap(t) {
+    const colors = [
+      [0, 0, 131],
+      [0, 60, 170],
+      [5, 255, 255],
+      [255, 255, 0],
+      [250, 0, 0],
+      [128, 0, 0]
+    ];
+    const idx = t * (colors.length - 1);
+    const i = Math.floor(idx);
+    const f = idx - i;
+    const c1 = colors[i] || colors[0];
+    const c2 = colors[i + 1] || colors[colors.length - 1];
+    const r = Math.round(c1[0] + f * (c2[0] - c1[0]));
+    const g = Math.round(c1[1] + f * (c2[1] - c1[1]));
+    const b = Math.round(c1[2] + f * (c2[2] - c1[2]));
     return `rgb(${r},${g},${b})`;
   }
 
