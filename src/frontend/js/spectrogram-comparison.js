@@ -412,7 +412,7 @@ class SpectrogramComparison {
     const halfWidth = width / 2;
     const specHeight = height * 0.40;
     const loudnessHeight = height * 0.45;
-    const padding = 16;
+    const padding = 32;
     const labelHeight = 30;
     
     // 绘制标题
@@ -432,9 +432,7 @@ class SpectrogramComparison {
       padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, -80, 0, durUnc);
     this.drawSpectrogram(ctx, comparisonData.constrained.spectrogram,
       halfWidth + padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, -80, 0, durCon);
-    // 色标尺
-    this.drawColorbar(ctx, halfWidth - padding - 40, labelHeight + 8, 12, specHeight - labelHeight - 16, -80, 0);
-    this.drawColorbar(ctx, width - padding - 40, labelHeight + 8, 12, specHeight - labelHeight - 16, -80, 0);
+    // 移除色标尺
     ctx.save();
     ctx.fillStyle = '#111111';
     ctx.font = '12px Arial';
@@ -443,14 +441,7 @@ class SpectrogramComparison {
     ctx.rotate(-Math.PI / 2);
     ctx.fillText('Frequency (kHz)', 0, 0);
     ctx.restore();
-    ctx.save();
-    ctx.fillStyle = '#111111';
-    ctx.font = '12px Arial';
-    ctx.textAlign = 'center';
-    ctx.translate(halfWidth + padding - 36, labelHeight + (specHeight - labelHeight) / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillText('Frequency (kHz)', 0, 0);
-    ctx.restore();
+    // 右侧不再重复频率纵向标签
     
     // 绘制响度轮廓
     const loudnessY = specHeight + 20;
@@ -655,8 +646,10 @@ class SpectrogramComparison {
       ctx.fillStyle = '#ff6b6b';
       ctx.font = '9px system-ui';
       ctx.textAlign = 'right';
-      ctx.fillText(`${bounds.loudnessMax} LUFS`, x + width - 8, upperY - 4);
-      ctx.fillText(`${bounds.loudnessMin} LUFS`, x + width - 8, lowerY + 12);
+      const labelUpperY = Math.max(y + 10, Math.min(y + height - 10, upperY - 6));
+      const labelLowerY = Math.max(y + 10, Math.min(y + height - 10, lowerY + 12));
+      ctx.fillText(`${bounds.loudnessMax} LUFS`, x + width - 8, labelUpperY);
+      ctx.fillText(`${bounds.loudnessMin} LUFS`, x + width - 8, labelLowerY);
     }
     
     ctx.strokeStyle = '#111111';
@@ -839,8 +832,7 @@ class SpectrogramComparison {
       padding + 4 * scale, headerHeight + 8 * scale, halfWidth - padding * 2 - 8 * scale, specHeight - labelHeight, rangeUnc.min, rangeUnc.max);
     this.drawSpectrogram(ctx, comparisonData.constrained.spectrogram,
       halfWidth + padding + 4 * scale, headerHeight + 8 * scale, halfWidth - padding * 2 - 8 * scale, specHeight - labelHeight, rangeCon.min, rangeCon.max);
-    this.drawColorbar(ctx, halfWidth - padding - 40 * scale, headerHeight + 8 * scale, 12 * scale, specHeight - labelHeight, rangeUnc.min, rangeUnc.max);
-    this.drawColorbar(ctx, width - padding - 40 * scale, headerHeight + 8 * scale, 12 * scale, specHeight - labelHeight, rangeCon.min, rangeCon.max);
+    // 移除论文版色标尺
     const loudnessY = headerHeight + specHeight + 20 * scale;
     this.roundRect(ctx, padding, loudnessY, halfWidth - padding * 2, loudnessHeight, 16 * scale, '#ffffff', border);
     this.roundRect(ctx, halfWidth + padding, loudnessY, halfWidth - padding * 2, loudnessHeight, 16 * scale, '#ffffff', border);
@@ -856,14 +848,7 @@ class SpectrogramComparison {
     ctx.rotate(-Math.PI / 2);
     ctx.fillText('Frequency (kHz)', 0, 0);
     ctx.restore();
-    ctx.save();
-    ctx.fillStyle = '#111111';
-    ctx.font = `${14 * scale}px system-ui`;
-    ctx.textAlign = 'center';
-    ctx.translate(halfWidth + padding - 40 * scale, headerHeight + (specHeight - labelHeight) / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillText('Frequency (kHz)', 0, 0);
-    ctx.restore();
+    // 右侧不再重复频率纵向标签
     ctx.save();
     ctx.fillStyle = '#111111';
     ctx.font = `${14 * scale}px system-ui`;
