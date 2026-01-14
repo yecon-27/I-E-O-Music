@@ -466,14 +466,6 @@ class SpectrogramComparison {
     ctx.rotate(-Math.PI / 2);
     ctx.fillText('Loudness (LUFS)', 0, 0);
     ctx.restore();
-    ctx.save();
-    ctx.fillStyle = '#111111';
-    ctx.font = '12px Arial';
-    ctx.textAlign = 'center';
-    ctx.translate(halfWidth + padding - 36, loudnessY + loudnessHeight / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillText('Loudness (LUFS)', 0, 0);
-    ctx.restore();
     
     // 轴标签（共享 X）
     ctx.fillStyle = '#111111';
@@ -500,7 +492,7 @@ class SpectrogramComparison {
     const secondsPerFrame = specData.sampleRate ? (specData.hopSize / specData.sampleRate) : 0;
     const capSec = 10;
     const framesToDraw = secondsPerFrame > 0 ? Math.min(numFrames, Math.floor(capSec / secondsPerFrame)) : numFrames;
-    const drawWidth = width * ((Math.min(durationSec || capSec, capSec)) / capSec);
+    const drawWidth = width;
     const cellWidth = drawWidth / Math.max(1, framesToDraw);
     const visibleBins = Math.max(1, Math.floor(numMelBins * (this.focusLowerRatio || 1)));
     const cellHeight = height / visibleBins;
@@ -549,7 +541,7 @@ class SpectrogramComparison {
     }
     ctx.textAlign = 'center';
     ctx.font = '11px Arial';
-    const ticks = Math.min(10, Math.max(1, Math.ceil(durationSec || 6)));
+    const ticks = 10;
     for (let t = 0; t <= ticks; t++) {
       const xx = x + (t / ticks) * drawWidth;
       ctx.beginPath();
@@ -643,7 +635,7 @@ class SpectrogramComparison {
     
     if (showBounds) {
       ctx.strokeStyle = '#e11d48';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1;
       ctx.setLineDash([5, 5]);
       
       const upperY = y + height - ((bounds.loudnessMax - visMin) / visRange) * height;
@@ -662,8 +654,9 @@ class SpectrogramComparison {
       
       ctx.fillStyle = '#ff6b6b';
       ctx.font = '9px system-ui';
-      ctx.fillText(`${bounds.loudnessMax} LUFS`, x + width - 60, upperY - 6);
-      ctx.fillText(`${bounds.loudnessMin} LUFS`, x + width - 60, lowerY + 14);
+      ctx.textAlign = 'right';
+      ctx.fillText(`${bounds.loudnessMax} LUFS`, x + width - 8, upperY - 4);
+      ctx.fillText(`${bounds.loudnessMin} LUFS`, x + width - 8, lowerY + 12);
     }
     
     ctx.strokeStyle = '#111111';
@@ -929,7 +922,7 @@ class SpectrogramComparison {
     ctx.fillText(`${maxDb.toFixed(0)} dB`, x + w + 6, y + 12);
     // Colorbar label
     ctx.textAlign = 'center';
-    ctx.fillText('dB', x + w / 2, y - 6);
+    ctx.fillText('Magnitude (dB)', x + w / 2, y - 10);
   }
 
   /**
