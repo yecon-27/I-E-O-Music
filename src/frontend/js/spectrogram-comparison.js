@@ -433,8 +433,8 @@ class SpectrogramComparison {
     this.drawSpectrogram(ctx, comparisonData.constrained.spectrogram,
       halfWidth + padding, labelHeight, halfWidth - padding * 2, specHeight - labelHeight, -80, 0, durCon);
     // 色标尺
-    this.drawColorbar(ctx, halfWidth - padding - 24, labelHeight + 8, 12, specHeight - labelHeight - 16, -80, 0);
-    this.drawColorbar(ctx, width - padding - 24, labelHeight + 8, 12, specHeight - labelHeight - 16, -80, 0);
+    this.drawColorbar(ctx, halfWidth - padding - 40, labelHeight + 8, 12, specHeight - labelHeight - 16, -80, 0);
+    this.drawColorbar(ctx, width - padding - 40, labelHeight + 8, 12, specHeight - labelHeight - 16, -80, 0);
     ctx.save();
     ctx.fillStyle = '#111111';
     ctx.font = '12px Arial';
@@ -837,8 +837,8 @@ class SpectrogramComparison {
       padding + 4 * scale, headerHeight + 8 * scale, halfWidth - padding * 2 - 8 * scale, specHeight - labelHeight, rangeUnc.min, rangeUnc.max);
     this.drawSpectrogram(ctx, comparisonData.constrained.spectrogram,
       halfWidth + padding + 4 * scale, headerHeight + 8 * scale, halfWidth - padding * 2 - 8 * scale, specHeight - labelHeight, rangeCon.min, rangeCon.max);
-    this.drawColorbar(ctx, halfWidth - padding - 24 * scale, headerHeight + 8 * scale, 12 * scale, specHeight - labelHeight, rangeUnc.min, rangeUnc.max);
-    this.drawColorbar(ctx, width - padding - 24 * scale, headerHeight + 8 * scale, 12 * scale, specHeight - labelHeight, rangeCon.min, rangeCon.max);
+    this.drawColorbar(ctx, halfWidth - padding - 40 * scale, headerHeight + 8 * scale, 12 * scale, specHeight - labelHeight, rangeUnc.min, rangeUnc.max);
+    this.drawColorbar(ctx, width - padding - 40 * scale, headerHeight + 8 * scale, 12 * scale, specHeight - labelHeight, rangeCon.min, rangeCon.max);
     const loudnessY = headerHeight + specHeight + 20 * scale;
     this.roundRect(ctx, padding, loudnessY, halfWidth - padding * 2, loudnessHeight, 16 * scale, '#ffffff', border);
     this.roundRect(ctx, halfWidth + padding, loudnessY, halfWidth - padding * 2, loudnessHeight, 16 * scale, '#ffffff', border);
@@ -917,10 +917,6 @@ class SpectrogramComparison {
     }
     ctx.fillStyle = '#111111';
     ctx.font = '12px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText(`${minDb.toFixed(0)} dB`, x + w + 6, y + h - 2);
-    ctx.fillText(`${maxDb.toFixed(0)} dB`, x + w + 6, y + 12);
-    // Colorbar label
     ctx.textAlign = 'center';
     ctx.fillText('Magnitude (dB)', x + w / 2, y - 10);
   }
