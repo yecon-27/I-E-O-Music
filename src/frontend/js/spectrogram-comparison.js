@@ -435,6 +435,22 @@ class SpectrogramComparison {
     // 色标尺
     this.drawColorbar(ctx, halfWidth - padding - 24, labelHeight + 8, 12, specHeight - labelHeight - 16, -80, 0);
     this.drawColorbar(ctx, width - padding - 24, labelHeight + 8, 12, specHeight - labelHeight - 16, -80, 0);
+    ctx.save();
+    ctx.fillStyle = '#111111';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.translate(padding - 36, labelHeight + (specHeight - labelHeight) / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Frequency (kHz)', 0, 0);
+    ctx.restore();
+    ctx.save();
+    ctx.fillStyle = '#111111';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.translate(halfWidth + padding - 36, labelHeight + (specHeight - labelHeight) / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Frequency (kHz)', 0, 0);
+    ctx.restore();
     
     // 绘制响度轮廓
     const loudnessY = specHeight + 20;
@@ -442,6 +458,22 @@ class SpectrogramComparison {
       padding, loudnessY, halfWidth - padding * 2, loudnessHeight, comparisonData.envelopeBounds, false);
     this.drawLoudnessContour(ctx, comparisonData.constrained.loudness,
       halfWidth + padding, loudnessY, halfWidth - padding * 2, loudnessHeight, comparisonData.envelopeBounds, true);
+    ctx.save();
+    ctx.fillStyle = '#111111';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.translate(padding - 36, loudnessY + loudnessHeight / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Loudness (LUFS)', 0, 0);
+    ctx.restore();
+    ctx.save();
+    ctx.fillStyle = '#111111';
+    ctx.font = '12px Arial';
+    ctx.textAlign = 'center';
+    ctx.translate(halfWidth + padding - 36, loudnessY + loudnessHeight / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Loudness (LUFS)', 0, 0);
+    ctx.restore();
     
     // 轴标签（共享 X）
     ctx.fillStyle = '#111111';
@@ -465,18 +497,19 @@ class SpectrogramComparison {
   drawSpectrogram(ctx, specData, x, y, width, height, minDb, maxDb, durationSec = 0) {
     const { data, numFrames, numMelBins } = specData;
     
-    const maxLabelSec = Math.max(1, Math.ceil(durationSec || 0));
-    const visibleFrac = durationSec > 0 ? (durationSec / maxLabelSec) : 1;
-    const drawWidth = width * visibleFrac;
-    const cellWidth = drawWidth / numFrames;
+    const secondsPerFrame = specData.sampleRate ? (specData.hopSize / specData.sampleRate) : 0;
+    const capSec = 10;
+    const framesToDraw = secondsPerFrame > 0 ? Math.min(numFrames, Math.floor(capSec / secondsPerFrame)) : numFrames;
+    const drawWidth = width * ((Math.min(durationSec || capSec, capSec)) / capSec);
+    const cellWidth = drawWidth / Math.max(1, framesToDraw);
     const visibleBins = Math.max(1, Math.floor(numMelBins * (this.focusLowerRatio || 1)));
     const cellHeight = height / visibleBins;
     
-    for (let i = 0; i < numFrames; i++) {
+    for (let i = 0; i < framesToDraw; i++) {
       for (let j = 0; j < visibleBins; j++) {
         const v0 = data[i][j];
         const vL = data[Math.max(i - 1, 0)][j];
-        const vR = data[Math.min(i + 1, numFrames - 1)][j];
+        const vR = data[Math.min(i + 1, framesToDraw - 1)][j];
         const value = (v0 + vL + vR) / 3;
         const minDbEff = Math.max(minDb, -60);
         const normalized = (value - minDbEff) / (maxDb - minDbEff);
@@ -516,7 +549,7 @@ class SpectrogramComparison {
     }
     ctx.textAlign = 'center';
     ctx.font = '11px Arial';
-    const ticks = Math.max(1, Math.ceil(durationSec || 6));
+    const ticks = Math.min(10, Math.max(1, Math.ceil(durationSec || 6)));
     for (let t = 0; t <= ticks; t++) {
       const xx = x + (t / ticks) * drawWidth;
       ctx.beginPath();
@@ -598,7 +631,7 @@ class SpectrogramComparison {
   drawLoudnessContour(ctx, loudnessData, x, y, width, height, bounds, showBounds) {
     const { values, times } = loudnessData;
     
-    ctx.fillStyle = '#0d0d1a';
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(x, y, width, height);
     
     const minLoudness = Math.min(...values, bounds.loudnessMin);
@@ -642,9 +675,14 @@ class SpectrogramComparison {
     for (let i = values.length - 1; i >= 0; i--) {
       if (values[i] > peak - 5) { cutIndex = i; break; }
     }
-    const len = Math.max(2, cutIndex + 1);
+    const capSec = 10;
+    let lastIdx = cutIndex;
+    for (let i = 0; i <= cutIndex; i++) {
+      if (times[i] > capSec) { lastIdx = i - 1; break; }
+    }
+    const len = Math.max(2, lastIdx + 1);
     for (let i = 0; i < len; i++) {
-      const px = x + (i / (len - 1)) * width;
+      const px = x + Math.min(1, (times[i] / capSec)) * width;
       const py = y + height - ((values[i] - visMin) / visRange) * height;
       
       if (i === 0) {
@@ -751,7 +789,7 @@ class SpectrogramComparison {
     const padding = 48 * scale;
     const cardGap = 24 * scale;
     const labelHeight = 50 * scale;
-    const navy = '#0f172a';
+    const navy = '#ffffff';
     const text = '#0f172a';
     const subtext = '#64748b';
     const border = '#e5e7eb';
@@ -809,12 +847,44 @@ class SpectrogramComparison {
     this.drawColorbar(ctx, halfWidth - padding - 24 * scale, headerHeight + 8 * scale, 12 * scale, specHeight - labelHeight, rangeUnc.min, rangeUnc.max);
     this.drawColorbar(ctx, width - padding - 24 * scale, headerHeight + 8 * scale, 12 * scale, specHeight - labelHeight, rangeCon.min, rangeCon.max);
     const loudnessY = headerHeight + specHeight + 20 * scale;
-    this.roundRect(ctx, padding, loudnessY, halfWidth - padding * 2, loudnessHeight, 16 * scale, '#0b1020', border);
-    this.roundRect(ctx, halfWidth + padding, loudnessY, halfWidth - padding * 2, loudnessHeight, 16 * scale, '#0b1020', border);
+    this.roundRect(ctx, padding, loudnessY, halfWidth - padding * 2, loudnessHeight, 16 * scale, '#ffffff', border);
+    this.roundRect(ctx, halfWidth + padding, loudnessY, halfWidth - padding * 2, loudnessHeight, 16 * scale, '#ffffff', border);
     this.drawLoudnessContour(ctx, comparisonData.unconstrained.loudness,
       padding + 4 * scale, loudnessY + 6 * scale, halfWidth - padding * 2 - 8 * scale, loudnessHeight - 12 * scale, comparisonData.envelopeBounds, false);
     this.drawLoudnessContour(ctx, comparisonData.constrained.loudness,
       halfWidth + padding + 4 * scale, loudnessY + 6 * scale, halfWidth - padding * 2 - 8 * scale, loudnessHeight - 12 * scale, comparisonData.envelopeBounds, false);
+    ctx.save();
+    ctx.fillStyle = '#111111';
+    ctx.font = `${14 * scale}px system-ui`;
+    ctx.textAlign = 'center';
+    ctx.translate(padding - 40 * scale, headerHeight + (specHeight - labelHeight) / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Frequency (kHz)', 0, 0);
+    ctx.restore();
+    ctx.save();
+    ctx.fillStyle = '#111111';
+    ctx.font = `${14 * scale}px system-ui`;
+    ctx.textAlign = 'center';
+    ctx.translate(halfWidth + padding - 40 * scale, headerHeight + (specHeight - labelHeight) / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Frequency (kHz)', 0, 0);
+    ctx.restore();
+    ctx.save();
+    ctx.fillStyle = '#111111';
+    ctx.font = `${14 * scale}px system-ui`;
+    ctx.textAlign = 'center';
+    ctx.translate(padding - 40 * scale, loudnessY + loudnessHeight / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Loudness (LUFS)', 0, 0);
+    ctx.restore();
+    ctx.save();
+    ctx.fillStyle = '#111111';
+    ctx.font = `${14 * scale}px system-ui`;
+    ctx.textAlign = 'center';
+    ctx.translate(halfWidth + padding - 40 * scale, loudnessY + loudnessHeight / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('Loudness (LUFS)', 0, 0);
+    ctx.restore();
     const metricsY = height - 25 * scale;
     ctx.fillStyle = text;
     ctx.font = `${14 * scale}px monospace`;
