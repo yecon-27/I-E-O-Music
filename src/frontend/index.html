@@ -591,6 +591,20 @@
                                     <div class="spectrum-canvas-wrapper">
                                         <canvas id="spectrum-comparison-canvas" width="560" height="320"></canvas>
                                     </div>
+                                    <div id="spectrum-caption" style="margin-top:8px; display:flex; gap:24px; justify-content:center; font-family: system-ui, Arial; font-size:12px; color:#0f172a;">
+                                        <div class="caption-col" style="display:flex; gap:10px; align-items:center;">
+                                            <span class="caption-title" style="font-weight:600;">(a) Baseline</span>
+                                            <span id="caption-baseline-lra" style="opacity:0.9;">LRA: --</span>
+                                            <span id="caption-baseline-bpm" style="opacity:0.9;">BPM: --</span>
+                                            <span id="caption-baseline-tempo" style="opacity:0.9;">Tempo: --</span>
+                                        </div>
+                                        <div class="caption-col" style="display:flex; gap:10px; align-items:center;">
+                                            <span class="caption-title" style="font-weight:600;">(b) Constraint-First</span>
+                                            <span id="caption-safe-lra" style="opacity:0.9;">LRA: --</span>
+                                            <span id="caption-safe-bpm" style="opacity:0.9;">BPM: --</span>
+                                            <span id="caption-safe-tempo" style="opacity:0.9;">Tempo: --</span>
+                                        </div>
+                                    </div>
                                     <div class="spectrum-actions">
                                         <button id="spectrum-generate-btn" class="param-btn primary">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>

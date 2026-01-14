@@ -2242,6 +2242,7 @@ class GameResultManager {
       
       // 更新参数显示
       this.updateSpectrumParams(this.lastSpectrumData);
+      this.updateSpectrumCaption(this.lastSpectrumData);
       
       // 绘制频谱图
       comparison.drawComparison(canvas, this.lastSpectrumData);
@@ -2296,6 +2297,41 @@ class GameResultManager {
         finalContrast = data.unconstrained?.rawParams?.rawContrast;
       }
       safeContrastEl.textContent = `${this.t('ui.contrast')}: ${finalContrast !== undefined && finalContrast !== null ? (finalContrast * 100).toFixed(0) + '%' : '--'}`;
+    }
+  }
+
+  /**
+   * 更新图下方的数值标签（LRA / BPM / Tempo）
+   */
+  updateSpectrumCaption(data) {
+    const blLraEl = document.getElementById('caption-baseline-lra');
+    const blBpmEl = document.getElementById('caption-baseline-bpm');
+    const blTempoEl = document.getElementById('caption-baseline-tempo');
+    const sfLraEl = document.getElementById('caption-safe-lra');
+    const sfBpmEl = document.getElementById('caption-safe-bpm');
+    const sfTempoEl = document.getElementById('caption-safe-tempo');
+
+    if (blLraEl && data.unconstrained?.lra !== undefined) {
+      blLraEl.textContent = `LRA: ${Number(data.unconstrained.lra).toFixed(1)} LU`;
+    }
+    let rawBpm = data.unconstrained?.rawParams?.rawBpm;
+    if (blBpmEl) {
+      blBpmEl.textContent = `BPM: ${rawBpm !== undefined && rawBpm !== null ? Math.round(rawBpm) : '--'}`;
+    }
+    if (blTempoEl) {
+      blTempoEl.textContent = `Tempo: ${rawBpm !== undefined && rawBpm !== null ? Math.round(rawBpm) + ' BPM' : '--'}`;
+    }
+
+    if (sfLraEl && data.constrained?.lra !== undefined) {
+      sfLraEl.textContent = `LRA: ${Number(data.constrained.lra).toFixed(1)} LU`;
+    }
+    const safeBpm = data.constrained?.sequence?.tempos?.[0]?.qpm;
+    const safeBpmVal = safeBpm !== undefined && safeBpm !== null ? Math.round(safeBpm) : 130;
+    if (sfBpmEl) {
+      sfBpmEl.textContent = `BPM: ${safeBpmVal}`;
+    }
+    if (sfTempoEl) {
+      sfTempoEl.textContent = `Tempo: ${safeBpmVal} BPM`;
     }
   }
 
