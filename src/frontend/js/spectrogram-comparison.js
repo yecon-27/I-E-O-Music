@@ -437,7 +437,7 @@ class SpectrogramComparison {
     ctx.fillStyle = '#111111';
     ctx.font = '12px Arial';
     ctx.textAlign = 'center';
-    ctx.translate(padding - 36, labelHeight + (specHeight - labelHeight) / 2);
+    ctx.translate(padding - 12, labelHeight + (specHeight - labelHeight) / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.fillText('Frequency (kHz)', 0, 0);
     ctx.restore();
@@ -453,7 +453,7 @@ class SpectrogramComparison {
     ctx.fillStyle = '#111111';
     ctx.font = '12px Arial';
     ctx.textAlign = 'center';
-    ctx.translate(padding - 36, loudnessY + loudnessHeight / 2);
+    ctx.translate(padding - 12, loudnessY + loudnessHeight / 2);
     ctx.rotate(-Math.PI / 2);
     ctx.fillText('Loudness (LUFS)', 0, 0);
     ctx.restore();
@@ -840,14 +840,7 @@ class SpectrogramComparison {
       padding + 4 * scale, loudnessY + 6 * scale, halfWidth - padding * 2 - 8 * scale, loudnessHeight - 12 * scale, comparisonData.envelopeBounds, false);
     this.drawLoudnessContour(ctx, comparisonData.constrained.loudness,
       halfWidth + padding + 4 * scale, loudnessY + 6 * scale, halfWidth - padding * 2 - 8 * scale, loudnessHeight - 12 * scale, comparisonData.envelopeBounds, false);
-    ctx.save();
-    ctx.fillStyle = '#111111';
-    ctx.font = `${14 * scale}px system-ui`;
-    ctx.textAlign = 'center';
-    ctx.translate(padding - 40 * scale, headerHeight + (specHeight - labelHeight) / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillText('Frequency (kHz)', 0, 0);
-    ctx.restore();
+    // 右侧不再重复频率纵向标签
     // 右侧不再重复频率纵向标签
     ctx.save();
     ctx.fillStyle = '#111111';
@@ -857,14 +850,7 @@ class SpectrogramComparison {
     ctx.rotate(-Math.PI / 2);
     ctx.fillText('Loudness (LUFS)', 0, 0);
     ctx.restore();
-    ctx.save();
-    ctx.fillStyle = '#111111';
-    ctx.font = `${14 * scale}px system-ui`;
-    ctx.textAlign = 'center';
-    ctx.translate(halfWidth + padding - 40 * scale, loudnessY + loudnessHeight / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillText('Loudness (LUFS)', 0, 0);
-    ctx.restore();
+    // 右侧不再重复响度纵向标签
     const metricsY = height - 25 * scale;
     ctx.fillStyle = text;
     ctx.font = `${14 * scale}px monospace`;

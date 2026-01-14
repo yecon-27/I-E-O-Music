@@ -2345,14 +2345,6 @@ class GameResultManager {
     const pat = this.analyzePattern(session.notes || []);
     const labelMap = { sequential: 'Sequential', repetitive: 'Repetitive', exploratory: 'Exploratory' };
     const modeLabel = labelMap[pat.patternType] || 'Exploratory';
-    const text = `Mode: ${modeLabel}`;
-    const pad = 10;
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(pad, pad, ctx.measureText ? (ctx.measureText(text).width + 20) : 160, 26);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 14px monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText(text, pad + 10, pad + 18);
     const a = document.createElement('a');
     a.download = `spectrum_canvas_${Date.now()}.png`;
     a.href = off.toDataURL('image/png');
