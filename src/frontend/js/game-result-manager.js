@@ -2306,10 +2306,10 @@ class GameResultManager {
   updateSpectrumCaption(data) {
     const blLraEl = document.getElementById('caption-baseline-lra');
     const blBpmEl = document.getElementById('caption-baseline-bpm');
-    const blTempoEl = document.getElementById('caption-baseline-tempo');
+    const blContrastEl = document.getElementById('caption-baseline-contrast');
     const sfLraEl = document.getElementById('caption-safe-lra');
     const sfBpmEl = document.getElementById('caption-safe-bpm');
-    const sfTempoEl = document.getElementById('caption-safe-tempo');
+    const sfContrastEl = document.getElementById('caption-safe-contrast');
 
     if (blLraEl && data.unconstrained?.lra !== undefined) {
       blLraEl.textContent = `LRA: ${Number(data.unconstrained.lra).toFixed(1)} LU`;
@@ -2318,8 +2318,9 @@ class GameResultManager {
     if (blBpmEl) {
       blBpmEl.textContent = `BPM: ${rawBpm !== undefined && rawBpm !== null ? Math.round(rawBpm) : '--'}`;
     }
-    if (blTempoEl) {
-      blTempoEl.textContent = `Tempo: ${rawBpm !== undefined && rawBpm !== null ? Math.round(rawBpm) + ' BPM' : '--'}`;
+    if (blContrastEl) {
+      const rawContrast = data.unconstrained?.rawParams?.rawContrast;
+      blContrastEl.textContent = `Contrast: ${rawContrast !== undefined && rawContrast !== null ? (rawContrast * 100).toFixed(0) + '%' : '--'}`;
     }
 
     if (sfLraEl && data.constrained?.lra !== undefined) {
@@ -2330,8 +2331,17 @@ class GameResultManager {
     if (sfBpmEl) {
       sfBpmEl.textContent = `BPM: ${safeBpmVal}`;
     }
-    if (sfTempoEl) {
-      sfTempoEl.textContent = `Tempo: ${safeBpmVal} BPM`;
+    if (sfContrastEl) {
+      let finalContrast = undefined;
+      if (data.constrained?.safeParams?.safeContrast !== undefined) {
+        finalContrast = data.constrained.safeParams.safeContrast;
+      } else if (data.constrained?.clampLog) {
+        const contrastClamp = data.constrained.clampLog.find(c => c.param === 'contrast');
+        finalContrast = contrastClamp ? contrastClamp.clamped : data.unconstrained?.rawParams?.rawContrast;
+      } else {
+        finalContrast = data.unconstrained?.rawParams?.rawContrast;
+      }
+      sfContrastEl.textContent = `Contrast: ${finalContrast !== undefined && finalContrast !== null ? (finalContrast * 100).toFixed(0) + '%' : '--'}`;
     }
   }
 
