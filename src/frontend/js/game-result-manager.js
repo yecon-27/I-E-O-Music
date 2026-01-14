@@ -2178,6 +2178,7 @@ class GameResultManager {
     const generateBtn = document.getElementById('spectrum-generate-btn');
     const exportPngBtn = document.getElementById('spectrum-export-png-btn');
     const exportJsonBtn = document.getElementById('spectrum-export-json-btn');
+    const exportFullJsonBtn = document.getElementById('spectrum-export-fulljson-btn');
 
     if (generateBtn) {
       generateBtn.addEventListener('click', () => {
@@ -2194,6 +2195,11 @@ class GameResultManager {
     if (exportJsonBtn) {
       exportJsonBtn.addEventListener('click', () => {
         this.exportSpectrumJSON();
+      });
+    }
+    if (exportFullJsonBtn) {
+      exportFullJsonBtn.addEventListener('click', () => {
+        this.exportSpectrumFullJSON();
       });
     }
   }
@@ -2434,6 +2440,20 @@ class GameResultManager {
     const timestamp = Date.now();
     comparison.exportDataAsJSON(this.lastSpectrumData, `spectrum_data_${timestamp}.json`);
     this.showMusicMessage('频谱数据已导出为 JSON');
+  }
+
+  /**
+   * 导出完整 JSON（包含频谱与响度数组）
+   */
+  exportSpectrumFullJSON() {
+    if (!this.lastSpectrumData) {
+      this.showMusicMessage('请先生成频谱分析');
+      return;
+    }
+    const comparison = new window.SpectrogramComparison();
+    const timestamp = Date.now();
+    comparison.exportFullDataAsJSON(this.lastSpectrumData, `spectrum_full_data_${timestamp}.json`);
+    this.showMusicMessage('完整数据已导出为 JSON');
   }
   
   getGameData() {

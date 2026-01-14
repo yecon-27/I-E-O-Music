@@ -940,6 +940,63 @@ class SpectrogramComparison {
     a.click();
     URL.revokeObjectURL(url);
   }
+
+  /**
+   * 导出完整频谱与响度数据（包含数组）
+   */
+  exportFullDataAsJSON(comparisonData, filename = 'spectrum_full_data.json') {
+    const pickSpectro = (spec) => ({
+      numFrames: spec.numFrames,
+      numMelBins: spec.numMelBins,
+      hopSize: spec.hopSize,
+      sampleRate: spec.sampleRate,
+      data: spec.data,
+    });
+    const pickLoud = (l) => ({
+      values: l.values,
+      times: l.times,
+      integrated: l.integrated,
+    });
+    const exportData = {
+      seed: comparisonData.seed,
+      envelopeBounds: comparisonData.envelopeBounds,
+      params: {
+        sampleRate: this.sampleRate,
+        fftSize: this.fftSize,
+        hopSize: this.hopSize,
+        numMelBins: this.numMelBins,
+        minFreq: this.minFreq,
+        maxFreq: this.maxFreq,
+        focusLowerRatio: this.focusLowerRatio,
+      },
+      unconstrained: {
+        spectrogram: pickSpectro(comparisonData.unconstrained.spectrogram),
+        loudness: pickLoud(comparisonData.unconstrained.loudness),
+        lra: comparisonData.unconstrained.lra,
+        metrics: comparisonData.unconstrained.metrics,
+        bpm: comparisonData.unconstrained.sequence?.tempos?.[0]?.qpm || comparisonData.unconstrained.rawParams?.rawBpm || null,
+        contrast: comparisonData.unconstrained.rawParams?.rawContrast ?? null,
+      },
+      constrained: {
+        spectrogram: pickSpectro(comparisonData.constrained.spectrogram),
+        loudness: pickLoud(comparisonData.constrained.loudness),
+        lra: comparisonData.constrained.lra,
+        metrics: comparisonData.constrained.metrics,
+        bpm: comparisonData.constrained.sequence?.tempos?.[0]?.qpm || null,
+        contrast: (comparisonData.constrained.safeParams?.safeContrast !== undefined)
+          ? comparisonData.constrained.safeParams.safeContrast
+          : (comparisonData.constrained.clampLog?.find?.(c => c.param === 'contrast')?.clamped ?? comparisonData.unconstrained.rawParams?.rawContrast ?? null),
+      },
+      generatedAt: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 }
 
 function _mmToPx(mm, dpi) {
