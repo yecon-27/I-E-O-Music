@@ -12,7 +12,8 @@ class SpectrogramComparison {
     this.numMelBins = 64; // 减少 Mel bins
     this.minFreq = 20;
     this.maxFreq = 8000;
-    this.focusLowerRatio = 0.45; // 仅渲染底部 ~45% 频段，突出低区
+    this.focusLowerRatio = 0.30;
+    this.loudnessFocusTopRatio = 0.10;
     
     // 固定随机种子，确保可重现
     this.fixedSeed = 42;
@@ -511,13 +512,21 @@ class SpectrogramComparison {
     ctx.fillStyle = '#94a3b8';
     ctx.textAlign = 'right';
     ctx.font = '11px system-ui';
-    for (let k = 0; k <= 10; k++) {
-      const yy = y + height - (k / 10) * height;
+    const melMin = this.hzToMel(this.minFreq);
+    const melMax = this.hzToMel(this.maxFreq);
+    const visMelMax = melMin + (melMax - melMin) * (this.focusLowerRatio || 1);
+    const yticks = 6;
+    for (let k = 0; k <= yticks; k++) {
+      const frac = k / yticks;
+      const yy = y + height - frac * height;
+      const mel = melMin + (visMelMax - melMin) * frac;
+      const hz = this.melToHz(mel);
+      const reg = Math.max(0, Math.log2(hz / 16.35));
       ctx.beginPath();
       ctx.moveTo(x - 4, yy);
       ctx.lineTo(x, yy);
       ctx.stroke();
-      ctx.fillText(String(k), x - 6, yy + 3);
+      ctx.fillText(reg.toFixed(1), x - 6, yy + 3);
     }
     ctx.textAlign = 'center';
     ctx.font = '11px system-ui';
@@ -603,30 +612,28 @@ class SpectrogramComparison {
   drawLoudnessContour(ctx, loudnessData, x, y, width, height, bounds, showBounds) {
     const { values, times } = loudnessData;
     
-    // 绘制背景
     ctx.fillStyle = '#0d0d1a';
     ctx.fillRect(x, y, width, height);
     
-    // 计算范围
     const minLoudness = Math.min(...values, bounds.loudnessMin);
     const maxLoudness = Math.max(...values, bounds.loudnessMax);
     const range = maxLoudness - minLoudness;
+    const focus = this.loudnessFocusTopRatio || 1;
+    const visMin = maxLoudness - range * focus;
+    const visRange = Math.max(1e-6, maxLoudness - visMin);
     
-    // 绘制包络边界（虚线）
     if (showBounds) {
       ctx.strokeStyle = '#ff6b6b';
       ctx.lineWidth = 1;
       ctx.setLineDash([5, 5]);
       
-      // 上边界
-      const upperY = y + height - ((bounds.loudnessMax - minLoudness) / range) * height;
+      const upperY = y + height - ((bounds.loudnessMax - visMin) / visRange) * height;
       ctx.beginPath();
       ctx.moveTo(x, upperY);
       ctx.lineTo(x + width, upperY);
       ctx.stroke();
       
-      // 下边界
-      const lowerY = y + height - ((bounds.loudnessMin - minLoudness) / range) * height;
+      const lowerY = y + height - ((bounds.loudnessMin - visMin) / visRange) * height;
       ctx.beginPath();
       ctx.moveTo(x, lowerY);
       ctx.lineTo(x + width, lowerY);
@@ -634,21 +641,19 @@ class SpectrogramComparison {
       
       ctx.setLineDash([]);
       
-      // 标注
       ctx.fillStyle = '#ff6b6b';
       ctx.font = '9px system-ui';
       ctx.fillText(`${bounds.loudnessMax} LUFS`, x + width - 50, upperY - 3);
       ctx.fillText(`${bounds.loudnessMin} LUFS`, x + width - 50, lowerY + 10);
     }
     
-    // 绘制响度曲线
     ctx.strokeStyle = '#4ecdc4';
     ctx.lineWidth = 2;
     ctx.beginPath();
     
     for (let i = 0; i < values.length; i++) {
       const px = x + (i / (values.length - 1)) * width;
-      const py = y + height - ((values[i] - minLoudness) / range) * height;
+      const py = y + height - ((values[i] - visMin) / visRange) * height;
       
       if (i === 0) {
         ctx.moveTo(px, py);
