@@ -2180,6 +2180,7 @@ class GameResultManager {
     const exportJsonBtn = document.getElementById('spectrum-export-json-btn');
     const exportFullJsonBtn = document.getElementById('spectrum-export-fulljson-btn');
     const exportClickTrailBtn = document.getElementById('export-clicktrail-png-btn');
+    const exportClickTrailJsonBtn = document.getElementById('export-clicktrail-json-btn');
 
     if (generateBtn) {
       generateBtn.addEventListener('click', () => {
@@ -2206,6 +2207,11 @@ class GameResultManager {
     if (exportClickTrailBtn) {
       exportClickTrailBtn.addEventListener('click', () => {
         this.exportClickTrailPNG();
+      });
+    }
+    if (exportClickTrailJsonBtn) {
+      exportClickTrailJsonBtn.addEventListener('click', () => {
+        this.exportClickTrailJSON();
       });
     }
   }
@@ -2535,6 +2541,31 @@ class GameResultManager {
     a.href = off.toDataURL('image/png');
     a.click();
     this.showMusicMessage('Click trail PNG exported');
+  }
+  
+  exportClickTrailJSON() {
+    const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [], durationSec: 60 };
+    const notes = session.notes || [];
+    const durationSec = session.durationSec || 60;
+    const laneMap = { 1: 'C', 2: 'D', 3: 'E', 4: 'G', 5: 'A' };
+    const items = (notes || []).map(n => {
+      const lane = n.name?.[0] || laneMap[n.laneId] || 'C';
+      const timeSec = (n.dt || 0) / 1000;
+      return { lane, timeSec };
+    });
+    const exportData = {
+      lanes: ['C','D','E','G','A'],
+      points: items,
+      durationSec
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `click_trail_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    this.showMusicMessage('Click trail JSON exported');
   }
   
   getGameData() {
