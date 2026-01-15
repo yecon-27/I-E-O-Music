@@ -2179,6 +2179,7 @@ class GameResultManager {
     const exportPngBtn = document.getElementById('spectrum-export-png-btn');
     const exportJsonBtn = document.getElementById('spectrum-export-json-btn');
     const exportFullJsonBtn = document.getElementById('spectrum-export-fulljson-btn');
+    const exportClickTrailBtn = document.getElementById('export-clicktrail-png-btn');
 
     if (generateBtn) {
       generateBtn.addEventListener('click', () => {
@@ -2200,6 +2201,11 @@ class GameResultManager {
     if (exportFullJsonBtn) {
       exportFullJsonBtn.addEventListener('click', () => {
         this.exportSpectrumFullJSON();
+      });
+    }
+    if (exportClickTrailBtn) {
+      exportClickTrailBtn.addEventListener('click', () => {
+        this.exportClickTrailPNG();
       });
     }
   }
@@ -2454,6 +2460,81 @@ class GameResultManager {
     const timestamp = Date.now();
     comparison.exportFullDataAsJSON(this.lastSpectrumData, `spectrum_full_data_${timestamp}.json`);
     this.showMusicMessage('完整数据已导出为 JSON');
+  }
+  
+  exportClickTrailPNG() {
+    const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [], durationSec: 60 };
+    const notes = session.notes || [];
+    const durationSec = session.durationSec || 60;
+    const width = 720;
+    const height = 220;
+    const lanes = ['C','D','E','G','A'];
+    const laneColors = { C: '#F87171', D: '#FB923C', E: '#FBBF24', G: '#60A5FA', A: '#A78BFA' };
+    const off = document.createElement('canvas');
+    off.width = width;
+    off.height = height;
+    const ctx = off.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0,0,width,height);
+    const paddingL = 48, paddingR = 24, paddingT = 24, paddingB = 40;
+    const plotW = width - paddingL - paddingR;
+    const rowH = Math.floor((height - paddingT - paddingB) / lanes.length);
+    ctx.fillStyle = '#0f172a';
+    ctx.font = '12px system-ui';
+    ctx.textAlign = 'right';
+    lanes.forEach((lane, i) => {
+      const y = paddingT + i * rowH + Math.floor(rowH/2);
+      ctx.fillText(lane, paddingL - 8, y + 4);
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(paddingL, y);
+      ctx.lineTo(paddingL + plotW, y);
+      ctx.stroke();
+    });
+    ctx.strokeStyle = '#111111';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(paddingL, height - paddingB);
+    ctx.lineTo(paddingL + plotW, height - paddingB);
+    ctx.stroke();
+    ctx.fillStyle = '#0f172a';
+    ctx.textAlign = 'center';
+    const ticks = 10;
+    for (let t = 0; t <= ticks; t++) {
+      const xx = paddingL + (t / ticks) * plotW;
+      ctx.beginPath();
+      ctx.moveTo(xx, height - paddingB);
+      ctx.lineTo(xx, height - paddingB + 5);
+      ctx.stroke();
+      ctx.fillText(String(t), xx, height - paddingB + 16);
+    }
+    if (notes && notes.length) {
+      const maxTime = Math.max(...notes.map(n => n.dt || 0), durationSec * 1000);
+      const laneMap = { 1: 'C', 2: 'D', 3: 'E', 4: 'G', 5: 'A' };
+      const yPos = {};
+      lanes.forEach((lane, i) => {
+        yPos[lane] = paddingT + i * rowH + Math.floor(rowH/2);
+      });
+      notes.forEach(note => {
+        const lane = note.name?.[0] || laneMap[note.laneId] || 'C';
+        const time = note.dt || 0;
+        const xx = paddingL + (time / maxTime) * plotW;
+        const yy = yPos[lane];
+        ctx.fillStyle = laneColors[lane] || '#999';
+        ctx.beginPath();
+        ctx.arc(xx, yy, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+    ctx.fillStyle = '#0f172a';
+    ctx.textAlign = 'left';
+    ctx.fillText('Time (s)', paddingL, height - paddingB + 32);
+    const a = document.createElement('a');
+    a.download = `click_trail_${Date.now()}.png`;
+    a.href = off.toDataURL('image/png');
+    a.click();
+    this.showMusicMessage('Click trail PNG exported');
   }
   
   getGameData() {
