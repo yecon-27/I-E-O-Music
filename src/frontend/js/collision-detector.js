@@ -275,7 +275,7 @@ class CollisionDetector {
         
         // Background for label - 使用柔和的半透明背景
         const labelY = y + size * 1.3;
-        const labelText = handType === 'leftHand' ? '左手' : '右手';
+        const labelText = handType === 'leftHand' ? '左手' : 'hand';
         const labelWidth = ctx.measureText(labelText).width + 12;
         const labelHeight = size * 0.45;
         
