@@ -415,12 +415,12 @@ class SpectrogramComparison {
     const padding = 48;
     const labelHeight = 30;
     
-    // 绘制标题
+    // 子图标识
     ctx.fillStyle = '#111111';
     ctx.font = '12px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('(a) ' + (window.i18n ? window.i18n.t('spectro.title.left') : 'Unconstrained Baseline'), halfWidth / 2, 18);
-    ctx.fillText('(b) ' + (window.i18n ? window.i18n.t('spectro.title.right') : 'Constraint-First Output'), halfWidth + halfWidth / 2, 18);
+    ctx.textAlign = 'left';
+    ctx.fillText('(a)', padding + 8, labelHeight + 14);
+    ctx.fillText('(b)', halfWidth + padding + 8, labelHeight + 14);
     
     const rangeUnc = this.getDisplayRange(comparisonData.unconstrained.spectrogram);
     const rangeCon = this.getDisplayRange(comparisonData.constrained.spectrogram);
@@ -789,7 +789,7 @@ class SpectrogramComparison {
     ctx.fillStyle = text;
     ctx.font = `${22 * scale}px system-ui`;
     ctx.textAlign = 'left';
-    ctx.fillText('Spectrogram + Loudness Comparison', padding, 40 * scale);
+    ctx.fillText('', padding, 40 * scale);
 
     // 参数区：原始参数 vs 约束后参数
     const rawBpm = comparisonData.unconstrained?.sequence?.tempos?.[0]?.qpm || comparisonData.unconstrained?.rawParams?.rawBpm || 0;
@@ -836,6 +836,11 @@ class SpectrogramComparison {
       halfWidth + padding + 4 * scale, headerHeight + 8 * scale, halfWidth - padding * 2 - 8 * scale, specHeight - labelHeight, rangeCon.min, rangeCon.max);
     // 移除论文版色标尺
     const loudnessY = headerHeight + specHeight + 20 * scale;
+    ctx.fillStyle = '#111111';
+    ctx.font = `${16 * scale}px system-ui`;
+    ctx.textAlign = 'left';
+    ctx.fillText('(a)', padding + 12 * scale, headerHeight + 18 * scale);
+    ctx.fillText('(b)', halfWidth + padding + 12 * scale, headerHeight + 18 * scale);
     this.roundRect(ctx, padding, loudnessY, halfWidth - padding * 2, loudnessHeight, 16 * scale, '#ffffff', border);
     this.roundRect(ctx, halfWidth + padding, loudnessY, halfWidth - padding * 2, loudnessHeight, 16 * scale, '#ffffff', border);
     this.drawLoudnessContour(ctx, comparisonData.unconstrained.loudness,
