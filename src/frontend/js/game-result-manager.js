@@ -2559,9 +2559,15 @@ class GameResultManager {
         const xx = paddingL + (time / maxTime) * plotW;
         const yy = yPos[lane];
         ctx.fillStyle = laneColors[lane] || '#999';
+        ctx.shadowColor = 'rgba(0,0,0,0.25)';
+        ctx.shadowBlur = 4;
         ctx.beginPath();
-        ctx.arc(xx, yy, 3, 0, Math.PI * 2);
+        ctx.arc(xx, yy, 6, 0, Math.PI * 2);
         ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+        ctx.shadowBlur = 0;
       });
     }
     ctx.fillStyle = '#0f172a';

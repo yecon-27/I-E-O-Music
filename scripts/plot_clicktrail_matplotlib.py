@@ -55,7 +55,7 @@ def main():
         xs.append(t)
         ys.append(lane_index.get(lane, 0))
         cs.append(colors.get(lane, '#999999'))
-    ax.scatter(xs, ys, s=24, c=cs, alpha=0.7, edgecolors='white', linewidths=0.8, zorder=3)
+    ax.scatter(xs, ys, s=64, c=cs, alpha=0.9, edgecolors='black', linewidths=1.2, zorder=3)
 
     fig.savefig(args.pdf, bbox_inches='tight')
     fig.savefig(args.eps, bbox_inches='tight')

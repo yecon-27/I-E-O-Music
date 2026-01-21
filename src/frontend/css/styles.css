@@ -3574,8 +3574,8 @@ body.high-animation * {
 .scatter-row {
     display: flex;
     align-items: center;
-    height: 24px;
-    margin-bottom: 4px;
+    height: 28px;
+    margin-bottom: 6px;
 }
 
 .scatter-row:last-child {
@@ -3591,7 +3591,7 @@ body.high-animation * {
 
 .scatter-track {
     flex: 1;
-    height: 20px;
+    height: 24px;
     position: relative;
     background: rgba(0, 0, 0, 0.02);
     border-radius: 4px;
@@ -3599,21 +3599,23 @@ body.high-animation * {
 
 .scatter-dot {
     position: absolute;
-    width: 8px;
-    height: 8px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     top: 50%;
     transform: translateY(-50%);
-    opacity: 0.7;
+    opacity: 0.95;
+    border: 2px solid rgba(255,255,255,0.95);
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.25);
     transition: transform 0.15s ease;
 }
 
 .scatter-dot.highlight {
-    width: 14px;
-    height: 14px;
+    width: 20px;
+    height: 20px;
     opacity: 1;
-    border: 2px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+    border: 3px solid rgba(255, 255, 255, 1);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
 }
 
 

@@ -420,25 +420,7 @@
                                     </div>
                                 </div>
                                 
-                                <div class="segment-selector">
-                                    <div class="segment-header">
-                                        <span id="segment-label">片段选择</span>
-                                        <span class="segment-tip">拖动滑块设置起始/结束位置</span>
-                                    </div>
-                                    <div class="segment-canvas-wrapper" style="position:relative;">
-                                        <canvas id="segment-canvas" width="560" height="120"></canvas>
-                                        <!-- 滑块已隐藏，由canvas处理拖动交互 -->
-                                        <div class="segment-sliders-overlay" style="position:absolute;left:0;right:0;bottom:0;height:40px;opacity:0;visibility:hidden;pointer-events:none;">
-                                            <input type="range" id="segment-start-slider" min="0" max="12" value="0" step="0.5" style="opacity:0;visibility:hidden;pointer-events:none;">
-                                            <input type="range" id="segment-end-slider" min="8" max="20" value="15" step="0.5" style="opacity:0;visibility:hidden;pointer-events:none;">
-                                        </div>
-                                    </div>
-                                    <div class="segment-values" style="display:flex;justify-content:space-between;margin-top:4px;font-size:12px;color:var(--text-secondary);">
-                                        <span>起始: <strong id="segment-start-value" style="color:var(--accent-primary);">0.0s</strong></span>
-                                        <span>时长: <strong id="report-param-duration-value" style="color:var(--accent-primary);">15s</strong></span>
-                                        <span>结束: <strong id="segment-end-value" style="color:var(--accent-primary);">15.0s</strong></span>
-                                    </div>
-                                </div>
+                                
                                 
                                 <!-- 操作按钮 -->
                                 <div class="param-actions">
