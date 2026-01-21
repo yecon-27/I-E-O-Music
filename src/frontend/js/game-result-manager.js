@@ -91,17 +91,11 @@ class GameResultManager {
       });
     }
     
-    // 刷新专家模式按钮 - 重新渲染专家视图与参数文本
+    // 导出会话报告按钮
     if (refreshExpertBtn) {
       refreshExpertBtn.addEventListener("click", () => {
-        console.log("[GameResult] 刷新专家模式视图");
-        this.updateExpertView();
-        try {
-          window.musicParamController?.updateTexts?.();
-          window.musicParamController?.updateAllSliderStyles?.();
-        } catch (e) {
-          console.warn("[Expert Refresh] 参数面板刷新失败:", e);
-        }
+        console.log("[GameResult] Export Session Report");
+        this.exportSessionReport();
       });
     }
 
@@ -2497,6 +2491,89 @@ class GameResultManager {
     a.click();
     URL.revokeObjectURL(url);
     this.showMusicMessage('Minimal audit JSON exported');
+  }
+  
+  /**
+   * 导出当前会话报告（JSON）
+   * 结构示例：
+   * {
+   *   traceId: "trace_123",
+   *   patternLabel: "Sequential",
+   *   params: {
+   *     requested: { tempo, "accent ratio", "gain" },
+   *     effective: { tempo, "accent ratio", "gain" }
+   *   },
+   *   metrics: { peakLufs, lraEffective },
+   *   enforcementStatus: "clamped"|"pass"
+   * }
+   */
+  async exportSessionReport() {
+    const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [] };
+    if (!session.notes || session.notes.length < 2) {
+      this.showMusicMessage('会话数据不足，无法导出');
+      return;
+    }
+    try {
+      const comparison = new window.SpectrogramComparison();
+      const data = await comparison.generateComparisonData(session);
+      const pat = this.analyzePattern(session.notes || []);
+      const labelMap = { sequential: 'Sequential', repetitive: 'Repetitive', exploratory: 'Exploratory', mixed: 'Mixed', sequential_pentatonic: 'Sequential' };
+      const patternLabel = labelMap[pat.patternType] || 'Mixed';
+      const traceId = `trace_${Date.now()}`;
+      const requestedTempo = data.unconstrained?.rawParams?.rawBpm ?? null;
+      const requestedContrast = data.unconstrained?.rawParams?.rawContrast ?? null;
+      const requestedVolume = data.unconstrained?.rawParams?.rawVolume ?? null;
+      const effectiveTempo = data.constrained?.sequence?.tempos?.[0]?.qpm ?? null;
+      // 取最终对比度（优先 safeParams，再看 clampLog，否则回退到原始）
+      let effectiveContrast = undefined;
+      if (data.constrained?.safeParams?.safeContrast !== undefined) {
+        effectiveContrast = data.constrained.safeParams.safeContrast;
+      } else if (data.constrained?.clampLog) {
+        const cClamp = data.constrained.clampLog.find(c => c.param === 'contrast');
+        effectiveContrast = cClamp ? cClamp.clamped : data.unconstrained?.rawParams?.rawContrast;
+      } else {
+        effectiveContrast = data.unconstrained?.rawParams?.rawContrast;
+      }
+      // 音量（gain）取安全参数或原始，再转换为百分比显示
+      const effectiveVolume = (data.constrained?.safeParams?.safeVolume ?? requestedVolume);
+      const enforcementStatus = (data.constrained?.clampLog?.length || 0) > 0 ? 'clamped' : 'pass';
+      // 指标
+      const loudSafe = data.constrained?.loudness?.values || [];
+      const peakLufs = loudSafe.length ? Math.max(...loudSafe) : null;
+      const lraEffective = (data.unconstrained?.lra && data.constrained?.lra) ? Number((data.unconstrained.lra / data.constrained.lra).toFixed(2)) : null;
+      const record = {
+        traceId,
+        patternLabel,
+        params: {
+          requested: {
+            tempo: requestedTempo,
+            "accent ratio": requestedContrast !== undefined && requestedContrast !== null ? `${(requestedContrast * 100).toFixed(1)}%` : null,
+            "gain": requestedVolume !== undefined && requestedVolume !== null ? `${Math.round(requestedVolume * 100)}%` : null
+          },
+          effective: {
+            tempo: effectiveTempo,
+            "accent ratio": effectiveContrast !== undefined && effectiveContrast !== null ? `${(effectiveContrast * 100).toFixed(1)}%` : null,
+            "gain": effectiveVolume !== undefined && effectiveVolume !== null ? `${Math.round(effectiveVolume * 100)}%` : null
+          }
+        },
+        metrics: {
+          peakLufs,
+          lraEffective
+        },
+        enforcementStatus
+      };
+      const blob = new Blob([JSON.stringify([record], null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `session_report_${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      this.showMusicMessage('Session report exported');
+    } catch (e) {
+      console.error('[SessionReport] 导出失败:', e);
+      this.showMusicMessage('导出失败：' + e.message);
+    }
   }
   
   exportClickTrailPNG() {
