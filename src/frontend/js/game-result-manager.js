@@ -327,7 +327,8 @@ class GameResultManager {
     if (volumeSlider && volumeValue) {
       volumeSlider.addEventListener("input", (e) => {
         const value = parseInt(e.target.value);
-        volumeValue.textContent = value + "%";
+        const db = 20 * Math.log10(Math.max(1e-6, value / 100));
+        volumeValue.textContent = `${db.toFixed(2)} dB`;
         // 应用音量
         if (window.popSynth) {
           window.popSynth.setVolume(value / 100);
@@ -384,7 +385,8 @@ class GameResultManager {
     if (volumeSlider && volumeDisplay) {
       volumeSlider.addEventListener("input", (e) => {
         const value = e.target.value;
-        volumeDisplay.textContent = value + "%";
+        const db = 20 * Math.log10(Math.max(1e-6, value / 100));
+        volumeDisplay.textContent = `${Number(db).toFixed(2)} dB`;
         // 应用音量
         if (window.popSynth) {
           window.popSynth.setVolume(value / 100);
@@ -2602,8 +2604,9 @@ class GameResultManager {
       const effectiveVolume = (data.constrained?.safeParams?.safeVolume ?? requestedVolume);
       const enforcementStatus = (data.constrained?.clampLog?.length || 0) > 0 ? 'clamped' : 'pass';
       // 指标
-      const loudSafe = data.constrained?.loudness?.values || [];
-      const peakLufs = loudSafe.length ? Math.max(...loudSafe) : null;
+      const integratedLufs = (data.constrained?.loudness?.integrated !== undefined && data.constrained?.loudness?.integrated !== null)
+        ? Number(Number(data.constrained.loudness.integrated).toFixed(2))
+        : null;
       const lraEffective = (data.unconstrained?.lra && data.constrained?.lra) ? Number((data.unconstrained.lra / data.constrained.lra).toFixed(2)) : null;
       // onset density（约束版本音符密度，个/秒）
       let onsetDensity = null;
@@ -2619,16 +2622,16 @@ class GameResultManager {
           requested: {
             tempo: requestedTempo,
             "accent ratio": requestedContrast !== undefined && requestedContrast !== null ? `${(requestedContrast * 100).toFixed(1)}%` : null,
-            "gain": requestedVolume !== undefined && requestedVolume !== null ? `${Math.round(requestedVolume * 100)}%` : null
+            "gain": requestedVolume !== undefined && requestedVolume !== null ? `${(20 * Math.log10(Math.max(1e-6, requestedVolume))).toFixed(2)} dB` : null
           },
           effective: {
             tempo: effectiveTempo,
             "accent ratio": effectiveContrast !== undefined && effectiveContrast !== null ? `${(effectiveContrast * 100).toFixed(1)}%` : null,
-            "gain": effectiveVolume !== undefined && effectiveVolume !== null ? `${Math.round(effectiveVolume * 100)}%` : null
+            "gain": effectiveVolume !== undefined && effectiveVolume !== null ? `${(20 * Math.log10(Math.max(1e-6, effectiveVolume))).toFixed(2)} dB` : null
           }
         },
         metrics: {
-          peakLufs,
+          integratedLufs,
           lraEffective,
           onsetDensity
         },

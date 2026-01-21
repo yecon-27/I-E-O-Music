@@ -142,7 +142,11 @@ class MusicParamController {
             if (volumeLabel) {
                 const span = volumeLabel.querySelector('span:first-child');
                 if (span) {
-                    span.innerHTML = `${this.t('expert.volume')} <span class="param-safe-range">${this.t('expert.safeRange')}${this.safeRanges.volume.min}-${this.safeRanges.volume.max}${this.safeRanges.volume.unit}</span>`;
+                    const vmin = this.safeRanges.volume.min;
+                    const vmax = this.safeRanges.volume.max;
+                    const dbMin = (20 * Math.log10(Math.max(1e-6, vmin / 100))).toFixed(1);
+                    const dbMax = (20 * Math.log10(Math.max(1e-6, vmax / 100))).toFixed(1);
+                    span.innerHTML = `${this.t('expert.volume')} <span class="param-safe-range">${this.t('expert.safeRange')}${dbMin}–${dbMax} dB</span>`;
                 }
                 const warning = volumeLabel.querySelector('.param-warning-badge');
                 if (warning) warning.textContent = this.t('expert.warning.unsafe');
@@ -665,7 +669,7 @@ class MusicParamController {
         
         const contrastSlider = document.getElementById('report-param-contrast');
         const contrastValue = document.getElementById('report-param-contrast-value');
-        if (contrastSlider) {
+            if (contrastSlider) {
             contrastSlider.min = String(preset.contrast.absMin);
             contrastSlider.max = String(preset.contrast.absMax);
             const contrastMid = Math.round((preset.contrast.min + preset.contrast.max) / 2);
@@ -683,7 +687,10 @@ class MusicParamController {
             const volumeMid = Math.round((preset.volume.min + preset.volume.max) / 2);
             volumeSlider.value = String(volumeMid);
             this.currentParams.volume = volumeMid;
-            if (volumeValue) volumeValue.textContent = volumeMid + '%';
+                if (volumeValue) {
+                    const db = 20 * Math.log10(Math.max(1e-6, volumeMid / 100));
+                    volumeValue.textContent = `${db.toFixed(2)} dB`;
+                }
             this.updateSliderStyle(volumeSlider, 'volume', volumeMid);
         }
         
@@ -751,7 +758,14 @@ class MusicParamController {
                 
                 // 更新显示
                 if (valueEl) {
-                    valueEl.textContent = param === 'tempo' ? value : value + '%';
+                    if (param === 'tempo') {
+                        valueEl.textContent = value;
+                    } else if (param === 'volume') {
+                        const db = 20 * Math.log10(Math.max(1e-6, value / 100));
+                        valueEl.textContent = `${db.toFixed(2)} dB`;
+                    } else {
+                        valueEl.textContent = value + '%';
+                    }
                 }
                 
                 // 检查是否超出安全范围
@@ -767,7 +781,14 @@ class MusicParamController {
             // 初始化显示值为当前滑块值（若已被重置为默认）
             const initVal = parseInt(slider.value);
             if (valueEl) {
-                valueEl.textContent = param === 'tempo' ? initVal : initVal + '%';
+                if (param === 'tempo') {
+                    valueEl.textContent = initVal;
+                } else if (param === 'volume') {
+                    const db = 20 * Math.log10(Math.max(1e-6, initVal / 100));
+                    valueEl.textContent = `${db.toFixed(2)} dB`;
+                } else {
+                    valueEl.textContent = initVal + '%';
+                }
             }
             this.updateSliderStyle(slider, param, initVal);
             // 初始化警告状态
@@ -959,7 +980,10 @@ class MusicParamController {
         
         if (tempoEl) tempoEl.textContent = this.currentParams.tempo;
         if (contrastEl) contrastEl.textContent = this.currentParams.contrast + '%';
-        if (volumeEl) volumeEl.textContent = this.currentParams.volume + '%';
+        if (volumeEl) {
+            const db = 20 * Math.log10(Math.max(1e-6, this.currentParams.volume / 100));
+            volumeEl.textContent = `${db.toFixed(2)} dB`;
+        }
         if (harmonyEl) harmonyEl.textContent = this.currentParams.harmony;
         if (durationMinEl && this.convergedDuration) durationMinEl.textContent = this.convergedDuration.min;
         if (durationMaxEl && this.convergedDuration) durationMaxEl.textContent = this.convergedDuration.max;
