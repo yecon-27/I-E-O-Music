@@ -591,14 +591,14 @@ class MusicParamController {
             paramActions?.classList.toggle('hidden', mode !== 'test');
             presetsArea?.classList.toggle('hidden', mode !== 'test');
             
-            // 测试模式仅保留三项参数，其余隐藏；Segment Select 保留
+            // 测试模式仅保留三项参数，其余隐藏
             const harmonyItem = document.getElementById('harmony-param-item');
             const instrumentItem = document.getElementById('instrument-param-item');
             const segmentSelector = document.querySelector('.segment-selector');
             if (mode === 'test') {
                 harmonyItem?.classList.add('hidden');
                 instrumentItem?.classList.add('hidden');
-                segmentSelector?.classList.remove('hidden');
+                segmentSelector?.classList.add('hidden');
             } else {
                 harmonyItem?.classList.remove('hidden');
                 instrumentItem?.classList.remove('hidden');

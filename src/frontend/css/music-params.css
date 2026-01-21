@@ -526,13 +526,19 @@
     background: var(--bg-secondary);
     border-radius: var(--radius-md);
     padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 240px;
+    height: clamp(240px, 28vh, 360px);
 }
 
 .scatter-row {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 6px;
+    margin-bottom: 0;
+    flex: 1;
 }
 
 .scatter-row:last-child {
@@ -540,34 +546,42 @@
 }
 
 .scatter-label {
-    width: 20px;
-    font-size: 0.75rem;
+    width: 24px;
+    font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .scatter-track {
     flex: 1;
-    height: 16px;
-    background: rgba(0, 0, 0, 0.04);
-    border-radius: 8px;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 9999px;
     position: relative;
     overflow: hidden;
 }
 
 .scatter-dot {
     position: absolute;
-    width: 8px;
-    height: 8px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     top: 50%;
     transform: translateY(-50%);
+    border: 2px solid rgba(255,255,255,0.95);
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.25);
+    opacity: 0.98;
 }
 
 .scatter-dot.highlight {
-    width: 10px;
-    height: 10px;
-    box-shadow: 0 0 4px currentColor;
+    width: 20px;
+    height: 20px;
+    border-width: 3px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.3);
+    opacity: 1;
 }
 
 /* 模式得分 */

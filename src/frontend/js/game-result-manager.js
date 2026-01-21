@@ -76,6 +76,7 @@ class GameResultManager {
         if (expertView) expertView.classList.remove("hidden");
         postSessionBtn.classList.add("active");
         
+        this.enforceMinimalExpertParams();
         // 更新专家视图数据
         this.updateExpertView();
       });
@@ -96,6 +97,8 @@ class GameResultManager {
       refreshExpertBtn.addEventListener("click", () => {
         console.log("[GameResult] Export Session Report");
         this.exportSessionReport();
+        this.exportClickTrailPNG();
+        this.exportClickTrailJSON();
       });
     }
 
@@ -824,6 +827,19 @@ class GameResultManager {
     this.updateUnconstrainedParamsDisplay();
     
     // session report removed
+  }
+  
+  enforceMinimalExpertParams() {
+    try {
+      document.getElementById('harmony-param-item')?.classList.add('hidden');
+      document.getElementById('instrument-param-item')?.classList.add('hidden');
+      document.getElementById('duration-param-item')?.classList.add('hidden');
+      document.querySelector('.segment-selector')?.classList.add('hidden');
+      document.querySelector('.music-params-grid')?.classList.remove('hidden');
+      document.getElementById('spectrum-analysis-area')?.classList.add('hidden');
+    } catch (e) {
+      console.warn('[ExpertParams] 最小化参数显示失败:', e);
+    }
   }
 
   /**
@@ -2541,6 +2557,13 @@ class GameResultManager {
       const loudSafe = data.constrained?.loudness?.values || [];
       const peakLufs = loudSafe.length ? Math.max(...loudSafe) : null;
       const lraEffective = (data.unconstrained?.lra && data.constrained?.lra) ? Number((data.unconstrained.lra / data.constrained.lra).toFixed(2)) : null;
+      // onset density（约束版本音符密度，个/秒）
+      let onsetDensity = null;
+      const notesSafe = data.constrained?.sequence?.notes || [];
+      const durSafe = data.constrained?.sequence?.totalTime || (data.constrained?.loudness?.times?.slice(-1)[0] || null);
+      if (notesSafe.length && durSafe && durSafe > 0) {
+        onsetDensity = Number((notesSafe.length / durSafe).toFixed(2));
+      }
       const record = {
         traceId,
         patternLabel,
@@ -2558,7 +2581,8 @@ class GameResultManager {
         },
         metrics: {
           peakLufs,
-          lraEffective
+          lraEffective,
+          onsetDensity
         },
         enforcementStatus
       };
