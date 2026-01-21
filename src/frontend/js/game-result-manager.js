@@ -867,6 +867,7 @@ class GameResultManager {
     
     const maxTime = Math.max(...notes.map(n => n.dt || 0), durationSec * 1000);
     const positionCounts = {};
+    const lanePoints = { C: [], D: [], E: [], G: [], A: [] };
     
     notes.forEach((note, idx) => {
       const noteName = note.name?.[0] || laneMap[note.laneId] || "C";
@@ -892,7 +893,54 @@ class GameResultManager {
       }
       
       track.appendChild(dot);
+      lanePoints[noteName].push(leftPercent);
     });
+    
+    Object.keys(lanePoints).forEach(lane => {
+      const row = scatterEl.querySelector(`[data-lane="${lane}"]`);
+      const track = row?.querySelector(".scatter-track");
+      if (!track) return;
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("class", "scatter-overlay");
+      svg.setAttribute("viewBox", "0 0 100 100");
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      const xs = lanePoints[lane].slice().sort((a,b)=>a-b);
+      let d = "";
+      for (let i = 0; i < xs.length; i++) {
+        const x = Math.max(0, Math.min(100, xs[i]));
+        const cmd = i === 0 ? "M" : "L";
+        d += `${cmd} ${x} 50 `;
+      }
+      path.setAttribute("d", d.trim());
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", laneColors[lane] || "#999");
+      path.setAttribute("stroke-width", "1");
+      path.setAttribute("stroke-opacity", "0.35");
+      svg.appendChild(path);
+      track.appendChild(svg);
+    });
+    
+    let axis = scatterEl.querySelector(".scatter-axis");
+    if (!axis) {
+      axis = document.createElement("div");
+      axis.className = "scatter-axis";
+      scatterEl.appendChild(axis);
+    }
+    axis.innerHTML = "";
+    const maxSec = Math.max(1, Math.round(maxTime / 1000));
+    const step = maxSec >= 10 ? 5 : Math.max(1, Math.round(maxSec / 2));
+    for (let t = 0; t <= maxSec; t += step) {
+      const x = (t / maxSec) * 100;
+      const tick = document.createElement("div");
+      tick.className = "axis-tick";
+      tick.style.left = `${x}%`;
+      axis.appendChild(tick);
+      const label = document.createElement("div");
+      label.className = "axis-label";
+      label.style.left = `${x}%`;
+      label.textContent = `${t}s`;
+      axis.appendChild(label);
+    }
   }
 
   /**
