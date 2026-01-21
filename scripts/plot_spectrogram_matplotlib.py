@@ -48,10 +48,14 @@ def main():
     plt.rcParams['axes.unicode_minus'] = False
     plt.rcParams['axes.labelweight'] = 'medium'
 
-    fig, axs = plt.subplots(2, 2, figsize=(12, 8),
-                            gridspec_kw={'height_ratios': [0.6, 0.6], 'hspace': 0.25, 'wspace': 0.40})
+    fig, axs = plt.subplots(2, 2, figsize=(12, 7.6),
+                            gridspec_kw={'height_ratios': [0.6, 0.6], 'hspace': 0.18, 'wspace': 0.28})
     (ax_spec_a, ax_spec_b), (ax_loud_a, ax_loud_b) = axs
-    plt.subplots_adjust(left=0.23, right=0.90, top=0.92, bottom=0.12)
+    # 紧凑裁边：尽量去掉大留白和“截图感”
+    plt.subplots_adjust(left=0.10, right=0.98, top=0.94, bottom=0.10)
+    fig.patch.set_facecolor('white')
+    for ax in [ax_spec_a, ax_spec_b, ax_loud_a, ax_loud_b]:
+        ax.set_facecolor('white')
 
     # Spectrograms
     # Spectrograms (robust to missing arrays)
@@ -88,10 +92,10 @@ def main():
         ax_spec_a.tick_params(axis='y', length=5)
         ax_spec_b.tick_params(axis='y', length=5)
         sp_pos = ax_spec_b.get_position()
-        cbar_ax = fig.add_axes([sp_pos.x1 + 0.03, sp_pos.y0, 0.015, sp_pos.height])
+        cbar_ax = fig.add_axes([sp_pos.x1 + 0.02, sp_pos.y0, 0.012, sp_pos.height])
         cb = fig.colorbar(im, cax=cbar_ax)
         cb.set_label('Magnitude (dB)', weight='medium')
-        cbar_ax.tick_params(labelsize=11, width=1.2)
+        cbar_ax.tick_params(labelsize=10, width=1.0)
         print("INFO: Spectrogram arrays loaded and plotted.")
     else:
         # Placeholders if spectrogram arrays are missing
@@ -126,21 +130,16 @@ def main():
     else:
         ax_loud_b.text(0.5, 0.5, 'No Loudness Data', ha='center', va='center', fontsize=10)
         print("WARNING: JSON missing constrained.loudness.values/times")
-    ax_loud_a.set_ylabel('Loudness (LUFS)', labelpad=18, fontsize=14)
+    ax_loud_a.set_ylabel('Loudness (LUFS)', labelpad=14, fontsize=13)
     ax_loud_a.yaxis.set_label_coords(-0.12, 0.5)
-    ax_loud_a.set_xlabel('Time (s)', fontsize=14)
-    ax_loud_b.set_xlabel('Time (s)', fontsize=14)
+    # 共享 X 轴标题：放在页脚统一显示
     ax_loud_a.set_xlim(0, 10)
     ax_loud_b.set_xlim(0, 10)
     ax_loud_a.set_ylim(-30, -10)
     ax_loud_b.set_ylim(-30, -10)
     ax_loud_a.set_yticks([-30, -20, -10])
     ax_loud_b.set_yticks([-30, -20, -10])
-    # Constraint dashed lines on (b)
-    ax_loud_b.axhline(env.get("loudnessMax", -14), color='red', linestyle='--', linewidth=1, alpha=0.7)
-    ax_loud_b.axhline(env.get("loudnessMin", -30), color='red', linestyle='--', linewidth=1, alpha=0.7)
-    ax_loud_b.text(9.6, env.get("loudnessMax", -14) + 0.8, f"{env.get('loudnessMax', -14)} LUFS", color='red', fontsize=8, ha='right')
-    ax_loud_b.text(9.6, env.get("loudnessMin", -30) - 0.8, f"{env.get('loudnessMin', -30)} LUFS", color='red', fontsize=8, ha='right')
+    # No signal-layer clamp lines
 
     # Footer metrics
     raw_bpm = data.get("unconstrained", {}).get("bpm") or data.get("unconstrained", {}).get("rawParams", {}).get("rawBpm")
@@ -161,12 +160,26 @@ def main():
         ax.tick_params(labelsize=11, width=1.2)
         for spine in ax.spines.values():
             spine.set_linewidth(1.2)
-    ax_spec_a.set_title('(a) Unconstrained Baseline', pad=20, fontsize=14, fontweight='bold')
-    ax_spec_b.set_title('(b) Constraint-First Output', pad=20, fontsize=14, fontweight='bold')
+    # 子图编号放在图外（左上角外侧）
+    pos_spec_a = ax_spec_a.get_position()
+    pos_spec_b = ax_spec_b.get_position()
+    pos_loud_a = ax_loud_a.get_position()
+    pos_loud_b = ax_loud_b.get_position()
+    fig.text(pos_spec_a.x0 - 0.03, pos_spec_a.y1 + 0.015, '(a)', ha='left', va='bottom', fontsize=13, fontweight='bold')
+    fig.text(pos_spec_b.x0 - 0.03, pos_spec_b.y1 + 0.015, '(b)', ha='left', va='bottom', fontsize=13, fontweight='bold')
+    fig.text(pos_loud_a.x0 - 0.03, pos_loud_a.y1 + 0.015, '(c)', ha='left', va='bottom', fontsize=13, fontweight='bold')
+    fig.text(pos_loud_b.x0 - 0.03, pos_loud_b.y1 + 0.015, '(d)', ha='left', va='bottom', fontsize=13, fontweight='bold')
+    # 共享 X 轴标题
+    fig.text(0.54, 0.06, 'Time (s)', ha='center', va='center', fontsize=13)
+    # 列标题
+    pos_a = ax_spec_a.get_position()
+    pos_b = ax_spec_b.get_position()
+    fig.text(pos_a.x0 + pos_a.width / 2, pos_a.y1 + 0.02, 'Baseline', ha='center', va='bottom', fontsize=13, fontweight='medium')
+    fig.text(pos_b.x0 + pos_b.width / 2, pos_b.y1 + 0.02, 'Constrained', ha='center', va='bottom', fontsize=13, fontweight='medium')
 
-    fig.savefig(args.png, dpi=args.dpi, bbox_inches='tight')
-    fig.savefig(args.pdf, bbox_inches='tight')
-    fig.savefig(args.svg, bbox_inches='tight')
+    fig.savefig(args.png, dpi=args.dpi, bbox_inches='tight', facecolor='white')
+    fig.savefig(args.pdf, bbox_inches='tight', facecolor='white')
+    fig.savefig(args.svg, bbox_inches='tight', facecolor='white')
     print(f"Saved PNG ({args.dpi} DPI): {args.png}")
     print(f"Saved PDF (vector): {args.pdf}")
     print(f"Saved SVG (vector): {args.svg}")

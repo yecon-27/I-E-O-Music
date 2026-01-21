@@ -452,7 +452,7 @@ class SpectrogramComparison {
     this.drawLoudnessContour(ctx, comparisonData.unconstrained.loudness,
       padding, loudnessY, halfWidth - padding * 2, loudnessHeight, comparisonData.envelopeBounds, false);
     this.drawLoudnessContour(ctx, comparisonData.constrained.loudness,
-      halfWidth + padding, loudnessY, halfWidth - padding * 2, loudnessHeight, comparisonData.envelopeBounds, true);
+      halfWidth + padding, loudnessY, halfWidth - padding * 2, loudnessHeight, comparisonData.envelopeBounds, false);
     ctx.save();
     ctx.fillStyle = '#111111';
     ctx.font = '12px Arial';
@@ -875,6 +875,97 @@ class SpectrogramComparison {
     link.click();
   }
 
+  /**
+   * 导出矢量版 SVG（纯矢量：频谱格子 + 响度路径）
+   */
+  exportPaperSVG(comparisonData, filename = 'spectrogram_paper.svg', options = {}) {
+    const width = options.width || 1600;
+    const height = options.height || 900;
+    const halfWidth = width / 2;
+    const headerHeight = 140;
+    const specHeight = Math.floor(height * 0.34);
+    const loudnessHeight = Math.floor(height * 0.36);
+    const padding = 48;
+    const labelHeight = 50;
+    const leftX = padding + 4;
+    const rightX = halfWidth + padding + 4;
+    const specY = headerHeight + 8;
+    const leftW = halfWidth - padding * 2 - 8;
+    const rightW = leftW;
+    const buildSpectro = (spec, x, y, w, h) => {
+      const { data, numFrames, numMelBins } = spec;
+      const secondsPerFrame = spec.sampleRate ? (spec.hopSize / spec.sampleRate) : 0;
+      const capSec = 10;
+      const framesToDraw = secondsPerFrame > 0 ? Math.min(numFrames, Math.floor(capSec / secondsPerFrame)) : numFrames;
+      const visibleBins = Math.max(1, Math.floor(numMelBins * (this.focusLowerRatio || 0.30)));
+      const range = this.getDisplayRange(spec);
+      const minDbEff = Math.max(range.min, -60);
+      const maxDbEff = range.max;
+      const cellW = w / Math.max(1, framesToDraw);
+      const cellH = h / visibleBins;
+      let out = '';
+      for (let i = 0; i < framesToDraw; i++) {
+        for (let j = 0; j < visibleBins; j++) {
+          const v0 = data[i][j];
+          const vL = data[Math.max(i - 1, 0)][j];
+          const vR = data[Math.min(i + 1, framesToDraw - 1)][j];
+          const value = (v0 + vL + vR) / 3;
+          const normalized = (value - minDbEff) / (maxDbEff - minDbEff);
+          const color = this.viridisColormap(Math.max(0, Math.min(1, normalized)));
+          const rx = x + i * cellW;
+          const ry = y + h - (j + 1) * cellH;
+          out += `<rect x="${rx.toFixed(2)}" y="${ry.toFixed(2)}" width="${Math.ceil(cellW)}" height="${Math.ceil(cellH)}" fill="${color}"/>`;
+        }
+      }
+      return out;
+    };
+    const buildLoud = (loud, x, y, w, h) => {
+      const values = loud.values || [];
+      const times = loud.times || [];
+      const visMin = -30, visMax = -10;
+      const visRange = Math.max(1e-6, visMax - visMin);
+      const capSec = 10;
+      let d = '';
+      const len = Math.max(2, values.length);
+      for (let i = 0; i < len; i++) {
+        const t = Math.min(capSec, times[i] || 0);
+        const px = x + (t / capSec) * w;
+        const v = Math.max(visMin, Math.min(visMax, values[i]));
+        const py = y + h - ((v - visMin) / visRange) * h;
+        d += (i === 0 ? 'M' : 'L') + ` ${px.toFixed(2)} ${py.toFixed(2)} `;
+      }
+      return `<path d="${d.trim()}" fill="none" stroke="#111111" stroke-width="2"/>`;
+    };
+    const buildColorbar = (x, y, w, h) => {
+      let out = '';
+      const steps = 64;
+      for (let i = 0; i < steps; i++) {
+        const t = i / (steps - 1);
+        const yy = y + h - Math.round(t * h);
+        out += `<rect x="${x}" y="${yy}" width="${w}" height="${Math.ceil(h / steps) + 1}" fill="${this.viridisColormap(t)}"/>`;
+      }
+      return out;
+    };
+    let svg = `<?xml version="1.0" encoding="UTF-8"?>`;
+    svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
+    svg += `<rect x="0" y="0" width="${width}" height="${height}" fill="#ffffff"/>`;
+    svg += `<text x="${padding + 12}" y="${40}" font-family="system-ui,Arial" font-size="22" fill="#0f172a">(a)</text>`;
+    svg += `<text x="${halfWidth + padding + 12}" y="${40}" font-family="system-ui,Arial" font-size="22" fill="#0f172a">(b)</text>`;
+    svg += buildSpectro(comparisonData.unconstrained.spectrogram, leftX, specY, leftW, specHeight - labelHeight);
+    svg += buildSpectro(comparisonData.constrained.spectrogram, rightX, specY, rightW, specHeight - labelHeight);
+    svg += buildColorbar(width - padding - 20, specY + 8, 14, specHeight - labelHeight - 16);
+    const loudY = headerHeight + specHeight + 20;
+    svg += buildLoud(comparisonData.unconstrained.loudness, leftX, loudY + 6, leftW, loudnessHeight - 12);
+    svg += buildLoud(comparisonData.constrained.loudness, rightX, loudY + 6, rightW, loudnessHeight - 12);
+    svg += `</svg>`;
+    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.download = filename;
+    a.href = url;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
   roundRect(ctx, x, y, w, h, r, fill, stroke) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -1058,6 +1149,11 @@ SpectrogramComparison.prototype.exportCurrentComparisonPNG300DPI = function(file
   link.click();
 };
 
+SpectrogramComparison.prototype.exportCurrentComparisonSVG = function(filename = 'spectrogram_comparison.svg', options = {}) {
+  if (this._lastData) {
+    this.exportPaperSVG(this._lastData, filename, options);
+  }
+};
 // 监听语言切换事件，重绘频谱文本
 try {
   window.addEventListener('languageChanged', () => {

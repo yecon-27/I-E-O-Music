@@ -2236,6 +2236,7 @@ class GameResultManager {
    */
   bindSpectrumAnalysisButtons() {
     const generateBtn = document.getElementById('spectrum-generate-btn');
+    const importJsonBtn = document.getElementById('spectrum-import-json-btn');
     const exportPngBtn = document.getElementById('spectrum-export-png-btn');
     const exportJsonBtn = document.getElementById('spectrum-export-json-btn');
     const exportFullJsonBtn = document.getElementById('spectrum-export-fulljson-btn');
@@ -2264,6 +2265,11 @@ class GameResultManager {
         this.exportSpectrumFullJSON();
       });
     }
+    if (importJsonBtn) {
+      importJsonBtn.addEventListener('click', () => {
+        this.importSpectrumJSON();
+      });
+    }
     if (exportClickTrailBtn) {
       exportClickTrailBtn.addEventListener('click', () => {
         this.exportClickTrailPNG();
@@ -2274,6 +2280,33 @@ class GameResultManager {
         this.exportClickTrailJSON();
       });
     }
+  }
+  
+  importSpectrumJSON() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        this.lastSpectrumData = data;
+        const canvas = document.getElementById('spectrum-comparison-canvas');
+        if (!canvas) {
+          this.showMusicMessage('找不到画布');
+          return;
+        }
+        const comparison = new window.SpectrogramComparison();
+        comparison.drawComparison(canvas, data);
+        this.showMusicMessage('已从 JSON 导入并绘制');
+      } catch (e) {
+        console.error('[Spectrum] 导入失败:', e);
+        this.showMusicMessage('导入失败：' + e.message);
+      }
+    };
+    input.click();
   }
 
   /**
@@ -2455,6 +2488,13 @@ class GameResultManager {
    * 导出频谱图为 SVG（矢量容器，嵌入当前画布位图）
    */
   exportSpectrumPNG() {
+    const comparison = new window.SpectrogramComparison();
+    if (this.lastSpectrumData) {
+      comparison.exportPaperSVG(this.lastSpectrumData, `spectrum_canvas_${Date.now()}.svg`, { width: 1600, height: 900 });
+      this.showMusicMessage('SVG 已导出');
+      return;
+    }
+    // 回退：若没有缓存数据，则封装当前画布位图为 SVG
     const canvas = document.getElementById('spectrum-comparison-canvas');
     if (!canvas) {
       this.showMusicMessage('请先生成频谱分析');
@@ -2618,25 +2658,26 @@ class GameResultManager {
       if (notesSafe.length && durSafe && durSafe > 0) {
         onsetDensity = Number((notesSafe.length / durSafe).toFixed(2));
       }
+      const fmt2 = (v) => (v === null || v === undefined) ? null : Number(Number(v).toFixed(2));
       const record = {
         traceId,
         patternLabel,
         params: {
           requested: {
-            tempo: requestedTempo,
-            "accent ratio": requestedContrast !== undefined && requestedContrast !== null ? `${(requestedContrast * 100).toFixed(1)}%` : null,
+            tempo: fmt2(requestedTempo),
+            "accent ratio": requestedContrast !== undefined && requestedContrast !== null ? `${(requestedContrast * 100).toFixed(2)}%` : null,
             "gain": requestedVolume !== undefined && requestedVolume !== null ? `${(20 * Math.log10(Math.max(1e-6, requestedVolume))).toFixed(2)} dB` : null
           },
           effective: {
-            tempo: effectiveTempo,
-            "accent ratio": effectiveContrast !== undefined && effectiveContrast !== null ? `${(effectiveContrast * 100).toFixed(1)}%` : null,
+            tempo: fmt2(effectiveTempo),
+            "accent ratio": effectiveContrast !== undefined && effectiveContrast !== null ? `${(effectiveContrast * 100).toFixed(2)}%` : null,
             "gain": effectiveVolume !== undefined && effectiveVolume !== null ? `${(20 * Math.log10(Math.max(1e-6, effectiveVolume))).toFixed(2)} dB` : null
           }
         },
         metrics: {
-          integratedLufs,
-          lraEffective,
-          onsetDensity
+          integratedLufs: fmt2(integratedLufs),
+          lraEffective: fmt2(lraEffective),
+          onsetDensity: fmt2(onsetDensity)
         },
         enforcementStatus
       };
