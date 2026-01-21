@@ -2452,28 +2452,31 @@ class GameResultManager {
     }
 
   /**
-   * 导出频谱图为 PNG
+   * 导出频谱图为 SVG（矢量容器，嵌入当前画布位图）
    */
   exportSpectrumPNG() {
     const canvas = document.getElementById('spectrum-comparison-canvas');
     if (!canvas) {
-      this.showMusicMessage('Please generate the spectrogram first');
+      this.showMusicMessage('请先生成频谱分析');
       return;
     }
-    const off = document.createElement('canvas');
-    off.width = canvas.width;
-    off.height = canvas.height;
-    const ctx = off.getContext('2d');
-    ctx.drawImage(canvas, 0, 0);
-    const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [] };
-    const pat = this.analyzePattern(session.notes || []);
-    const labelMap = { sequential: 'Sequential', repetitive: 'Repetitive', exploratory: 'Exploratory' };
-    const modeLabel = labelMap[pat.patternType] || 'Exploratory';
+    const pngDataUrl = canvas.toDataURL('image/png');
+    const width = canvas.width;
+    const height = canvas.height;
+    const svg =
+      `<?xml version="1.0" encoding="UTF-8"?>` +
+      `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">` +
+      `<rect x="0" y="0" width="${width}" height="${height}" fill="white"/>` +
+      `<image x="0" y="0" width="${width}" height="${height}" xlink:href="${pngDataUrl}" />` +
+      `</svg>`;
+    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.download = `spectrum_canvas_${Date.now()}.png`;
-    a.href = off.toDataURL('image/png');
+    a.download = `spectrum_canvas_${Date.now()}.svg`;
+    a.href = url;
     a.click();
-    this.showMusicMessage('PNG exported');
+    URL.revokeObjectURL(url);
+    this.showMusicMessage('SVG 已导出');
   }
 
   hideSpectrumMetrics() {
