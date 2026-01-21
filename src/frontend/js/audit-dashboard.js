@@ -87,6 +87,7 @@ class AuditDashboard {
                 
                 <div class="audit-footer">
                     <button id="audit-export-json" class="btn-secondary">Export JSON</button>
+                    <button id="audit-export-min" class="btn-secondary">Export Minimal</button>
                     <button id="audit-replay" class="btn-primary">Replay Session</button>
                 </div>
             </div>
@@ -98,6 +99,9 @@ class AuditDashboard {
         div.querySelector('#audit-close-btn').addEventListener('click', () => this.hide());
         div.querySelector('#audit-export-json').addEventListener('click', () => {
             window.sessionLogger?.downloadJSON();
+        });
+        div.querySelector('#audit-export-min').addEventListener('click', () => {
+            window.gameResultManager?.exportMinimalAuditJSON();
         });
         
         // 注入样式

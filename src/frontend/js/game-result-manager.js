@@ -2468,6 +2468,37 @@ class GameResultManager {
     this.showMusicMessage('完整数据已导出为 JSON');
   }
   
+  exportMinimalAuditJSON() {
+    const data = this.lastSpectrumData;
+    if (!data) {
+      this.showMusicMessage('请先生成频谱分析');
+      return;
+    }
+    const traceId = `trace_${Date.now()}`;
+    const requestedTempo = data.unconstrained?.rawParams?.rawBpm ?? data.unconstrained?.sequence?.tempos?.[0]?.qpm ?? null;
+    const effectiveTempo = data.constrained?.sequence?.tempos?.[0]?.qpm ?? null;
+    const clamp = (data.constrained?.clampLog || []).find(c => c.param === 'tempo');
+    const enforcementStatus = clamp ? 'clamped' : 'pass';
+    const minimal = {
+      traceId,
+      patternLabel: 'Mixed',
+      params: {
+        requested: { tempo: requestedTempo },
+        effective: { tempo: effectiveTempo }
+      },
+      enforcementStatus,
+      interventions: clamp ? [{ param: 'tempo', orig: clamp.original, clamped: clamp.clamped }] : []
+    };
+    const blob = new Blob([JSON.stringify(minimal, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `audit_min_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    this.showMusicMessage('Minimal audit JSON exported');
+  }
+  
   exportClickTrailPNG() {
     const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [], durationSec: 60 };
     const notes = session.notes || [];

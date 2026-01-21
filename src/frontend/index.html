@@ -351,8 +351,12 @@
                                 <!-- 模式切换 -->
                                 <div class="param-mode-toggle">
                                     <button id="param-mode-test" class="mode-btn active">测试模式</button>
-                                    <button id="param-mode-converge" class="mode-btn">Converge Mode</button>
                                     <button id="param-mode-spectrum" class="mode-btn">Spectrogram</button>
+                                </div>
+                                <div class="param-presets" id="param-presets" style="margin:8px 0 12px 0; display:flex; gap:8px;">
+                                    <button class="mode-btn" data-preset="relaxed">Relaxed</button>
+                                    <button class="mode-btn active" data-preset="default">Default</button>
+                                    <button class="mode-btn" data-preset="tight">Tight</button>
                                 </div>
                                 
                                 <div class="music-params-grid">
@@ -369,7 +373,7 @@
                                     
                                     <div class="param-item">
                                         <label>
-                                            <span>动态对比度 <span class="param-safe-range">安全: 0-20%</span></span>
+                                            <span>Accent ratio <span class="param-safe-range">安全: 0-20%</span></span>
                                             <span id="contrast-warning" class="param-warning-badge hidden">可能有感官过载风险</span>
                                         </label>
                                         <div class="param-control">
@@ -380,7 +384,7 @@
                                     
                                     <div class="param-item">
                                         <label>
-                                            <span>音量 <span class="param-safe-range">安全: 60-80%</span></span>
+                                            <span>Gain <span class="param-safe-range">安全: 60-80%</span></span>
                                             <span id="volume-warning" class="param-warning-badge hidden">可能有感官过载风险</span>
                                         </label>
                                         <div class="param-control">
@@ -389,7 +393,7 @@
                                         </div>
                                     </div>
                                     
-                                    <div class="param-item">
+                                    <div class="param-item" id="harmony-param-item">
                                         <label>
                                             <span>音乐</span>
                                             <span id="harmony-warning" class="param-warning-badge hidden">可能有感官过载风险</span>
@@ -403,7 +407,7 @@
                                         </div>
                                     </div>
                                     
-                                    <div class="param-item">
+                                    <div class="param-item" id="instrument-param-item">
                                         <label>
                                             <span>乐器</span>
                                             <span id="instrument-warning" class="param-warning-badge hidden">可能有感官过载风险</span>
@@ -448,153 +452,7 @@
                                     </button>
                                 </div>
                                 
-                                <!-- 收敛模式提交区域 (临床风格双滑块) -->
-                                <div id="converge-submit-area" class="converge-submit-area hidden">
-                                    <h4 class="converge-title">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                                        设定安全区间
-                                    </h4>
-                                        <div class="daw-range-grid">
-                                        <!-- BPM -->
-                                        <div class="daw-range-item">
-                                            <div class="daw-range-header">
-                                                <label>BPM</label>
-                                                <span class="daw-range-values">
-                                                    <span id="converge-tempo-min-val" class="daw-value">60</span>
-                                                    <span class="daw-separator">-</span>
-                                                    <span id="converge-tempo-max-val" class="daw-value">80</span>
-                                                </span>
-                                            </div>
-                                            <div class="daw-dual-slider" data-param="tempo" data-min="40" data-max="120">
-                                                <div class="daw-track">
-                                                    <div class="daw-track-fill"></div>
-                                                </div>
-                                                <div class="daw-scale" data-min="40" data-max="120">
-                                                    <span class="daw-scale-mark" style="--pos: 0%">40</span>
-                                                    <span class="daw-scale-mark" style="--pos: 25%">60</span>
-                                                    <span class="daw-scale-mark" style="--pos: 50%">80</span>
-                                                    <span class="daw-scale-mark" style="--pos: 75%">100</span>
-                                                    <span class="daw-scale-mark" style="--pos: 100%">120</span>
-                                                </div>
-                                                <input type="range" class="daw-thumb daw-thumb-min" id="converge-tempo-min" min="40" max="120" value="60">
-                                                <input type="range" class="daw-thumb daw-thumb-max" id="converge-tempo-max" min="40" max="120" value="80">
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- 对比度 -->
-                                        <div class="daw-range-item">
-                                            <div class="daw-range-header">
-                                                <label>对比度</label>
-                                                <span class="daw-range-values">
-                                                    <span id="converge-contrast-min-val" class="daw-value">0</span>
-                                                    <span class="daw-separator">-</span>
-                                                    <span id="converge-contrast-max-val" class="daw-value">20</span>
-                                                    <span class="daw-unit">%</span>
-                                                </span>
-                                            </div>
-                                            <div class="daw-dual-slider" data-param="contrast" data-min="0" data-max="50">
-                                                <div class="daw-track">
-                                                    <div class="daw-track-fill"></div>
-                                                </div>
-                                                <div class="daw-scale" data-min="0" data-max="50">
-                                                    <span class="daw-scale-mark" style="--pos: 0%">0</span>
-                                                    <span class="daw-scale-mark" style="--pos: 40%">20</span>
-                                                    <span class="daw-scale-mark" style="--pos: 100%">50</span>
-                                                </div>
-                                                <input type="range" class="daw-thumb daw-thumb-min" id="converge-contrast-min" min="0" max="50" value="0">
-                                                <input type="range" class="daw-thumb daw-thumb-max" id="converge-contrast-max" min="0" max="50" value="20">
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- 音量 -->
-                                        <div class="daw-range-item">
-                                            <div class="daw-range-header">
-                                                <label>音量</label>
-                                                <span class="daw-range-values">
-                                                    <span id="converge-volume-min-val" class="daw-value">60</span>
-                                                    <span class="daw-separator">-</span>
-                                                    <span id="converge-volume-max-val" class="daw-value">80</span>
-                                                    <span class="daw-unit">%</span>
-                                                </span>
-                                            </div>
-                                            <div class="daw-dual-slider" data-param="volume" data-min="0" data-max="100">
-                                                <div class="daw-track">
-                                                    <div class="daw-track-fill"></div>
-                                                </div>
-                                                <div class="daw-scale" data-min="0" data-max="100">
-                                                    <span class="daw-scale-mark" style="--pos: 0%">0</span>
-                                                    <span class="daw-scale-mark" style="--pos: 25%">25</span>
-                                                    <span class="daw-scale-mark" style="--pos: 50%">50</span>
-                                                    <span class="daw-scale-mark" style="--pos: 75%">75</span>
-                                                    <span class="daw-scale-mark" style="--pos: 100%">100</span>
-                                                </div>
-                                                <input type="range" class="daw-thumb daw-thumb-min" id="converge-volume-min" min="0" max="100" value="60">
-                                                <input type="range" class="daw-thumb daw-thumb-max" id="converge-volume-max" min="0" max="100" value="80">
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- 时长 -->
-                                        <div class="daw-range-item" data-param="duration">
-                                            <div class="daw-range-header">
-                                                <label>时长</label>
-                                                <span class="daw-range-values">
-                                                    <span id="converge-duration-min-val" class="daw-value">8</span>
-                                                    <span class="daw-separator">-</span>
-                                                    <span id="converge-duration-max-val" class="daw-value">20</span>
-                                                    <span class="daw-unit">s</span>
-                                                </span>
-                                            </div>
-                                            <div class="daw-dual-slider" data-param="duration" data-scope="converge" data-min="8" data-max="20">
-                                                <div class="daw-track">
-                                                    <div class="daw-track-fill"></div>
-                                                </div>
-                                                <div class="daw-scale" data-min="8" data-max="20">
-                                                    <span class="daw-scale-mark" style="--pos: 0%">8</span>
-                                                    <span class="daw-scale-mark" style="--pos: 33.3%">12</span>
-                                                    <span class="daw-scale-mark" style="--pos: 66.6%">16</span>
-                                                    <span class="daw-scale-mark" style="--pos: 100%">20</span>
-                                                </div>
-                                                <input type="range" class="daw-thumb daw-thumb-min" id="converge-duration-min" min="8" max="20" value="8">
-                                                <input type="range" class="daw-thumb daw-thumb-max" id="converge-duration-max" min="8" max="20" value="20">
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- 乐器 -->
-                                        <div class="daw-range-item daw-instrument-row">
-                                            <div class="daw-range-header">
-                                                <label>乐器</label>
-                                            </div>
-                                            <div class="daw-instrument-btns" id="converge-instrument-btns">
-                                                <button class="daw-instrument-btn selected" data-value="piano">钢琴</button>
-                                                <button class="daw-instrument-btn" data-value="epiano">电钢</button>
-                                                <button class="daw-instrument-btn" data-value="guitar">吉他</button>
-                                            </div>
-                                        </div>
-
-                                        <!-- 和声 -->
-                                        <div class="daw-range-item daw-harmony-row">
-                                            <div class="daw-harmony-section">
-                                                <div class="daw-range-header">
-                                                    <label>和声</label>
-                                                </div>
-                                                <div class="daw-harmony-btns" id="converge-harmony-btns">
-                                                <button class="daw-harmony-btn selected" data-value="I-V">I-V</button>
-                                                <button class="daw-harmony-btn" data-value="I-IV">I-IV</button>
-                                                <button class="daw-harmony-btn" data-value="I-VI">I-VI</button>
-                                                <button class="daw-harmony-btn" data-value="I-IV-V">I-IV-V</button>
-                                                <button class="daw-harmony-btn" data-value="I-VI-IV-V">I-VI-IV-V</button>
-                                            </div>
-                                            </div>
-                                            <div class="daw-submit-section">
-                                                <button id="param-submit-btn" class="param-btn primary">
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline></svg>
-                                                    保存
-                                                </button>
-                                                <p class="submit-note">数据库未配置</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                
                                 
                                 <!-- 频谱分析区域 -->
                                 <div id="spectrum-analysis-area" class="spectrum-analysis-area hidden">

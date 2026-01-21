@@ -36,6 +36,7 @@ def main():
     parser.add_argument("json_path", help="Path to spectrum_full_data.json")
     parser.add_argument("--png", default="spectrogram_comparison_mpl_300dpi.png", help="Output PNG filename")
     parser.add_argument("--pdf", default="spectrogram_comparison_mpl.pdf", help="Output PDF filename")
+    parser.add_argument("--svg", default="spectrogram_comparison_mpl.svg", help="Output SVG filename")
     parser.add_argument("--dpi", type=int, default=300, help="DPI for PNG")
     args = parser.parse_args()
 
@@ -165,8 +166,10 @@ def main():
 
     fig.savefig(args.png, dpi=args.dpi, bbox_inches='tight')
     fig.savefig(args.pdf, bbox_inches='tight')
+    fig.savefig(args.svg, bbox_inches='tight')
     print(f"Saved PNG ({args.dpi} DPI): {args.png}")
     print(f"Saved PDF (vector): {args.pdf}")
+    print(f"Saved SVG (vector): {args.svg}")
 
 if __name__ == "__main__":
     main()

@@ -16,6 +16,26 @@ class MusicParamController {
             duration: { min: 8, max: 20, absMin: 8, absMax: 20, unit: 's' },
         };
         
+        // 三档预设
+        this.presets = {
+            relaxed: {
+                tempo: { min: 60, max: 180, absMin: 40, absMax: 200, unit: 'BPM' },
+                contrast: { min: 0, max: 100, absMin: 0, absMax: 100, unit: '%' },   // Accent ratio 0.0–1.0 显示为 0–100%
+                volume: { min: 0, max: 100, absMin: 0, absMax: 100, unit: '%' }      // Gain dB 映射到百分比滑块
+            },
+            default: {
+                tempo: { min: 120, max: 130, absMin: 80, absMax: 160, unit: 'BPM' },
+                contrast: { min: 0, max: 50, absMin: 0, absMax: 100, unit: '%' },
+                volume: { min: 20, max: 80, absMin: 0, absMax: 100, unit: '%' }
+            },
+            tight: {
+                tempo: { min: 124, max: 126, absMin: 100, absMax: 140, unit: 'BPM' },
+                contrast: { min: 0, max: 10, absMin: 0, absMax: 100, unit: '%' },
+                volume: { min: 45, max: 75, absMin: 0, absMax: 100, unit: '%' }
+            }
+        };
+        this.currentPreset = 'default';
+        
         // 安全和声选项
         this.safeHarmony = ['I-V'];
         this.allHarmonyOptions = ['I-V', 'I-IV', 'I-VI', 'I-IV-V', 'I-VI-IV-V'];
@@ -54,16 +74,17 @@ class MusicParamController {
         
         try {
             this.bindModeToggle();
+            this.bindPresets();
             this.bindSliders();
             this.bindHarmonyOptions();
             this.bindInstrumentOptions();
             this.bindDurationAndSegment();
             this.bindActionButtons();
-            this.bindDawDualSliders();
             this.updateAllSliderStyles();
             
             // Initial text update
             this.updateTexts();
+            this.applyPreset(this.currentPreset);
 
             // Subscribe to language changes
             if (window.i18n) {
@@ -84,11 +105,8 @@ class MusicParamController {
     }
 
      updateTexts() {
-         // Mode Buttons
          const testBtn = document.getElementById('param-mode-test');
-         const convergeBtn = document.getElementById('param-mode-converge');
          if (testBtn) testBtn.textContent = this.t('expert.mode.test');
-         if (convergeBtn) convergeBtn.textContent = this.t('expert.mode.converge');
  
          // Expert Right panel title
          const rightPanelTitle = document.querySelector('.expert-right .expert-panel-title');
@@ -113,7 +131,7 @@ class MusicParamController {
             if (contrastLabel) {
                 const span = contrastLabel.querySelector('span:first-child');
                 if (span) {
-                    span.innerHTML = `${this.t('expert.contrast')} <span class="param-safe-range">${this.t('expert.safeRange')}0-20%</span>`;
+                    span.innerHTML = `${this.t('expert.contrast')} <span class="param-safe-range">${this.t('expert.safeRange')}${this.safeRanges.contrast.min}-${this.safeRanges.contrast.max}${this.safeRanges.contrast.unit}</span>`;
                 }
                 const warning = contrastLabel.querySelector('.param-warning-badge');
                 if (warning) warning.textContent = this.t('expert.warning.unsafe');
@@ -124,7 +142,7 @@ class MusicParamController {
             if (volumeLabel) {
                 const span = volumeLabel.querySelector('span:first-child');
                 if (span) {
-                    span.innerHTML = `${this.t('expert.volume')} <span class="param-safe-range">${this.t('expert.safeRange')}60-80%</span>`;
+                    span.innerHTML = `${this.t('expert.volume')} <span class="param-safe-range">${this.t('expert.safeRange')}${this.safeRanges.volume.min}-${this.safeRanges.volume.max}${this.safeRanges.volume.unit}</span>`;
                 }
                 const warning = volumeLabel.querySelector('.param-warning-badge');
                 if (warning) warning.textContent = this.t('expert.warning.unsafe');
@@ -559,28 +577,36 @@ class MusicParamController {
      */
     bindModeToggle() {
         const testBtn = document.getElementById('param-mode-test');
-        const convergeBtn = document.getElementById('param-mode-converge');
         const spectrumBtn = document.getElementById('param-mode-spectrum');
-        const convergeArea = document.getElementById('converge-submit-area');
         const spectrumArea = document.getElementById('spectrum-analysis-area');
         const paramsGrid = document.querySelector('.music-params-grid');
         const paramActions = document.querySelector('.param-actions');
+        const presetsArea = document.getElementById('param-presets');
         
         const setActiveMode = (mode) => {
             testBtn?.classList.toggle('active', mode === 'test');
-            convergeBtn?.classList.toggle('active', mode === 'converge');
             spectrumBtn?.classList.toggle('active', mode === 'spectrum');
-            
-            convergeArea?.classList.toggle('hidden', mode !== 'converge');
             spectrumArea?.classList.toggle('hidden', mode !== 'spectrum');
             paramsGrid?.classList.toggle('hidden', mode !== 'test');
             paramActions?.classList.toggle('hidden', mode !== 'test');
+            presetsArea?.classList.toggle('hidden', mode !== 'test');
             
-            // 片段选择器只在测试模式显示
-            document.querySelector('.segment-selector')?.classList.toggle('hidden', mode !== 'test');
-            // 时长参数只在收敛模式显示
-            document.getElementById('duration-param-item')?.classList.toggle('hidden', mode !== 'converge');
+            // 测试模式仅保留三项参数，其余隐藏；Segment Select 保留
+            const harmonyItem = document.getElementById('harmony-param-item');
+            const instrumentItem = document.getElementById('instrument-param-item');
+            const segmentSelector = document.querySelector('.segment-selector');
+            if (mode === 'test') {
+                harmonyItem?.classList.add('hidden');
+                instrumentItem?.classList.add('hidden');
+                segmentSelector?.classList.remove('hidden');
+            } else {
+                harmonyItem?.classList.remove('hidden');
+                instrumentItem?.classList.remove('hidden');
+                segmentSelector?.classList.add('hidden');
+            }
+            document.getElementById('duration-param-item')?.classList.add('hidden');
         };
+        
         
         if (testBtn) {
             testBtn.addEventListener('click', () => {
@@ -589,36 +615,6 @@ class MusicParamController {
             });
         }
         
-        if (convergeBtn) {
-            convergeBtn.addEventListener('click', () => {
-                this.setMode('converge');
-                setActiveMode('converge');
-                this.updateConvergeSummary();
-                setTimeout(() => this.playConvergeAnimation(), 50);
-                
-                // 初始化“选定时长”滑条范围
-                const selSlider = document.getElementById('converge-duration-selected');
-                const selVal = document.getElementById('converge-duration-selected-val');
-                const bounds = this.convergedParams?.duration || this.safeRanges.duration;
-                if (selSlider) {
-                    selSlider.min = String(bounds.min);
-                    selSlider.max = String(bounds.max);
-                    const initVal = Math.max(bounds.min, Math.min(bounds.max, this.selectedDuration || this.currentParams.durationSec || 15));
-                    selSlider.value = String(initVal);
-                    this.selectedDuration = initVal;
-                    if (selVal) selVal.textContent = String(initVal);
-                    if (!selSlider.__bound) {
-                        selSlider.addEventListener('input', (e) => {
-                            const v = parseInt(e.target.value, 10);
-                            const clamped = Math.max(bounds.min, Math.min(bounds.max, v));
-                            this.selectedDuration = clamped;
-                            if (selVal) selVal.textContent = String(clamped);
-                        });
-                        selSlider.__bound = true;
-                    }
-                }
-            });
-        }
         
         if (spectrumBtn) {
             spectrumBtn.addEventListener('click', () => {
@@ -626,6 +622,74 @@ class MusicParamController {
                 setActiveMode('spectrum');
             });
         }
+    }
+    
+    bindPresets() {
+        const container = document.getElementById('param-presets');
+        if (!container) return;
+        const buttons = container.querySelectorAll('button[data-preset]');
+        const setActive = (name) => {
+            buttons.forEach(b => b.classList.toggle('active', b.dataset.preset === name));
+        };
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const name = btn.dataset.preset;
+                this.currentPreset = name;
+                setActive(name);
+                this.applyPreset(name);
+            });
+        });
+    }
+    
+    applyPreset(name) {
+        const preset = this.presets[name];
+        if (!preset) return;
+        
+        // 更新安全区间
+        this.safeRanges.tempo = { ...preset.tempo };
+        this.safeRanges.contrast = { ...preset.contrast };
+        this.safeRanges.volume = { ...preset.volume };
+        
+        // 更新滑条的绝对范围与当前值（设为预设范围中位数）
+        const tempoSlider = document.getElementById('report-param-tempo');
+        const tempoValue = document.getElementById('report-param-tempo-value');
+        if (tempoSlider) {
+            tempoSlider.min = String(preset.tempo.absMin);
+            tempoSlider.max = String(preset.tempo.absMax);
+            const tempoMid = Math.round((preset.tempo.min + preset.tempo.max) / 2);
+            tempoSlider.value = String(tempoMid);
+            this.currentParams.tempo = tempoMid;
+            if (tempoValue) tempoValue.textContent = String(tempoMid);
+            this.updateSliderStyle(tempoSlider, 'tempo', tempoMid);
+        }
+        
+        const contrastSlider = document.getElementById('report-param-contrast');
+        const contrastValue = document.getElementById('report-param-contrast-value');
+        if (contrastSlider) {
+            contrastSlider.min = String(preset.contrast.absMin);
+            contrastSlider.max = String(preset.contrast.absMax);
+            const contrastMid = Math.round((preset.contrast.min + preset.contrast.max) / 2);
+            contrastSlider.value = String(contrastMid);
+            this.currentParams.contrast = contrastMid;
+            if (contrastValue) contrastValue.textContent = contrastMid + '%';
+            this.updateSliderStyle(contrastSlider, 'contrast', contrastMid);
+        }
+        
+        const volumeSlider = document.getElementById('report-param-volume');
+        const volumeValue = document.getElementById('report-param-volume-value');
+        if (volumeSlider) {
+            volumeSlider.min = String(preset.volume.absMin);
+            volumeSlider.max = String(preset.volume.absMax);
+            const volumeMid = Math.round((preset.volume.min + preset.volume.max) / 2);
+            volumeSlider.value = String(volumeMid);
+            this.currentParams.volume = volumeMid;
+            if (volumeValue) volumeValue.textContent = volumeMid + '%';
+            this.updateSliderStyle(volumeSlider, 'volume', volumeMid);
+        }
+        
+        // 刷新安全标签文本
+        this.updateTexts();
+        this.updateAllSliderStyles();
     }
     
     
@@ -697,11 +761,6 @@ class MusicParamController {
                 
                 // 触发回调
                 this.onParamChange?.({ param, value, isUnsafe });
-                
-                // 如果在收敛模式，更新摘要
-                if (this.mode === 'converge') {
-                    this.updateConvergeSummary();
-                }
             });
             
             // 初始化样式
@@ -742,11 +801,6 @@ class MusicParamController {
                 
                 // 触发回调
                 this.onParamChange?.({ param: 'harmony', value, isUnsafe });
-                
-                // 如果在收敛模式，更新摘要
-                if (this.mode === 'converge') {
-                    this.updateConvergeSummary();
-                }
             });
         });
     }
@@ -772,11 +826,6 @@ class MusicParamController {
                 
                 // 触发回调
                 this.onParamChange?.({ param: 'instrument', value, isUnsafe: false });
-                
-                // 如果在收敛模式，更新摘要
-                if (this.mode === 'converge') {
-                    this.updateConvergeSummary();
-                }
             });
         });
     }
@@ -809,36 +858,6 @@ class MusicParamController {
                 this.resetToDefaults();
             });
         }
-        
-        // 提交按钮
-        const submitBtn = document.getElementById('param-submit-btn');
-        if (submitBtn) {
-            submitBtn.addEventListener('click', () => {
-                this.submitConvergedParams();
-            });
-        }
-        
-        // 收敛模式和声按钮
-        const harmonyBtnsContainer = document.getElementById('converge-harmony-btns');
-        if (harmonyBtnsContainer) {
-            const btns = harmonyBtnsContainer.querySelectorAll('.converge-harmony-btn');
-            btns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    btn.classList.toggle('selected');
-                });
-            });
-        }
-
-        // 收敛模式乐器按钮
-        const instrumentBtnsContainer = document.getElementById('converge-instrument-btns');
-        if (instrumentBtnsContainer) {
-            const btns = instrumentBtnsContainer.querySelectorAll('.daw-instrument-btn');
-            btns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    btn.classList.toggle('selected');
-                });
-            });
-        }
     }
     
     /**
@@ -847,26 +866,6 @@ class MusicParamController {
     setMode(mode) {
         this.mode = mode;
         console.log(`[MusicParamController] 模式切换: ${mode}`);
-        if (mode === 'converge') {
-            // 将测试模式的片段与时长范围迁移到收敛模式的双滑块
-            const durRange = this.testDurationRange || { min: Math.max(8, this.currentParams.durationSec - 2), max: Math.min(20, this.currentParams.durationSec + 2) };
-            const durMinSlider = document.getElementById('converge-duration-min');
-            const durMaxSlider = document.getElementById('converge-duration-max');
-            const durTrackFill = document.querySelector('.daw-dual-slider[data-param="duration"][data-scope="converge"] .daw-track-fill');
-            if (durMinSlider && durMaxSlider && durTrackFill) {
-                durMinSlider.value = String(durRange.min);
-                durMaxSlider.value = String(durRange.max);
-                const rangeMin = 8, rangeMax = 20, range = rangeMax - rangeMin;
-                durTrackFill.style.left = (((durRange.min - rangeMin) / range) * 100) + '%';
-                durTrackFill.style.right = (100 - ((durRange.max - rangeMin) / range) * 100) + '%';
-                const minValEl = document.getElementById('converge-duration-min-val');
-                const maxValEl = document.getElementById('converge-duration-max-val');
-                if (minValEl) minValEl.textContent = durRange.min;
-                if (maxValEl) maxValEl.textContent = durRange.max;
-                this.convergedDuration = { ...durRange };
-            }
-            this.updateConvergeSummary();
-        }
     }
     
     /**
