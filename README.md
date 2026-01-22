@@ -88,41 +88,37 @@ See scripts:
 
 ## Envelope Diagnostic
 
-`envelope-diagnostic/` 目录包含安全包络的诊断与分析工具，用于验证和可视化不同包络配置下的约束效果。
+The `envelope-diagnostic/` directory contains diagnostic and analysis tools for the safety envelope, used to verify and visualize constraint effects under different envelope configurations.
 
-### 目录结构
+### Directory Structure
 
-| 目录 | 说明 |
-|------|------|
-| `configs/` | 实验条件配置（baseline、default、tight、relaxed、ultra_tight） |
-| `data/` | 实验数据与统计摘要（paired analysis、clamp rate） |
-| `figures/` | 生成的可视化图表（SVG 格式） |
-| `scripts/` | 数据处理与图表生成脚本 |
+| Directory | Description |
+|-----------|-------------|
+| `configs/` | Experiment condition configs (baseline, default, tight, relaxed, ultra_tight) |
+| `data/` | Experiment data and statistical summaries (paired analysis, clamp rate) |
+| `figures/` | Generated visualizations (SVG format) |
+| `scripts/` | Data processing and chart generation scripts |
 
-### 包络配置对比
+### Envelope Configuration Comparison
 
-| 参数 | Relaxed | Default | Tight | Ultra Tight |
-|------|---------|---------|-------|-------------|
-| Tempo (BPM) | 60–180 | 120–130 | 124–126 | 124–126 |
-| Gain | 0.0–1.0 | 0.3–0.8 | 0.45–0.55 | 0.40–0.50 |
-| Accent ratio | 0.0–1.0 | 0.0–0.5 | 0.0–0.1 | 0.0–0.05 |
-
-### 使用方式
+| Parameter | Relaxed | Default | Tight |
+|-----------|---------|---------|-------|
+| Tempo (BPM) | 60–180 | 120–130 | 124–126 |
+| Gain | 0.0–1.0 | 0.3–0.8 | 0.45–0.55 |
+| Accent ratio | 0.0–1.0 | 0.0–0.5 | 0.0–0.1 | 
+### Usage
 
 ```bash
-# 生成 KDE 六边形图
 python envelope-diagnostic/scripts/compose_hexad_kde.py --condition constrained_default --out figures/hexad_default.svg
 
-# 汇总实验数据
 python envelope-diagnostic/scripts/summarize_runs.py
 ```
 
 ## Usage
 
-1. **Enable Expert Mode**: Press `Ctrl+Shift+E` or trigger via unsafe mode linkage.
-2. **Configure Safety Bounds**: Adjust parameters in the drawer or result view; out-of-bound values are clamped and logged.
-3. **Preview & Export**: Result view provides spectrogram comparison and JSON export for baseline vs. constrained output.
-4. **Audit & Reproduce**: Requested values, effective values, and constraint counts are available in session reports.
+1. **Configure Safety Bounds**: Adjust parameters in the drawer or result view; out-of-bound values are clamped and logged.
+2. **Preview & Export**: Result view provides spectrogram comparison and JSON export for baseline vs. constrained output.
+3. **Audit & Reproduce**: Requested values, effective values, and constraint counts are available in session reports.
 
 ## License
 
