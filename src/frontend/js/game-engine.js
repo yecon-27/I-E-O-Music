@@ -696,7 +696,10 @@ class GameEngine {
           meta: { seed: window.__LEVEL_SEED ?? null, scale: 'pentatonic', gameSpeed: this.gameSpeed }
         };
       
-        if (save) window.Sessions.push(session);
+        if (save) {
+            if (!window.Sessions) window.Sessions = [];
+            window.Sessions.push(session);
+        }
         
         try { this.onRoundEnd?.(session); } catch(e) { console.warn(e); }
         window.dispatchEvent(new CustomEvent('round:ended', { detail: session }));
