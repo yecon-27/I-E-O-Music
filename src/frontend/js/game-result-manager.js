@@ -707,20 +707,68 @@ class GameResultManager {
 
   /**
    * Export session report as JSON file
+   * Format matches envelope-diagnostic schema with baseline/constrained metrics
    */
   exportSessionReport() {
-    const session = window.game?.getLastSession?.() || null;
-    const traceId = window.sessionLogger?.sessionId || `session_${Date.now()}`;
-    const cfg = { ...(window.sessionConfig || {}) };
+    const traceId = `trace_${Date.now()}`;
     
-    const report = {
-      traceId,
-      exportedAt: new Date().toISOString(),
-      session: session,
-      config: cfg,
-      stats: this.calculateStats(),
-      gameData: this.gameData
+    // Get comparison data from spectrogram instance
+    const spectroData = window._spectroInstance?._lastData || null;
+    
+    // Get generator params
+    const generator = window._lastMusicGenerator || null;
+    const rawParams = generator?.lastRawParams || null;
+    const constrainedParams = generator?.lastConstrainedParams || null;
+    const clampLog = constrainedParams?.clampLog || spectroData?.constrained?.clampLog || [];
+    
+    // Determine pattern label from session
+    const session = window.game?.getLastSession?.() || null;
+    const patternLabel = this._detectPatternLabel(session?.notes || []);
+    
+    // Get accent ratio (not clamped, same for requested and effective)
+    const accentRatio = this._round2(rawParams?.rawAccentRatio ?? spectroData?.unconstrained?.rawParams?.rawAccentRatio);
+    
+    // Build params.requested (baseline/unconstrained)
+    const requested = {
+      tempo: this._round2(rawParams?.rawBpm ?? spectroData?.unconstrained?.rawParams?.rawBpm),
+      "accent ratio": accentRatio,
+      gain: this._round2(this._toDb(rawParams?.rawVolume ?? spectroData?.unconstrained?.rawParams?.rawVolume))
     };
+    
+    // Build params.effective (constrained) - accent ratio stays the same
+    const effective = {
+      tempo: this._round2(constrainedParams?.safeBpm ?? spectroData?.constrained?.safeParams?.safeBpm ?? requested.tempo),
+      "accent ratio": accentRatio,
+      gain: this._round2(this._toDb(constrainedParams?.safeVolume ?? spectroData?.constrained?.safeParams?.safeVolume ?? rawParams?.rawVolume))
+    };
+    
+    // Metrics with baseline and constrained sub-objects
+    const metrics = {
+      baseline: {
+        integratedLufs: this._round2(spectroData?.unconstrained?.metrics?.avgLoudness),
+        lraEffective: this._round2(spectroData?.unconstrained?.lra),
+        onsetDensity: this._round2(spectroData?.unconstrained?.metrics?.onsetDensity)
+      },
+      constrained: {
+        integratedLufs: this._round2(spectroData?.constrained?.metrics?.avgLoudness),
+        lraEffective: this._round2(spectroData?.constrained?.lra),
+        onsetDensity: this._round2(spectroData?.constrained?.metrics?.onsetDensity ?? this._computeOnsetDensity(session?.notes))
+      }
+    };
+    
+    // Enforcement status
+    const enforcementStatus = clampLog.length === 0 ? 'pass' : 'clamped';
+    
+    const report = [{
+      traceId,
+      patternLabel,
+      params: {
+        requested,
+        effective
+      },
+      metrics,
+      enforcementStatus
+    }];
     
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -731,6 +779,73 @@ class GameResultManager {
     URL.revokeObjectURL(url);
     
     console.log('[GameResult] Session report exported:', traceId);
+  }
+
+  /**
+   * Detect pattern label from notes
+   */
+  _detectPatternLabel(notes) {
+    if (!notes || notes.length < 3) return 'Unknown';
+    
+    // Simple heuristic: check for sequential vs repetitive patterns
+    const pitches = notes.map(n => n.midi || n.pitch || 0);
+    let sequential = 0, repetitive = 0;
+    
+    for (let i = 1; i < pitches.length; i++) {
+      const diff = Math.abs(pitches[i] - pitches[i-1]);
+      if (diff <= 2) sequential++;
+      if (diff === 0) repetitive++;
+    }
+    
+    const seqRatio = sequential / (pitches.length - 1);
+    const repRatio = repetitive / (pitches.length - 1);
+    
+    if (repRatio > 0.5) return 'Repetitive';
+    if (seqRatio > 0.6) return 'Sequential';
+    return 'Exploratory';
+  }
+
+  /**
+   * Round to 2 decimal places, return null if input is null/undefined
+   */
+  _round2(value) {
+    if (value == null || isNaN(value)) return null;
+    return Math.round(value * 100) / 100;
+  }
+
+  /**
+   * Convert linear gain to dB
+   */
+  _toDb(value) {
+    if (value == null) return null;
+    return value > 0 ? 20 * Math.log10(value) : -60;
+  }
+
+  /**
+   * Compute onset density from notes
+   */
+  _computeOnsetDensity(notes) {
+    if (!notes || notes.length < 2) return null;
+    const duration = (notes[notes.length - 1].t || notes[notes.length - 1].startTime || 0) - 
+                     (notes[0].t || notes[0].startTime || 0);
+    if (duration <= 0) return null;
+    return Math.round((notes.length / (duration / 1000)) * 100) / 100;
+  }
+
+  /**
+   * Hash object for config fingerprinting
+   */
+  _hashObject(obj) {
+    try {
+      const s = JSON.stringify(obj || {});
+      let h = 0;
+      for (let i = 0; i < s.length; i++) {
+        h = (h * 31 + s.charCodeAt(i)) >>> 0;
+      }
+      return h.toString(16).padStart(8, '0');
+    } catch {
+      return '00000000';
+    }
   }
 
   /**
