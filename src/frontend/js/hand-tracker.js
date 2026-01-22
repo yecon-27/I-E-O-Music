@@ -219,7 +219,7 @@ class HandTracker {
             this.updateHandCursor(handPosition);
             if (this.onPositionUpdate) this.onPositionUpdate(handPosition);
             
-            // 记录运动数据到自闭症友好功能模块
+            // Record movement data to autism-friendly features module
             if (window.autismFeatures) {
                 window.autismFeatures.recordMovement(handPosition.x, handPosition.y);
             }

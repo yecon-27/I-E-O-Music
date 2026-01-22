@@ -25,21 +25,21 @@ class GameEngine {
         this.scoreManager = null;
         this.animationManager = null;
 
-        // --- Round (一局) 采集状态 ---
+        // --- Round collection state ---
         this.roundActive = false;
         this.roundStart = 0;
-        this.roundNotes = [];     // 仅存本局的命中事件（相对时间）
+        this.roundNotes = [];     // Only store hit events for this round (relative time)
         this.roundTimer = null;
-        this.onRoundEnd = null;   // 结束回调（供步骤C用）
-        window.Sessions ??= [];   // 所有历史局的归档
+        this.onRoundEnd = null;   // End callback (for step C)
+        window.Sessions ??= [];   // Archive of all historical rounds
 
-        // 为暂停倒计时新增的字段
-        this.roundDurationMs = 0;   // 本局总时长（毫秒）
-        this.roundEndAt = 0;        // 计划结束的绝对时间戳
-        this.roundRemainingMs = null; // 暂停时的剩余毫秒
-        this.roundPausedAt = 0;     // 进入暂停的时间戳
+        // New fields for pause countdown
+        this.roundDurationMs = 0;   // Total duration of this round (milliseconds)
+        this.roundEndAt = 0;        // Planned end absolute timestamp
+        this.roundRemainingMs = null; // Remaining milliseconds when paused
+        this.roundPausedAt = 0;     // Timestamp when entering pause
 
-        // Session 级配置（与 reward 生成一致）
+        // Session level config (consistent with reward generation)
         this.sessionConfig = {
             volumeLevel: 'medium',
             rhythmDensity: 'normal',
@@ -85,21 +85,21 @@ class GameEngine {
 
     setSessionConfig(cfg = {}) {
         this.sessionConfig = { ...this.sessionConfig, ...cfg };
-        // 兼容通过全局配置的用法
+        // Compatible with global config usage
         window.sessionConfig = this.sessionConfig;
         
-        // 应用音量设置
+        // Apply volume settings
         const vol = this.sessionConfig.volumeLevel;
         const gain =
             vol === 'low' ? 0.4 :
             vol === 'high' ? 1.0 : 0.7;
         window.popSynth?.setVolume?.(gain);
         
-        // 应用音色设置
+        // Apply timbre settings
         const timbre = this.sessionConfig.timbre || 'piano';
         window.popSynth?.setTimbre?.(timbre);
         
-        // 应用泡泡密度设置
+        // Apply bubble density settings
         const density = this.sessionConfig.rhythmDensity || 'normal';
         this.bubbleManager?.setDensity?.(density);
     }
@@ -129,17 +129,17 @@ class GameEngine {
       
         // 1) Bubble + Collision
         this.bubbleManager = new BubbleManager(this.canvas.width, this.canvas.height);
-        // —— 在 init() 里 —-
-        // 让 PopSynth 可用（如未创建则创建一次）
+        // -- In init() --
+        // Make PopSynth available (create once if not created)
         window.popSynth ??= new PopSynth();
         this.setSessionConfig(this.sessionConfig);
         this.setupLaneGuides();
 
-        // 解锁 AudioContext（一次用户手势即可，兜底）
+        // Unlock AudioContext (one user gesture is enough, fallback)
         const unlockAudio = () => window.popSynth?.resume?.();
         window.addEventListener('pointerdown', unlockAudio, { once: true });
 
-        // GameEngine.init() 里
+        // GameEngine.init()
         this.bubbleManager.setOnPop((b) => {
             if (!b?.note) return;
         
@@ -154,10 +154,10 @@ class GameEngine {
                 }, delay);
             }
 
-            // ★ 触发音高标签跳动动画
+            // ★ Trigger pitch label bounce animation
             this.triggerLanePop(b.laneId);
 
-            // 记录成功事件到自闭症友好系统
+            // Record success event to autism-friendly system
             if (window.autismFeatures) {
                 window.autismFeatures.recordSuccess({
                     id: b.id,
@@ -184,7 +184,7 @@ class GameEngine {
         this.collisionDetector = new CollisionDetector();
         this.collisionDetector.addCollisionCallback(this.handleBubblePop.bind(this));
       
-        // 背景/文案/分数
+        // Background/text/score
         this.clearCanvas();
         this.drawBackground();
         this.drawCenteredMessage(this.t('game.ready'), '#95C3D8');
@@ -194,7 +194,7 @@ class GameEngine {
           rightHand: { x: 0, y: 0, visible: false }
         };
       
-        // 2) HandTracker（先 new 再绑回调）
+        // 2) HandTracker (new first then bindcallback)
         // this.handTracker = new HandTracker();
         // this.handTracker.onPositionUpdate = (pos) => {
         //   this.handPositions.rightHand = { x: pos.x, y: pos.y, visible: true };
@@ -203,11 +203,11 @@ class GameEngine {
         // this.handTracker.onHandLost     = () => { this.handPositions.rightHand.visible = false; };
         // this.handTracker.initialize();
       
-        // 3) 仅保留鼠标控制（移除摄像头/姿态检测）
+        // 3) Only keep mouse control (removed camera/pose detection)
         this.poseDetector = null;
         this.setupMouseFallback();
       
-        // 通知感官设置系统音频已就绪
+        // Notify sensory settings system that audio is ready
         if (window.autismFeatures && typeof window.autismFeatures.onAudioSystemReady === 'function') {
             window.autismFeatures.onAudioSystemReady();
         }
@@ -292,22 +292,22 @@ class GameEngine {
     }
 
     /**
-     * 触发音高标签的跳动动画（泡泡被戳破时调用）
-     * @param {number} laneId - lane 编号 (1-5)
+     * Trigger pitch label bounce animation (called when bubble is popped)
+     * @param {number} laneId - lane number (1-5)
      */
     triggerLanePop(laneId) {
         const el = this.laneLabelElements?.[laneId];
         if (!el) return;
         
-        // 优化：防止高频重复触发导致的视觉过载
-        // 如果动画正在进行中，忽略新的触发请求
+        // Optimization: prevent visual overload from high-frequency repeated triggers
+        // If animation is in progress, ignore new trigger requests
         if (el.classList.contains('pop')) return;
         
-        // 添加跳动 class
+        // Add bounce class
         el.classList.add('pop');
         el.style.color = el.dataset.color;
         
-        // 动画结束后移除 class (匹配 CSS 0.6s 动画时间)
+        // Remove class after animation ends (matches CSS 0.6s animation time)
         setTimeout(() => {
             el.classList.remove('pop');
         }, 600);
@@ -339,7 +339,6 @@ class GameEngine {
         const now = performance.now();
       
         if (!this.roundActive) {
-          // 仅切换暂停状态用于渲染“PAUSED”，不动计时器
           this.lastFrameTime = now;
           return this.isPaused;
         }
@@ -371,7 +370,6 @@ class GameEngine {
         console.log('Stopping game...');
         this.isRunning = false;
         this.isPaused = false;
-        // 取消本局倒计时，不入库，防止残留计时器
         this.stopRound?.({ save: false });
       }
     
@@ -475,7 +473,6 @@ class GameEngine {
      */
     drawBackground() {
         // Create gradient background (autism-friendly soft colors)
-        // 使用更干净的白色到浅蓝色的渐变，避免看起来发灰
         const gradient = this.ctx.createLinearGradient(0, 0, 0, this.canvas.height);
         gradient.addColorStop(0, '#FFFFFF'); // Pure White
         gradient.addColorStop(1, '#E1F5FE'); // Very Light Blue
@@ -529,11 +526,8 @@ class GameEngine {
         return this.bubbleManager;
     }
     
-    /**
-     * 检测戳泡泡尝试
-     */
     detectPopAttempts(positions) {
-        // 记录上一次的位置用于计算速度
+        // Record last position for speed calculation
         if (!this.lastHandPositions) {
             this.lastHandPositions = {
                 leftHand: { x: 0, y: 0, timestamp: Date.now() },
@@ -542,9 +536,9 @@ class GameEngine {
         }
         
         const now = Date.now();
-        const speedThreshold = 150; // 像素/秒，超过这个速度认为是尝试戳泡泡
+        const speedThreshold = 150; // pixels/second, above this speed is considered a pop attempt
         
-        // 检查左手
+        // Check left hand
         if (positions.leftHand.visible) {
             const deltaTime = (now - this.lastHandPositions.leftHand.timestamp) / 1000;
             if (deltaTime > 0) {
@@ -554,7 +548,7 @@ class GameEngine {
                 const speed = distance / deltaTime;
                 
                 if (speed > speedThreshold) {
-                    // 记录尝试（如果没有碰撞，就是失败的尝试）
+                    // Record attempt (if no collision, it's a failed attempt)
                     this.recordAttempt(positions.leftHand.x, positions.leftHand.y);
                 }
             }
@@ -565,7 +559,7 @@ class GameEngine {
             };
         }
         
-        // 检查右手
+        // Check right hand
         if (positions.rightHand.visible) {
             const deltaTime = (now - this.lastHandPositions.rightHand.timestamp) / 1000;
             if (deltaTime > 0) {
@@ -575,7 +569,7 @@ class GameEngine {
                 const speed = distance / deltaTime;
                 
                 if (speed > speedThreshold) {
-                    // 记录尝试（如果没有碰撞，就是失败的尝试）
+                    // Record attempt (if no collision, it's a failed attempt)
                     this.recordAttempt(positions.rightHand.x, positions.rightHand.y);
                 }
             }
@@ -588,17 +582,17 @@ class GameEngine {
     }
     
     /**
-     * 记录戳泡泡尝试
+     * Record bubble pop attempt
      */
     recordAttempt(x, y) {
-        // 防止重复记录（500ms内的多次快速移动只算一次尝试）
+        // Prevent duplicate recording (multiple fast movements within 500ms count as one attempt)
         const now = Date.now();
         if (this.lastAttemptTime && (now - this.lastAttemptTime) < 500) {
             return;
         }
         this.lastAttemptTime = now;
         
-        // 检查是否击中泡泡
+        // Check if bubble was hit
         const bubbles = this.bubbleManager ? this.bubbleManager.getBubbles() : [];
         let hit = false;
         
@@ -606,18 +600,18 @@ class GameEngine {
             const distance = Math.sqrt(
                 Math.pow(x - bubble.x, 2) + Math.pow(y - bubble.y, 2)
             );
-            if (distance <= bubble.radius + 35) { // 35是手部半径
+            if (distance <= bubble.radius + 35) { // 35 is hand radius
                 hit = true;
                 break;
             }
         }
         
-        // 记录到 SessionLogger (仅记录未命中的，命中的在 handleBubblePop 记录以避免重复)
+        // Record to SessionLogger (only record misses, hits are recorded in handleBubblePop to avoid duplicates)
         if (!hit && window.sessionLogger) {
             window.sessionLogger.recordClick(x, y, false);
         }
         
-        // 记录到数据追踪器
+        // Record to data tracker
         if (this.poseDetector?.handDataTracker) {
             this.poseDetector.handDataTracker.recordPop(hit);
         }
@@ -643,8 +637,8 @@ class GameEngine {
         }
     }
         /**
-     * 开始一局采样
-     * @param {number} seconds  本局时长（秒）
+     * Start a round of sampling
+     * @param {number} seconds  Round duration (seconds)
      * @param {{onEnd?: (session) => void, clearHistory?: boolean}} opts
      */
     startRound(seconds = 30, opts = {}) {
@@ -654,22 +648,23 @@ class GameEngine {
         this.roundStart = performance.now();
         this.roundNotes = [];
         this.onRoundEnd = (typeof opts.onEnd === 'function') ? opts.onEnd : null;
-        if (opts.clearHistory) window.Sessions = [];
+        // Ensure Sessions array exists
+        if (!window.Sessions || opts.clearHistory) window.Sessions = [];
 
-        // 重置泡泡并按 lane 生成固定数量
+        // Reset bubbles and generate fixed number by lane
         this.bubbleManager?.clearAllBubbles();
-        // 初始按顺序生成一组 4 个，每个间隔延迟，形成明显高度差
+        // Initially generate a group of 4 sequentially, each with delay, creating obvious height difference
         const initialCount = this.bubbleManager?.targetBubbleCount || 4;
         for (let i = 0; i < initialCount; i++) {
             this.bubbleManager?.scheduleSpawn(null, i * 800);
         }
-        // 清空点击轨迹
+        // Clear click trail
         if (this.clickTrailEl) this.clickTrailEl.innerHTML = '';
 
-        // 记录总时长与计划结束时间
+        // Record total duration and planned end time
         this.roundDurationMs = seconds * 1000;
         this.roundEndAt = this.roundStart + this.roundDurationMs;
-        this.roundRemainingMs = this.roundDurationMs; // 初始剩余=总时长
+        this.roundRemainingMs = this.roundDurationMs; // Initial remaining = total duration
         this.roundPausedAt = 0;
         window.sessionLogger?.startRecording();
 
@@ -716,7 +711,7 @@ class GameEngine {
         this.roundRemainingMs = null;
         this.roundPausedAt = 0;
         
-        // 🔥 重要：清空本局音符记录，防止下一局累积
+        // 🔥 Important: Clear this round's note records to prevent accumulation in next round
         this.roundNotes = [];
       }
     
@@ -765,11 +760,11 @@ class GameEngine {
         this.score += 10;
         window.gameApp?.updateScoreDisplay?.(this.score);
         
-        // 记录到游戏结果管理器（带手部信息）
+        // Record to game result manager (with hand info)
         if (window.gameResultManager) {
             const handType = collision.handType || 'unknown';
             window.gameResultManager.recordBubblePop(handType);
-            console.log('📊 记录泡泡戳破 - 手部类型:', handType);
+            console.log('📊 Recording bubble pop - hand type:', handType);
         }
       
         // 移除随机鼓励消息，让成就系统统一处理反馈
@@ -821,18 +816,18 @@ class GameEngine {
             if (this.bubbleManager) {
                 const poppedBubble = this.bubbleManager.checkCollision(x, y);
                 if (poppedBubble) {
-                    console.log('🖱️ 鼠标点击戳破泡泡:', poppedBubble.id);
+                    console.log('🖱️ Mouse click popped bubble:', poppedBubble.id);
                     
-                    // 记录到 SessionLogger
+                    // Record to SessionLogger
                     if (window.sessionLogger) {
                         window.sessionLogger.recordBubblePop(poppedBubble);
                         window.sessionLogger.recordClick(x, y, true);
                     }
 
-                    // 直接记录手部数据（鼠标模式默认为右手）
+                    // Directly record hand data (mouse mode defaults to right hand)
                     if (window.gameResultManager) {
                         window.gameResultManager.recordBubblePop('rightHand');
-                        console.log('📊 记录右手戳破数据');
+                        console.log('📊 Recording right hand pop data');
                     }
                 } else {
                     // 鼠标点击未命中

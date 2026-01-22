@@ -1,260 +1,218 @@
 /**
- * 🎵 超多样化音乐生成器
- * 基于游戏数据生成极其多样化的音乐，包含世界各地的音乐风格
+ * Diverse Music Generator
+ * Generates varied music based on game session data using world music scales
  */
 
 class UltraDiverseMusicGenerator {
     constructor() {
-        // 🎵 随机数生成器状态
         this.randomState = {
             seed: Date.now(),
             current: Date.now()
         };
         
-        // 🎵 超级扩展音阶系统 - 包含世界各地音乐风格
+        // Scale definitions (semitone intervals from root)
         this.scales = {
-            // 西方传统音阶
+            // Western scales
             major: [0, 2, 4, 5, 7, 9, 11],
             minor: [0, 2, 3, 5, 7, 8, 10],
             harmonic_minor: [0, 2, 3, 5, 7, 8, 11],
             melodic_minor: [0, 2, 3, 5, 7, 9, 11],
-            
-            // 教会调式
+            // Church modes
             dorian: [0, 2, 3, 5, 7, 9, 10],
             phrygian: [0, 1, 3, 5, 7, 8, 10],
             lydian: [0, 2, 4, 6, 7, 9, 11],
             mixolydian: [0, 2, 4, 5, 7, 9, 10],
             locrian: [0, 1, 3, 5, 6, 8, 10],
-            
-            // 五声音阶变体
+            // Pentatonic variants
             pentatonic: [0, 2, 4, 7, 9],
             pentatonic_minor: [0, 3, 5, 7, 10],
             egyptian: [0, 2, 5, 7, 10],
             hirajoshi: [0, 2, 3, 7, 8],
-            
-            // 蓝调和爵士音阶
+            // Blues and jazz scales
             blues: [0, 3, 5, 6, 7, 10],
             blues_major: [0, 2, 3, 4, 7, 9],
             bebop_dominant: [0, 2, 4, 5, 7, 9, 10, 11],
             bebop_major: [0, 2, 4, 5, 7, 8, 9, 11],
-            
-            // 异域音阶
+            // Exotic scales
             arabic: [0, 1, 4, 5, 7, 8, 11],
             persian: [0, 1, 4, 5, 6, 8, 11],
             hungarian: [0, 2, 3, 6, 7, 8, 11],
             gypsy: [0, 1, 4, 5, 7, 8, 10],
             spanish: [0, 1, 4, 5, 7, 8, 10],
-            
-            // 现代和实验音阶
+            // Modern/experimental scales
             whole_tone: [0, 2, 4, 6, 8, 10],
             diminished: [0, 2, 3, 5, 6, 8, 9, 11],
             augmented: [0, 3, 4, 7, 8, 11],
             prometheus: [0, 2, 4, 6, 9, 10],
-            
-            // 亚洲音阶
+            // Asian scales
             chinese: [0, 2, 4, 7, 9],
             japanese_in: [0, 1, 5, 7, 8],
             japanese_yo: [0, 2, 5, 7, 10],
             balinese: [0, 1, 3, 7, 8],
-            
-            // 印度音阶 (拉格)
+            // Indian ragas
             raga_bhairav: [0, 1, 4, 5, 7, 8, 11],
             raga_yaman: [0, 2, 4, 6, 7, 9, 11],
             raga_kafi: [0, 2, 3, 5, 7, 9, 10],
-            
-            // 非洲音阶
+            // African scales
             african_pentatonic: [0, 2, 3, 7, 9],
             ethiopian: [0, 2, 4, 5, 7, 8, 11],
-            
-            // 拉丁美洲音阶
+            // Latin American scales
             flamenco: [0, 1, 4, 5, 7, 8, 11],
             brazilian: [0, 2, 4, 6, 7, 9, 10],
-            
-            // 微分音阶
+            // Chromatic
             quarter_tone_major: [0, 1, 2, 4, 5, 7, 8, 9, 11],
             chromatic: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
         };
         
-        // 🎵 超级扩展和弦进行库
+        // Chord progressions by genre
         this.chordProgressions = {
-            // 流行音乐进行
             pop: [
                 [0, 5, 6, 4], [0, 4, 5, 0], [6, 4, 0, 5], [0, 6, 4, 5], [4, 5, 6, 4]
             ],
-            // 爵士进行
             jazz: [
                 [0, 6, 2, 5], [0, 3, 6, 2, 5], [6, 2, 5, 0], [0, 1, 2, 5], [2, 5, 0, 6]
             ],
-            // 古典进行
             classical: [
                 [0, 4, 0, 5, 0], [0, 2, 5, 0], [0, 6, 4, 5], [0, 3, 4, 5, 0], [0, 5, 6, 3, 4, 0]
             ],
-            // 环境音乐进行
             ambient: [
                 [0, 2, 4, 6], [0, 7, 4, 2], [6, 0, 4, 2], [4, 0, 5, 2], [0, 3, 6, 2]
             ],
-            // 电影配乐进行
             cinematic: [
                 [0, 3, 6, 4, 5], [6, 3, 4, 0], [0, 2, 6, 5], [4, 6, 0, 5], [0, 1, 4, 3]
             ],
-            // 蓝调进行
             blues: [
                 [0, 0, 0, 0, 3, 3, 0, 0, 4, 3, 0, 4], [0, 3, 0, 4], [0, 6, 3, 4]
             ],
-            // 摇滚进行
             rock: [
                 [0, 6, 3, 4], [0, 2, 3, 0], [5, 3, 0, 4], [0, 4, 5, 3], [6, 3, 0, 4]
             ],
-            // 民谣进行
             folk: [
                 [0, 3, 4, 0], [0, 5, 3, 4], [6, 3, 0, 4], [0, 2, 3, 0], [0, 6, 3, 0]
             ],
-            // 拉丁进行
             latin: [
                 [0, 4, 5, 0], [6, 2, 5, 0], [0, 3, 6, 4], [2, 5, 0, 6], [0, 1, 4, 5]
             ],
-            // 世界音乐进行
             world: [
                 [0, 2, 4, 5], [0, 6, 2, 4], [5, 0, 3, 4], [0, 3, 5, 2], [4, 0, 6, 2]
             ],
-            // 现代/实验进行
             modern: [
                 [0, 1, 2, 3], [0, 4, 8, 0], [0, 3, 6, 9], [0, 2, 5, 7], [6, 10, 2, 5]
             ],
-            // 电子音乐进行
             electronic: [
                 [0, 4, 6, 2], [6, 0, 4, 2], [0, 2, 4, 6], [4, 6, 0, 2], [0, 5, 3, 6]
             ],
-            // 游戏音乐进行
             game: [
                 [0, 4, 5, 3], [6, 2, 4, 0], [0, 6, 2, 5], [4, 0, 6, 3], [0, 3, 4, 6]
             ]
         };
         
-        // 🎵 超级扩展节奏模式系统
+        // Rhythm patterns
         this.rhythmPatterns = {
-            // 基础节奏
+            // Basic
             steady: [1, 0, 1, 0, 1, 0, 1, 0],
             simple: [1, 0, 0, 0, 1, 0, 0, 0],
             march: [1, 0, 1, 0, 1, 0, 1, 0],
-            
-            // 切分节奏
+            // Syncopated
             syncopated: [1, 0, 0, 1, 0, 1, 0, 0],
             offbeat: [0, 1, 0, 1, 0, 1, 0, 1],
             polyrhythm: [1, 0, 1, 1, 0, 1, 0, 1],
-            
-            // 三拍子系列
+            // Triple meter
             waltz: [1, 0, 0, 1, 0, 0],
             minuet: [1, 0, 1, 1, 0, 1],
             mazurka: [1, 0, 1, 0, 1, 0],
-            
-            // 拉丁节奏
+            // Latin
             latin: [1, 0, 1, 0, 0, 1, 0, 1],
             samba: [1, 0, 0, 1, 0, 1, 1, 0],
             bossa_nova: [1, 0, 0, 1, 0, 0, 1, 0],
             salsa: [1, 0, 1, 0, 1, 1, 0, 1],
             tango: [1, 0, 1, 1, 0, 1, 0, 0],
-            
-            // 爵士节奏
+            // Jazz
             swing: [1, 0, 0, 1, 0, 0, 1, 0],
             bebop: [1, 0, 1, 0, 1, 1, 0, 1],
             cool_jazz: [1, 0, 0, 0, 1, 0, 1, 0],
             fusion: [1, 1, 0, 1, 0, 1, 1, 0],
-            
-            // 摇滚节奏
+            // Rock
             rock: [1, 0, 1, 0, 1, 0, 1, 0],
             punk: [1, 1, 1, 1, 1, 1, 1, 1],
             metal: [1, 0, 1, 1, 0, 1, 1, 0],
             progressive: [1, 0, 1, 0, 0, 1, 0, 1, 1, 0],
-            
-            // 电子音乐节奏
+            // Electronic
             house: [1, 0, 0, 0, 1, 0, 0, 0],
             techno: [1, 0, 1, 0, 1, 0, 1, 0],
             trance: [1, 0, 0, 1, 0, 0, 1, 0],
             dubstep: [1, 0, 0, 0, 1, 1, 0, 1],
             drum_and_bass: [1, 0, 1, 1, 0, 1, 0, 1],
-            
-            // 世界音乐节奏
+            // World
             african: [1, 0, 1, 1, 0, 1, 0, 1],
             indian_tala: [1, 0, 0, 1, 0, 1, 0, 0, 1, 0],
             middle_eastern: [1, 0, 1, 0, 0, 1, 1, 0],
             celtic: [1, 0, 1, 1, 0, 1],
             flamenco: [1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1],
-            
-            // 复杂节奏
+            // Complex
             complex: [1, 0, 1, 0, 0, 1, 0, 1, 0, 0],
             irregular: [1, 0, 1, 0, 0, 1, 1, 0, 1],
             polymetric: [1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1],
-            
-            // 环境音乐节奏
+            // Ambient
             ambient: [1, 0, 0, 0, 1, 0, 0, 0],
             drone: [1, 0, 0, 0, 0, 0, 0, 0],
             minimal: [1, 0, 0, 0, 0, 1, 0, 0],
             meditative: [1, 0, 0, 0, 0, 0, 1, 0],
-            
-            // 高能节奏
+            // High energy
             energetic: [1, 1, 0, 1, 1, 0, 1, 0],
             frantic: [1, 1, 1, 0, 1, 1, 0, 1],
             driving: [1, 0, 1, 1, 1, 0, 1, 1],
             explosive: [1, 1, 1, 1, 0, 1, 1, 1],
         };
         
-        // 🎵 扩展乐器配置
+        // Instrument definitions (MIDI program numbers)
         this.instruments = {
-            // 钢琴类
+            // Keyboards
             piano: { program: 0, channel: 0, name: 'Acoustic Grand Piano' },
             epiano: { program: 4, channel: 1, name: 'Electric Piano' },
             harpsichord: { program: 6, channel: 2, name: 'Harpsichord' },
-            
-            // 管风琴类
+            // Organs
             organ: { program: 16, channel: 3, name: 'Hammond Organ' },
             church_organ: { program: 19, channel: 4, name: 'Church Organ' },
-            
-            // 吉他类
+            // Guitars
             guitar: { program: 24, channel: 5, name: 'Acoustic Guitar' },
             eguitar_clean: { program: 27, channel: 6, name: 'Electric Guitar Clean' },
             eguitar_distortion: { program: 29, channel: 7, name: 'Electric Guitar Distortion' },
-            
-            // 低音类
+            // Bass
             bass: { program: 32, channel: 8, name: 'Acoustic Bass' },
             ebass: { program: 33, channel: 9, name: 'Electric Bass' },
             synth_bass: { program: 38, channel: 10, name: 'Synth Bass' },
-            
-            // 弦乐类
+            // Strings
             violin: { program: 40, channel: 11, name: 'Violin' },
             viola: { program: 41, channel: 12, name: 'Viola' },
             cello: { program: 42, channel: 13, name: 'Cello' },
             strings: { program: 48, channel: 14, name: 'String Ensemble' },
-            
-            // 管乐类
+            // Winds
             flute: { program: 73, channel: 15, name: 'Flute' },
             oboe: { program: 68, channel: 16, name: 'Oboe' },
             clarinet: { program: 71, channel: 17, name: 'Clarinet' },
             saxophone: { program: 64, channel: 18, name: 'Soprano Sax' },
             trumpet: { program: 56, channel: 19, name: 'Trumpet' },
             trombone: { program: 57, channel: 20, name: 'Trombone' },
-            
-            // 合成器类
+            // Synths
             synth_lead: { program: 80, channel: 21, name: 'Synth Lead Square' },
             synth_saw: { program: 81, channel: 22, name: 'Synth Lead Sawtooth' },
             synth_pad: { program: 88, channel: 23, name: 'Synth Pad New Age' },
             synth_choir: { program: 91, channel: 24, name: 'Synth Choir' },
-            
-            // 特色乐器
+            // Specialty
             harp: { program: 46, channel: 25, name: 'Harp' },
             xylophone: { program: 13, channel: 26, name: 'Xylophone' },
             marimba: { program: 12, channel: 27, name: 'Marimba' },
             music_box: { program: 10, channel: 28, name: 'Music Box' },
-            
-            // 民族乐器
+            // Ethnic
             sitar: { program: 104, channel: 29, name: 'Sitar' },
             banjo: { program: 105, channel: 30, name: 'Banjo' },
             shamisen: { program: 106, channel: 31, name: 'Shamisen' }
         };
         
-        // 🎵 超级多样化风格模板
+        // Style templates by performance level
         this.styleTemplates = [
-            // 超高性能风格 (30+ 泡泡/分钟)
+            // Very high performance (30+ bubbles/min)
             {
                 name: 'cyber_punk_2077',
                 conditions: { performance: [30, 100] },
@@ -275,8 +233,7 @@ class UltraDiverseMusicGenerator {
                 instruments: [['eguitar_distortion', 'ebass', 'synth_lead'], ['organ', 'trombone']],
                 complexity: 'extreme'
             },
-            
-            // 高性能风格 (20-30 泡泡/分钟)
+            // High performance (20-30 bubbles/min)
             {
                 name: 'progressive_odyssey',
                 conditions: { performance: [20, 30] },
@@ -297,8 +254,7 @@ class UltraDiverseMusicGenerator {
                 instruments: [['trumpet', 'guitar', 'marimba'], ['violin', 'ebass']],
                 complexity: 'high'
             },
-            
-            // 中等性能风格 (10-20 泡泡/分钟)
+            // Medium performance (10-20 bubbles/min)
             {
                 name: 'indie_dreamscape',
                 conditions: { performance: [10, 20] },
@@ -319,8 +275,7 @@ class UltraDiverseMusicGenerator {
                 instruments: [['sitar', 'flute', 'marimba'], ['strings', 'harp']],
                 complexity: 'medium'
             },
-            
-            // 低性能风格 (5-10 泡泡/分钟)
+            // Low performance (5-10 bubbles/min)
             {
                 name: 'zen_garden',
                 conditions: { performance: [5, 10] },
@@ -341,8 +296,7 @@ class UltraDiverseMusicGenerator {
                 instruments: [['piano', 'violin', 'cello'], ['harpsichord', 'oboe']],
                 complexity: 'low'
             },
-            
-            // 极低性能风格 (<5 泡泡/分钟)
+            // Very low performance (<5 bubbles/min)
             {
                 name: 'cosmic_meditation',
                 conditions: { performance: [0, 5] },
@@ -357,7 +311,7 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 初始化随机种子
+     * Initialize random seed
      */
     initializeRandomSeed(seed) {
         this.randomState.seed = seed;
@@ -365,7 +319,7 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 生成可重现的随机数 (0-1)
+     * Generate reproducible random number (0-1)
      */
     seededRandom() {
         this.randomState.current = (this.randomState.current * 1664525 + 1013904223) % 4294967296;
@@ -373,57 +327,57 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 生成可重现的随机整数
+     * Generate reproducible random integer
      */
     seededRandomInt(min, max) {
         return Math.floor(this.seededRandom() * (max - min + 1)) + min;
     }
     
     /**
-     * 从数组中随机选择元素
+     * Random selection from array
      */
     seededChoice(array) {
         return array[this.seededRandomInt(0, array.length - 1)];
     }
     
     /**
-     * 🎵 超级多样化音乐生成
+     * Generate diverse music based on game session
      */
     generateMusic(gameSession) {
         const bubbleCount = gameSession?.notes?.length || 0;
         const sessionDuration = gameSession?.durationSec || 60;
         
-        // 🎵 基于时间戳、游戏数据和随机因子生成唯一种子
+        // Generate unique seed from timestamp, game data, and random factor
         const randomFactor = Math.floor(Math.random() * 10000);
         const randomSeed = Date.now() + bubbleCount * 1000 + sessionDuration * 100 + randomFactor;
         this.initializeRandomSeed(randomSeed);
         
-        console.log(`🎵 超多样化音乐生成开始 - 种子: ${randomSeed}`);
+        console.log(`Music generation started - seed: ${randomSeed}`);
         
-        // 🎵 深度分析游戏数据
+        // Analyze game data
         const gameAnalysis = this.analyzeGameSession(gameSession);
-        console.log(`🎵 游戏分析完成:`, gameAnalysis);
+        console.log(`Game analysis complete:`, gameAnalysis);
         
-        // 🎵 选择音乐风格模板
+        // Select style template
         const styleTemplate = this.selectStyleTemplate(gameAnalysis);
-        console.log(`🎵 选择风格模板: ${styleTemplate.name}`);
+        console.log(`Selected style template: ${styleTemplate.name}`);
         
-        // 🎵 生成具体音乐参数
+        // Generate music parameters
         const musicParams = this.generateMusicParameters(styleTemplate, gameAnalysis);
-        console.log(`🎵 音乐参数:`, musicParams);
+        console.log(`Music params:`, musicParams);
         
-        // 🎵 生成音乐结构
+        // Generate music structure
         const musicStructure = this.createMusicStructure(musicParams, gameAnalysis);
         
-        // 🎵 生成所有音符
+        // Generate all notes
         const notes = this.generateAllNotes(musicStructure, gameAnalysis);
         
-        // 🎵 创建最终序列
+        // Create final sequence
         return this.createMusicSequence(notes, musicStructure, musicParams);
     }
     
     /**
-     * 深度分析游戏会话数据
+     * Analyze game session data
      */
     analyzeGameSession(gameSession) {
         const bubbleCount = gameSession?.notes?.length || 0;
@@ -432,13 +386,13 @@ class UltraDiverseMusicGenerator {
         
         const performance = bubbleCount / (sessionDuration / 60);
         
-        // 分析节奏特征
+        // Analyze rhythm characteristics
         const rhythmAnalysis = this.analyzeRhythm(notes);
         
-        // 分析音高特征
+        // Analyze pitch characteristics
         const pitchAnalysis = this.analyzePitch(notes);
         
-        // 分析时间分布
+        // Analyze timing distribution
         const timingAnalysis = this.analyzeTiming(notes, sessionDuration);
         
         return {
@@ -455,7 +409,7 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 分析节奏模式
+     * Analyze rhythm patterns
      */
     analyzeRhythm(notes) {
         if (notes.length < 2) return { regularity: 0.5, avgInterval: 2000, variance: 1000 };
@@ -473,7 +427,7 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 分析音高分布
+     * Analyze pitch distribution
      */
     analyzePitch(notes) {
         if (notes.length === 0) return { range: 12, avgPitch: 60, distribution: 'even' };
@@ -497,7 +451,7 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 分析时间分布
+     * Analyze timing distribution
      */
     analyzeTiming(notes, sessionDuration) {
         if (notes.length === 0) return { consistency: 0.5, acceleration: 0, density: 0 };
@@ -526,7 +480,7 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 计算能量水平
+     * Calculate energy level
      */
     calculateEnergyLevel(rhythmAnalysis, performance) {
         const rhythmEnergy = 1 - rhythmAnalysis.regularity;
@@ -535,7 +489,7 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 计算复杂度
+     * Calculate complexity
      */
     calculateComplexity(pitchAnalysis, rhythmAnalysis) {
         const pitchComplexity = Math.min(1, pitchAnalysis.range / 24);
@@ -544,7 +498,7 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 确定情绪
+     * Determine mood
      */
     determineMood(performance, timingAnalysis) {
         if (performance > 25 && timingAnalysis.acceleration > 0.2) return 'excited';
@@ -555,18 +509,18 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 🎵 选择风格模板
+     * Select style template based on performance
      */
     selectStyleTemplate(gameAnalysis) {
         const { performance } = gameAnalysis;
         
-        // 筛选符合条件的模板
+        // Filter matching templates
         const matchingTemplates = this.styleTemplates.filter(template => {
             const [min, max] = template.conditions.performance;
             return performance >= min && performance < max;
         });
         
-        // 如果没有匹配的模板，使用默认模板
+        // Use default template if no match
         if (matchingTemplates.length === 0) {
             return {
                 name: 'universal_harmony',
@@ -579,12 +533,12 @@ class UltraDiverseMusicGenerator {
             };
         }
         
-        // 随机选择一个匹配的模板
+        // Randomly select a matching template
         return this.seededChoice(matchingTemplates);
     }
     
     /**
-     * 🎵 生成具体音乐参数
+     * Generate music parameters
      */
     generateMusicParameters(styleTemplate, gameAnalysis) {
         return {
@@ -600,7 +554,7 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 选择调性
+     * Select key
      */
     selectKey() {
         const keys = [60, 62, 64, 65, 67, 69, 71]; // C, D, E, F, G, A, B
@@ -608,15 +562,15 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 选择乐器组合
+     * Select instrument combination
      */
     selectInstruments(instrumentGroups) {
         const selectedInstruments = [];
         
-        // 从每个乐器组中选择
+        // Select from each instrument group
         instrumentGroups.forEach(group => {
             if (Array.isArray(group)) {
-                // 从组中随机选择1-2个乐器
+                // Randomly select 1-2 instruments from group
                 const numToSelect = this.seededRandomInt(1, Math.min(2, group.length));
                 const shuffled = [...group].sort(() => this.seededRandom() - 0.5);
                 
@@ -628,7 +582,7 @@ class UltraDiverseMusicGenerator {
             }
         });
         
-        // 确保至少有一个乐器
+        // Ensure at least one instrument
         if (selectedInstruments.length === 0) {
             selectedInstruments.push(this.instruments.piano);
         }
@@ -637,7 +591,7 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 创建音乐结构
+     * Create music structure
      */
     createMusicStructure(musicParams, gameAnalysis) {
         const targetDuration = Math.max(12, Math.min(45, gameAnalysis.sessionDuration * 0.8));
@@ -654,13 +608,13 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 创建音乐段落结构
+     * Create music section structure
      */
     createSections(musicParams, duration) {
         const sections = [];
         let currentTime = 0;
         
-        // 引子
+        // Intro
         if (duration > 20) {
             sections.push({
                 name: 'intro',
@@ -672,7 +626,7 @@ class UltraDiverseMusicGenerator {
             currentTime += 4;
         }
         
-        // 主题 A
+        // Theme A
         const mainDuration = Math.min(8, duration * 0.4);
         sections.push({
             name: 'theme_a',
@@ -683,7 +637,7 @@ class UltraDiverseMusicGenerator {
         });
         currentTime += mainDuration;
         
-        // 发展部
+        // Development
         if (duration > 25) {
             sections.push({
                 name: 'development',
@@ -695,7 +649,7 @@ class UltraDiverseMusicGenerator {
             currentTime += 6;
         }
         
-        // 主题 B
+        // Theme B
         const themeBDuration = Math.min(8, duration - currentTime - 4);
         if (themeBDuration > 0) {
             sections.push({
@@ -708,7 +662,7 @@ class UltraDiverseMusicGenerator {
             currentTime += themeBDuration;
         }
         
-        // 尾声
+        // Outro
         const outroDuration = duration - currentTime;
         if (outroDuration > 0) {
             sections.push({
@@ -724,7 +678,7 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 生成所有音符
+     * Generate all notes
      */
     generateAllNotes(structure, gameAnalysis) {
         const notes = [];
@@ -737,25 +691,25 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 为特定段落生成音符
+     * Generate notes for a specific section
      */
     generateSectionNotes(section, structure, gameAnalysis) {
         const notes = [];
         
-        // 生成和弦
+        // Generate chords
         notes.push(...this.generateChords(section, structure));
         
-        // 生成旋律
+        // Generate melody
         notes.push(...this.generateMelody(section, structure, gameAnalysis));
         
-        // 生成低音线
+        // Generate bass line
         notes.push(...this.generateBassLine(section, structure));
         
         return notes;
     }
     
     /**
-     * 生成和弦
+     * Generate chords
      */
     generateChords(section, structure) {
         const notes = [];
@@ -778,7 +732,7 @@ class UltraDiverseMusicGenerator {
             const chordIndex = chordProgression[i % chordProgression.length];
             const rootNote = params.key + scale[chordIndex % scale.length];
             
-            // 生成三和弦
+            // Generate triad
             const chordNotes = [
                 rootNote,
                 rootNote + scale[2 % scale.length],
@@ -801,7 +755,7 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 生成旋律
+     * Generate melody
      */
     generateMelody(section, structure, gameAnalysis) {
         const notes = [];
@@ -853,7 +807,7 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 生成低音线
+     * Generate bass line
      */
     generateBassLine(section, structure) {
         const notes = [];
@@ -893,7 +847,7 @@ class UltraDiverseMusicGenerator {
     }
     
     /**
-     * 创建最终音乐序列
+     * Create final music sequence
      */
     createMusicSequence(notes, structure, musicParams) {
         notes.sort((a, b) => a.startTime - b.startTime);
@@ -933,13 +887,13 @@ class UltraDiverseMusicGenerator {
     }
 }
 
-// 导出到全局
+// Export to global
 window.UltraDiverseMusicGenerator = UltraDiverseMusicGenerator;
 
-// 替换原有的createRichTestMusic函数
+// Create convenience function
 window.createUltraDiverseMusic = function(gameSession) {
     const generator = new UltraDiverseMusicGenerator();
     return generator.generateMusic(gameSession);
 };
 
-console.log('🎵 超多样化音乐生成器已加载');
+console.log('Diverse music generator loaded');

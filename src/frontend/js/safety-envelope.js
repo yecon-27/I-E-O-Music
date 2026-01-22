@@ -1,20 +1,20 @@
 /**
- * SafetyEnvelope - 安全熔断逻辑层
- * 所有音乐生成参数必须经过此层校验
+ * SafetyEnvelope - Safety circuit breaker logic layer
+ * All music generation parameters must pass through this layer for validation
  */
 class SafetyEnvelope {
     constructor() {
-        // 安全模式开关
+        // Safety mode switch
         this.unsafeMode = false;
         this.unsafeConfirmed = false;
         
-        // 预览模式（允许越界参数临时播放）
+        // Preview mode (allows out-of-bounds parameters for temporary playback)
         this.previewMode = false;
         
-        // 静音节点状态
-        this.muted = true; // 默认静音，需要专家手动 Preview
+        // Mute node state
+        this.muted = true; // Default muted, requires expert manual Preview
         
-        // 安全范围定义
+        // Safe range definitions
         this.safeRanges = {
             tempo: { min: 120, max: 130, unsafeMin: 100, unsafeMax: 140 },
             volume: { min: 0.3, max: 0.8, unsafeMin: 0, unsafeMax: 1.0 },
@@ -22,7 +22,7 @@ class SafetyEnvelope {
             noteRange: { min: 48, max: 84, unsafeMin: 24, unsafeMax: 108 }, // MIDI
         };
         
-        // 当前参数值
+        // Current parameter values
         this.currentParams = {
             tempo: 125,
             volume: 0.7,
@@ -31,24 +31,24 @@ class SafetyEnvelope {
             noteRangeHigh: 72,
         };
         
-        // 拦截回调
+        // Intercept callbacks
         this.onIntercept = null;
         this.onParamChange = null;
         this.onWarning = null;
         
-        // 订阅者列表 (Pub/Sub)
+        // Subscriber list (Pub/Sub)
         this.subscribers = new Map();
     }
     
     /**
-     * 启用/禁用不安全模式
+     * Enable/disable unsafe mode
      */
     setUnsafeMode(enabled, confirmed = false) {
         if (enabled && !confirmed) {
-            // 需要二次确认
+            // Requires secondary confirmation
             this.onWarning?.({
                 type: 'unsafe_mode_request',
-                message: '启用不安全模式需要二次确认',
+                message: 'Enabling unsafe mode requires secondary confirmation',
             });
             return false;
         }
@@ -57,17 +57,17 @@ class SafetyEnvelope {
         this.unsafeConfirmed = confirmed;
         
         if (!enabled) {
-            // 关闭不安全模式时，重新 clamp 所有参数
+            // When disabling unsafe mode, re-clamp all parameters
             this.revalidateAllParams();
         }
         
         this.publish('unsafeModeChanged', { enabled, confirmed });
-        console.log(`[SafetyEnvelope] 不安全模式: ${enabled ? '开启' : '关闭'}`);
+        console.log(`[SafetyEnvelope] Unsafe mode: ${enabled ? 'enabled' : 'disabled'}`);
         return true;
     }
     
     /**
-     * 设置预览模式
+     * Set preview mode
      */
     setPreviewMode(enabled) {
         this.previewMode = enabled;
@@ -76,12 +76,12 @@ class SafetyEnvelope {
     }
     
     /**
-     * 设置参数（带安全校验）
+     * Set parameter (with safety validation)
      */
     setParam(name, value) {
         const range = this.safeRanges[name];
         if (!range) {
-            console.warn(`[SafetyEnvelope] 未知参数: ${name}`);
+            console.warn(`[SafetyEnvelope] Unknown parameter: ${name}`);
             return value;
         }
         
@@ -90,16 +90,16 @@ class SafetyEnvelope {
         let intercepted = false;
         let clampedValue = value;
         
-        // 确定有效范围
+        // Determine effective range
         const effectiveMin = this.unsafeMode && this.unsafeConfirmed ? range.unsafeMin : range.min;
         const effectiveMax = this.unsafeMode && this.unsafeConfirmed ? range.unsafeMax : range.max;
         
-        // Clamp 到有效范围
+        // Clamp to effective range
         if (value < effectiveMin || value > effectiveMax) {
             clampedValue = Math.max(effectiveMin, Math.min(effectiveMax, value));
             intercepted = true;
             
-            // 记录拦截
+            // Record interception
             const rule = `${name}_range_[${effectiveMin}, ${effectiveMax}]`;
             window.sessionLogger?.recordInterception(name, value, clampedValue, rule);
             
@@ -114,7 +114,7 @@ class SafetyEnvelope {
         newValue = clampedValue;
         this.currentParams[name] = newValue;
         
-        // 记录参数变动
+        // Record parameter change
         if (oldValue !== newValue) {
             window.sessionLogger?.recordParamChange(name, oldValue, newValue, intercepted ? 'safety' : 'user');
             this.onParamChange?.({ name, oldValue, newValue, intercepted });
@@ -125,14 +125,14 @@ class SafetyEnvelope {
     }
     
     /**
-     * 获取参数（返回安全值）
+     * Get parameter (returns safe value)
      */
     getParam(name) {
         return this.currentParams[name];
     }
     
     /**
-     * 获取参数的有效范围
+     * Get effective range for parameter
      */
     getParamRange(name) {
         const range = this.safeRanges[name];
@@ -149,7 +149,7 @@ class SafetyEnvelope {
     }
     
     /**
-     * 重新校验所有参数
+     * Revalidate all parameters
      */
     revalidateAllParams() {
         for (const name of Object.keys(this.currentParams)) {
@@ -160,7 +160,7 @@ class SafetyEnvelope {
     }
     
     /**
-     * 检查音符是否在安全范围内
+     * Check if note is within safe range
      */
     validateNote(midi, velocity = 80) {
         const noteRange = this.getParamRange('noteRange');
@@ -170,13 +170,13 @@ class SafetyEnvelope {
         let validVelocity = velocity;
         let intercepted = false;
         
-        // 检查音高
+        // Check pitch
         if (midi < noteRange.min || midi > noteRange.max) {
             validMidi = Math.max(noteRange.min, Math.min(noteRange.max, midi));
             intercepted = true;
         }
         
-        // 检查力度
+        // Check velocity
         const normalizedVel = velocity / 127;
         if (normalizedVel < volumeRange.min || normalizedVel > volumeRange.max) {
             validVelocity = Math.round(Math.max(volumeRange.min, Math.min(volumeRange.max, normalizedVel)) * 127);
@@ -196,7 +196,7 @@ class SafetyEnvelope {
     }
     
     /**
-     * 订阅参数变化 (Pub/Sub)
+     * Subscribe to parameter changes (Pub/Sub)
      */
     subscribe(event, callback) {
         if (!this.subscribers.has(event)) {
@@ -216,13 +216,13 @@ class SafetyEnvelope {
             try {
                 cb(data);
             } catch (e) {
-                console.error('[SafetyEnvelope] 订阅回调错误:', e);
+                console.error('[SafetyEnvelope] Subscriber callback error:', e);
             }
         });
     }
     
     /**
-     * 获取当前状态摘要
+     * Get current status summary
      */
     getStatus() {
         return {
@@ -235,6 +235,6 @@ class SafetyEnvelope {
     }
 }
 
-// 全局单例
+// Global singleton
 window.safetyEnvelope = new SafetyEnvelope();
 window.SafetyEnvelope = SafetyEnvelope;

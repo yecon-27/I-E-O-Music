@@ -1,6 +1,6 @@
 /**
- * 手部运动数据追踪器
- * 收集和分析用户的手部运动数据
+ * Hand Movement Data Tracker
+ * Collects and analyzes user hand movement data
  */
 class HandDataTracker {
     constructor() {
@@ -38,35 +38,35 @@ class HandDataTracker {
     }
     
     /**
-     * 初始化UI元素
+     * Initialize UI elements
      */
     initializeUI() {
-        // 获取导出按钮
+        // Get export button
         this.exportBtn = document.getElementById('export-data-btn');
         
-        // 绑定导出按钮
+        // Bind export button
         if (this.exportBtn) {
             this.exportBtn.addEventListener('click', () => {
                 this.generateReport();
             });
         }
         
-        // 自动开始追踪（后台运行）
+        // Auto-start tracking (runs in background)
         this.startTracking();
     }
     
     /**
-     * 生成并导出数据报告
+     * Generate and export data report
      */
     generateReport() {
         const stats = this.getSessionStats();
         const report = this.createDetailedReport(stats);
         
-        // 生成文件名
+        // Generate filename
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const filename = `bubble-game-report-${timestamp}.json`;
         
-        // 导出JSON报告
+        // Export JSON report
         const dataStr = JSON.stringify(report, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
         
@@ -75,14 +75,14 @@ class HandDataTracker {
         link.download = filename;
         link.click();
         
-        // 同时生成可读的文本报告
+        // Also generate readable text report
         this.generateTextReport(report);
         
-        console.log('📊 数据报告已导出:', filename);
+        console.log('📊 Data report exported:', filename);
     }
     
     /**
-     * 开始追踪
+     * Start tracking
      */
     startTracking() {
         if (this.isTracking) return;
@@ -90,21 +90,21 @@ class HandDataTracker {
         this.isTracking = true;
         this.resetSession();
         
-        console.log('📊 手部数据追踪已启动 (后台运行)');
+        console.log('📊 Hand data tracking started (background)');
     }
     
     /**
-     * 停止追踪
+     * Stop tracking
      */
     stopTracking() {
         if (!this.isTracking) return;
         
         this.isTracking = false;
-        console.log('📊 手部数据追踪已停止');
+        console.log('📊 Hand data tracking stopped');
     }
     
     /**
-     * 重置会话数据
+     * Reset session data
      */
     resetSession() {
         this.data.session = {
@@ -122,7 +122,7 @@ class HandDataTracker {
     }
     
     /**
-     * 更新手部位置数据
+     * Update hand position data
      */
     updateHandPosition(hand, x, y, visible = true) {
         if (!this.isTracking) return;
@@ -131,38 +131,38 @@ class HandDataTracker {
         if (!handData) return;
         
         const currentTime = Date.now();
-        const deltaTime = (currentTime - this.lastUpdateTime) / 1000; // 转换为秒
+        const deltaTime = (currentTime - this.lastUpdateTime) / 1000; // Convert to seconds
         
         if (visible && handData.visible) {
-            // 计算移动距离
+            // Calculate movement distance
             const dx = x - handData.lastPosition.x;
             const dy = y - handData.lastPosition.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            // 计算速度 (像素/秒)
+            // Calculate speed (pixels/second)
             const speed = deltaTime > 0 ? distance / deltaTime : 0;
             
-            // 更新数据
+            // Update data
             handData.speed = speed;
             handData.totalDistance += distance;
             
-            // 记录速度样本用于计算平均值
+            // Record speed samples for average calculation
             if (speed > 0) {
                 this.data.session.speedSamples.push(speed);
                 if (this.data.session.speedSamples.length > 100) {
-                    this.data.session.speedSamples.shift(); // 保持最近100个样本
+                    this.data.session.speedSamples.shift(); // Keep last 100 samples
                 }
                 
-                // 更新最大速度
+                // Update max speed
                 this.data.session.maxSpeed = Math.max(this.data.session.maxSpeed, speed);
                 
-                // 计算平均速度
+                // Calculate average speed
                 const sum = this.data.session.speedSamples.reduce((a, b) => a + b, 0);
                 this.data.session.avgSpeed = sum / this.data.session.speedSamples.length;
             }
         }
         
-        // 更新位置和状态
+        // Update position and state
         handData.lastPosition = { x: handData.position.x, y: handData.position.y };
         handData.position = { x, y };
         handData.visible = visible;
@@ -171,7 +171,7 @@ class HandDataTracker {
     }
     
     /**
-     * 记录戳泡泡事件
+     * Record bubble pop event
      */
     recordPop(successful = true) {
         if (!this.isTracking) return;
@@ -181,19 +181,19 @@ class HandDataTracker {
             this.data.session.popCount++;
         }
         
-        // 计算精度
+        // Calculate accuracy
         this.data.session.accuracy = this.data.session.totalAttempts > 0 
             ? (this.data.session.popCount / this.data.session.totalAttempts) * 100 
             : 0;
     }
     
-    // updateDisplay方法已移除 - 改为后台数据收集
+    // updateDisplay method removed - changed to background data collection
     
     /**
-     * 获取会话统计数据
+     * Get session statistics
      */
     getSessionStats() {
-        const sessionTime = (Date.now() - this.data.session.startTime) / 1000; // 秒
+        const sessionTime = (Date.now() - this.data.session.startTime) / 1000; // seconds
         const totalDistance = this.data.leftHand.totalDistance + this.data.rightHand.totalDistance;
         
         return {
@@ -210,7 +210,7 @@ class HandDataTracker {
     }
     
     /**
-     * 创建详细报告
+     * Create detailed report
      */
     createDetailedReport(stats) {
         return {
@@ -219,7 +219,7 @@ class HandDataTracker {
                 gameVersion: "1.0.0",
                 reportType: "bubble-game-session",
                 sessionDuration: Math.round(stats.sessionTime),
-                generatedAt: new Date().toLocaleString('zh-CN')
+                generatedAt: new Date().toLocaleString()
             },
             
             gamePerformance: {
@@ -239,9 +239,9 @@ class HandDataTracker {
             },
             
             timeAnalysis: {
-                sessionStartTime: new Date(this.data.session.startTime).toLocaleString('zh-CN'),
-                sessionEndTime: new Date().toLocaleString('zh-CN'),
-                totalPlayTime: `${Math.floor(stats.sessionTime / 60)}分${Math.round(stats.sessionTime % 60)}秒`,
+                sessionStartTime: new Date(this.data.session.startTime).toLocaleString(),
+                sessionEndTime: new Date().toLocaleString(),
+                totalPlayTime: `${Math.floor(stats.sessionTime / 60)}m ${Math.round(stats.sessionTime % 60)}s`,
                 avgTimePerBubble: stats.popCount > 0 ? Math.round((stats.sessionTime / stats.popCount) * 100) / 100 : 0
             },
             
@@ -261,52 +261,52 @@ class HandDataTracker {
     }
     
     /**
-     * 生成可读的文本报告
+     * Generate readable text report
      */
     generateTextReport(report) {
         const textReport = `
-🎮 泡泡游戏 - 用户行为分析报告
+🎮 Bubble Game - User Behavior Analysis Report
 =====================================
 
-📊 基本信息
+📊 Basic Info
 -----------
-生成时间: ${report.metadata.generatedAt}
-游戏时长: ${report.timeAnalysis.totalPlayTime}
-开始时间: ${report.timeAnalysis.sessionStartTime}
-结束时间: ${report.timeAnalysis.sessionEndTime}
+Generated: ${report.metadata.generatedAt}
+Duration: ${report.timeAnalysis.totalPlayTime}
+Start Time: ${report.timeAnalysis.sessionStartTime}
+End Time: ${report.timeAnalysis.sessionEndTime}
 
-🎯 游戏表现
+🎯 Game Performance
 -----------
-戳破泡泡数: ${report.gamePerformance.totalBubblesPopped}
-总尝试次数: ${report.gamePerformance.totalAttempts}
-成功率: ${report.gamePerformance.successRate}%
-平均每个泡泡用时: ${report.timeAnalysis.avgTimePerBubble}秒
+Bubbles Popped: ${report.gamePerformance.totalBubblesPopped}
+Total Attempts: ${report.gamePerformance.totalAttempts}
+Success Rate: ${report.gamePerformance.successRate}%
+Avg Time Per Bubble: ${report.timeAnalysis.avgTimePerBubble}s
 
-🖐️ 运动分析
+🖐️ Movement Analysis
 -----------
-总移动距离: ${report.movementAnalysis.totalDistance} 像素
-左手移动距离: ${report.movementAnalysis.leftHandDistance} 像素
-右手移动距离: ${report.movementAnalysis.rightHandDistance} 像素
-主导手: ${report.movementAnalysis.dominantHand === 'right' ? '右手' : '左手'}
-最大移动速度: ${report.movementAnalysis.maxSpeed} px/s
-平均移动速度: ${report.movementAnalysis.avgSpeed} px/s
+Total Distance: ${report.movementAnalysis.totalDistance} pixels
+Left Hand Distance: ${report.movementAnalysis.leftHandDistance} pixels
+Right Hand Distance: ${report.movementAnalysis.rightHandDistance} pixels
+Dominant Hand: ${report.movementAnalysis.dominantHand === 'right' ? 'Right' : 'Left'}
+Max Speed: ${report.movementAnalysis.maxSpeed} px/s
+Avg Speed: ${report.movementAnalysis.avgSpeed} px/s
 
-📈 高级指标
+📈 Advanced Metrics
 -----------
-运动效率: ${report.detailedMetrics.movementEfficiency}%
-一致性评分: ${report.detailedMetrics.consistencyScore}%
-手部切换次数: ${report.detailedMetrics.handSwitches}
-速度样本数: ${report.detailedMetrics.speedSamples}
+Movement Efficiency: ${report.detailedMetrics.movementEfficiency}%
+Consistency Score: ${report.detailedMetrics.consistencyScore}%
+Hand Switches: ${report.detailedMetrics.handSwitches}
+Speed Samples: ${report.detailedMetrics.speedSamples}
 
-💡 分析建议
+💡 Recommendations
 -----------
 ${this.generateRecommendations(report)}
 
 =====================================
-报告生成完成 - 数据已保存为JSON格式
+Report complete - Data saved as JSON
         `;
         
-        // 导出文本报告
+        // Export text report
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
         const textBlob = new Blob([textReport], { type: 'text/plain;charset=utf-8' });
         const link = document.createElement('a');
@@ -316,15 +316,15 @@ ${this.generateRecommendations(report)}
     }
     
     /**
-     * 计算手部切换次数
+     * Calculate hand switches
      */
     calculateHandSwitches() {
-        // 简化计算 - 基于左右手活跃度变化
+        // Simplified calculation - based on left/right hand activity changes
         return Math.floor(Math.abs(this.data.leftHand.totalDistance - this.data.rightHand.totalDistance) / 100);
     }
     
     /**
-     * 计算运动效率
+     * Calculate movement efficiency
      */
     calculateMovementEfficiency() {
         const totalDistance = this.data.leftHand.totalDistance + this.data.rightHand.totalDistance;
@@ -332,13 +332,13 @@ ${this.generateRecommendations(report)}
         
         if (popCount === 0 || totalDistance === 0) return 0;
         
-        // 效率 = 成功次数 / 移动距离 * 1000 (标准化)
+        // Efficiency = success count / distance * 1000 (normalized)
         const efficiency = (popCount / totalDistance) * 1000;
         return Math.min(100, Math.round(efficiency * 100) / 100);
     }
     
     /**
-     * 计算一致性评分
+     * Calculate consistency score
      */
     calculateConsistencyScore() {
         const speeds = this.data.session.speedSamples;
@@ -348,45 +348,45 @@ ${this.generateRecommendations(report)}
         const variance = speeds.reduce((sum, speed) => sum + Math.pow(speed - avgSpeed, 2), 0) / speeds.length;
         const stdDev = Math.sqrt(variance);
         
-        // 一致性 = 100 - (标准差 / 平均值 * 100)，限制在0-100之间
+        // Consistency = 100 - (stdDev / avgSpeed * 100), clamped to 0-100
         const consistency = Math.max(0, 100 - (stdDev / avgSpeed * 100));
         return Math.round(consistency * 100) / 100;
     }
     
     /**
-     * 生成个性化建议
+     * Generate personalized recommendations
      */
     generateRecommendations(report) {
         const recommendations = [];
         
         if (report.gamePerformance.successRate < 70) {
-            recommendations.push("• 建议放慢速度，专注于准确性而非速度");
+            recommendations.push("• Try slowing down and focus on accuracy over speed");
         }
         
         if (report.movementAnalysis.avgSpeed > 200) {
-            recommendations.push("• 移动速度较快，可以尝试更平稳的手部动作");
+            recommendations.push("• Movement speed is high, try smoother hand motions");
         }
         
         if (report.detailedMetrics.consistencyScore < 60) {
-            recommendations.push("• 建议练习保持稳定的移动节奏");
+            recommendations.push("• Practice maintaining a steady movement rhythm");
         }
         
         const dominantRatio = report.movementAnalysis.rightHandDistance / 
                             (report.movementAnalysis.leftHandDistance + report.movementAnalysis.rightHandDistance);
         
         if (dominantRatio > 0.8 || dominantRatio < 0.2) {
-            recommendations.push("• 可以尝试使用非主导手来提高协调性");
+            recommendations.push("• Try using your non-dominant hand to improve coordination");
         }
         
         if (recommendations.length === 0) {
-            recommendations.push("• 表现优秀！继续保持当前的游戏节奏");
+            recommendations.push("• Excellent performance! Keep up the current pace");
         }
         
         return recommendations.join('\n');
     }
     
     /**
-     * 销毁追踪器
+     * Destroy tracker
      */
     destroy() {
         this.stopTracking();
@@ -397,5 +397,5 @@ ${this.generateRecommendations(report)}
     }
 }
 
-// 导出类
+// Export class
 window.HandDataTracker = HandDataTracker;

@@ -1,7 +1,7 @@
 {
   "name": "musibubble-tokyo2020-mediapipe-pictogram",
   "version": "1.0.0",
-  "description": "一个结合了 MediaPipe 姿势检测和 Tokyo2020 风格小人的互动泡泡游戏。",
+  "description": "。",
   "main": "index.js",
   "directories": {
     "doc": "docs"

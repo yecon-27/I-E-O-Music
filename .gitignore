@@ -133,6 +133,9 @@ Thumbs.db
 # Project specific
 *.bat
 
-# Ver
-cel build output
+# Vercel build output
 public/
+
+# Translation files (keep code review clean - English only)
+src/frontend/locales/
+locales/

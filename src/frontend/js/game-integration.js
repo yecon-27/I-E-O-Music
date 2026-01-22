@@ -1,69 +1,69 @@
 /**
- * 游戏集成脚本 - 连接游戏引擎和结果管理器
+ * Game Integration Script - Connects game engine and result manager
  */
 
-// 等待页面加载完成
+// Wait for page load complete
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('[Integration] 游戏集成脚本启动');
+    console.log('[Integration] Game integration script started');
     
-    // 监听游戏结束事件
+    // Listen for game end event
     window.addEventListener('round:ended', function(event) {
-        console.log('[Integration] 接收到游戏结束事件:', event.detail);
+        console.log('[Integration] Received game end event:', event.detail);
         
         if (window.gameResultManager) {
-            // 调用endGame方法，它会处理数据并显示结果窗口
+            // Call endGame method, it will process data and display result window
             window.gameResultManager.endGame();
         } else {
-            console.error('[Integration] GameResultManager 未找到');
+            console.error('[Integration] GameResultManager not found');
         }
     });
 
-    // 初始化专家模式集成
+    // Initialize expert mode integration
     setupExpertIntegration();
     
-    console.log('[Integration] 游戏事件监听器已设置');
+    console.log('[Integration] Game event listeners set up');
 });
 
 /**
- * 设置专家模式与游戏引擎的实时集成
+ * Setup expert mode real-time integration with game engine
  */
 function setupExpertIntegration() {
-    console.log('[Integration] 初始化专家模式集成...');
+    console.log('[Integration] Initializing expert mode integration...');
     
-    // 监听安全层参数变化
+    // Listen for safety layer parameter changes
     if (window.safetyEnvelope) {
         window.safetyEnvelope.subscribe('paramChanged', ({ name, newValue, intercepted }) => {
-            console.log(`[Expert] 参数变更: ${name} = ${newValue} ${intercepted ? '(已拦截)' : ''}`);
+            console.log(`[Expert] Parameter changed: ${name} = ${newValue} ${intercepted ? '(intercepted)' : ''}`);
             
             if (!window.game) return;
             
-            // 1. Tempo -> 奖励 BPM
+            // 1. Tempo -> Reward BPM
             if (name === 'tempo') {
                 window.game.sessionConfig.rewardBpm = newValue;
-                // 如果有背景音乐引擎，这里也可以更新
+                // If there's a background music engine, can also update here
             }
             
-            // 2. Volume -> 合成器音量
+            // 2. Volume -> Synthesizer volume
             if (name === 'volume') {
-                // GameEngine 使用 'low'/'medium'/'high'，但专家模式支持精细控制
-                // 我们直接操作 PopSynth
+                // GameEngine uses 'low'/'medium'/'high', but expert mode supports fine control
+                // We directly operate PopSynth
                 window.popSynth?.setVolume?.(newValue);
-                // 更新 game config 以保持一致性 (近似映射)
+                // Update game config for consistency (approximate mapping)
                 window.game.sessionConfig.volumeLevel = newValue > 0.8 ? 'high' : (newValue < 0.4 ? 'low' : 'medium');
             }
             
-            // 3. Density -> 泡泡生成密度
+            // 3. Density -> Bubble spawn density
             if (name === 'density') {
-                // 直接传递数字给 BubbleManager (需要 BubbleManager 支持数字)
+                // Directly pass number to BubbleManager (requires BubbleManager to support numbers)
                 window.game.bubbleManager?.setDensity?.(newValue);
-                // 更新 game config
+                // Update game config
                 window.game.sessionConfig.rhythmDensity = newValue < 0.8 ? 'sparse' : 'normal';
             }
             
-            // 4. Note Range -> 可以在 BubbleManager 中实现音域限制 (TODO)
+            // 4. Note Range -> Can implement note range limits in BubbleManager (TODO)
         });
         
-        // 监听预览模式/静音
+        // Listen for preview mode/mute
         window.safetyEnvelope.subscribe('previewModeChanged', ({ enabled, muted }) => {
             console.log(`[Expert] 预览模式: ${enabled}, 静音: ${muted}`);
             if (muted) {

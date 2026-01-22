@@ -1,6 +1,6 @@
 /**
- * AuditDashboard - 专家审计报告看板
- * 负责渲染游戏结束后的详细数据分析，包括双轴折线图和安全检查清单
+ * AuditDashboard - Expert Audit Report Dashboard
+ * Responsible for rendering detailed data analysis after game ends, including dual-axis line chart and safety checklist
  */
 class AuditDashboard {
     constructor() {
@@ -10,11 +10,11 @@ class AuditDashboard {
     }
 
     /**
-     * 显示审计看板
-     * @param {Object} sessionData - SessionLogger 导出的数据
+     * Show audit dashboard
+     * @param {Object} sessionData - Data exported from SessionLogger
      */
     show(sessionData) {
-        // 复用或创建容器
+        // Reuse or create container
         let dashboard = document.getElementById('audit-dashboard-full');
         if (!dashboard) {
             dashboard = this.createDashboardElement();
@@ -23,16 +23,16 @@ class AuditDashboard {
         this.container = dashboard;
         this.container.classList.remove('hidden');
         
-        // 填充基础信息
+        // Fill basic info
         this.updateMetaInfo(sessionData);
         
-        // 渲染双轴折线图 (BPM vs Click Freq)
+        // Render dual-axis line chart (BPM vs Click Freq)
         this.renderDualAxisChart(sessionData.timeline.causalAlignment);
         
-        // 渲染安全检查清单
+        // Render safety checklist
         this.renderSafetyChecks(sessionData.safetyChecks);
         
-        // 渲染拦截日志
+        // Render interception log
         this.renderInterceptLog(sessionData.timeline.interceptedEvents);
     }
 
@@ -79,7 +79,7 @@ class AuditDashboard {
                             </div>
                         </div>
                         <div class="audit-card log-card">
-                            <h3>Interception Log (安全拦截记录)</h3>
+                            <h3>Interception Log (Security Interception Records)</h3>
                             <div id="audit-intercept-log" class="intercept-log custom-scrollbar"></div>
                         </div>
                     </div>
@@ -95,7 +95,7 @@ class AuditDashboard {
         
         document.body.appendChild(div);
         
-        // 绑定事件
+        // Bind events
         div.querySelector('#audit-close-btn').addEventListener('click', () => this.hide());
         div.querySelector('#audit-export-json').addEventListener('click', () => {
             window.sessionLogger?.downloadJSON();
@@ -104,7 +104,7 @@ class AuditDashboard {
             window.gameResultManager?.exportMinimalAuditJSON();
         });
         
-        // 注入样式
+        // Inject styles
         this.injectStyles();
         
         return div;
@@ -388,6 +388,6 @@ class AuditDashboard {
     }
 }
 
-// 导出单例
+// Export singleton
 window.auditDashboard = new AuditDashboard();
 window.AuditDashboard = AuditDashboard;

@@ -1,4 +1,4 @@
-// 记录每次命中的音符；后续用于生成音乐
+// Record each hit note; used for music generation
 (function () {
     const noteLog = []; // {t, midi, freq, vel, bubbleId, hand}
   
@@ -8,7 +8,7 @@
     function clear() { noteLog.length = 0; }
     function get() { return noteLog; }
   
-    // 便于后续与 Magenta.js/后端对接
+    // For integration with Magenta.js/backend
     function toNoteSequence(bpm = 80) {
       const notes = noteLog.map(n => ({
         pitch: n.midi,
@@ -21,7 +21,7 @@
       return { notes, tempos: [{ time: 0, qpm: bpm }], totalTime };
     }
   
-    // （可选）下载记录为 JSON
+    // (Optional) Download log as JSON
     function downloadJSON(filename = 'noteLog.json') {
       const blob = new Blob([JSON.stringify(noteLog, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);

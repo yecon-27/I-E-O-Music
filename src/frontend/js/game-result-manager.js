@@ -1,6 +1,6 @@
 /**
- * 游戏结果管理器
- * 负责收集游戏数据并在60秒结束时显示结果窗口
+ * Game Result Manager
+ * Responsible for collecting game data and displaying result window after 60 seconds
  */
 
 const PATTERN_ICONS = {
@@ -20,12 +20,12 @@ class GameResultManager {
       totalAttempts: 0,
       maxConsecutive: 0,
       currentConsecutive: 0,
-      sessionDuration: 60, // 60秒
-      popTimes: [], // 记录每次戳泡泡的时间
+      sessionDuration: 60, // 60 seconds
+      popTimes: [], // Record time of each bubble pop
       handStats: {
-        leftHand: 0, // 左手戳破次数
-        rightHand: 0, // 右手戳破次数
-        unknown: 0, // 未知手部（鼠标等）
+        leftHand: 0, // Left hand pop count
+        rightHand: 0, // Right hand pop count
+        unknown: 0, // Unknown hand (mouse etc.)
       },
     };
 
@@ -41,14 +41,14 @@ class GameResultManager {
   }
 
   /**
-   * 初始化UI元素
+   * Initialize UI elements
    */
   initializeUI() {
-    console.log("[GameResult] initializeUI 被调用");
+    console.log("[GameResult] initializeUI called");
     this.resultOverlay = document.getElementById("game-result-overlay");
-    console.log("[GameResult] resultOverlay 元素:", !!this.resultOverlay);
+    console.log("[GameResult] resultOverlay element:", !!this.resultOverlay);
 
-    // 绑定按钮事件
+    // Bind button events
     const playAgainBtn = document.getElementById("play-again-btn");
     const finishGameBtn = document.getElementById("finish-game-btn");
     const playMusicBtn = document.getElementById("play-music-btn");
@@ -58,10 +58,10 @@ class GameResultManager {
     const exitExpertBtn = document.getElementById("exit-expert-btn");
     const refreshExpertBtn = document.getElementById("refresh-expert-btn");
 
-    // 更新静态文本 (UI初始化时)
+    // Update static text (during UI initialization)
     this.updateStaticUIText();
 
-    // Expert Mode按钮 - 切换到专家视图
+    // Expert Mode button - switch to expert view
     console.log("[GameResult] postSessionBtn:", !!postSessionBtn);
     console.log("[GameResult] normalView:", !!normalView);
     console.log("[GameResult] expertView:", !!expertView);
@@ -69,46 +69,45 @@ class GameResultManager {
     
     if (postSessionBtn) {
       postSessionBtn.addEventListener("click", () => {
-        console.log("[GameResult] 切换到专家模式");
+        console.log("[GameResult] Switching to expert mode");
         console.log("[GameResult] normalView element:", normalView);
         console.log("[GameResult] expertView element:", expertView);
         if (normalView) normalView.classList.add("hidden");
         if (expertView) expertView.classList.remove("hidden");
         postSessionBtn.classList.add("active");
         
+        // After entering expert view, force display only three parameters
         this.enforceMinimalExpertParams();
-        // 更新专家视图数据
+        // Update expert view data
         this.updateExpertView();
       });
     }
 
-    // 退出专家模式按钮 - 回到普通视图
+    // Exit expert mode button - return to normal view
     if (exitExpertBtn) {
       exitExpertBtn.addEventListener("click", () => {
-        console.log("[GameResult] 退出专家模式");
+        console.log("[GameResult] Exiting expert mode");
         if (expertView) expertView.classList.add("hidden");
         if (normalView) normalView.classList.remove("hidden");
         if (postSessionBtn) postSessionBtn.classList.remove("active");
       });
     }
     
-    // 导出会话报告按钮
+    // Export session report button
     if (refreshExpertBtn) {
       refreshExpertBtn.addEventListener("click", () => {
         console.log("[GameResult] Export Session Report");
         this.exportSessionReport();
-        this.exportClickTrailPNG();
-        this.exportClickTrailJSON();
       });
     }
 
-    // 无约束音乐按钮绑定
+    // Unconstrained music button binding
     this.bindUnconstrainedMusicButtons();
 
-    // 绑定报告面板内的音乐参数控件
+    // Bind music parameter controls in report panel
     this.bindReportMusicParams();
 
-    // 监听泡泡miss事件（飞出屏幕），重置连击
+    // Listen for bubble miss event (flew off screen), reset combo
     window.addEventListener('bubble:missed', () => {
       this.resetConsecutive();
     });
@@ -131,7 +130,7 @@ class GameResultManager {
       });
     }
 
-    // 绑定 WAV 下载按钮
+    // Bind WAV download button
     const downloadWavBtn = document.getElementById('download-wav-btn');
     if (downloadWavBtn) {
       downloadWavBtn.addEventListener('click', () => {
@@ -139,16 +138,16 @@ class GameResultManager {
       });
     }
     
-    // 绑定频谱分析按钮
+    // Bind spectrum analysis buttons
     this.bindSpectrumAnalysisButtons();
     
-    // 监听语言切换事件
+    // Listen for language switch event
     if (window.i18n) {
         window.i18n.subscribe(() => {
             this.updateStaticUIText();
-            // 如果结果窗口是打开的，刷新动态内容
+            // If result window is open, refresh dynamic content
             if (this.resultOverlay && !this.resultOverlay.classList.contains('hidden')) {
-                // 重新计算并显示结果（只更新文本，不重置数据）
+                // Recalculate and display results (only update text, don't reset data)
                 const stats = this.calculateStats();
                 this.updateResultDisplay(stats);
             }
@@ -220,9 +219,9 @@ class GameResultManager {
       if (spectroExportPngBtn) spectroExportPngBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg> ${this.t('spectro.btn.exportPng')}`;
       if (spectroExportJsonBtn) spectroExportJsonBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"></rect></svg> ${this.t('spectro.btn.exportJson')}`;
 
-      // Report Params - 不再在这里设置，由 music-param-controller.js 统一管理
+      // Report Params - No longer set here, managed uniformly by music-param-controller.js
       // const reportParamLabels = document.querySelectorAll('.music-params-grid label');
-      // 标签顺序: Tempo, 动态对比度, 音量, 奖励时长, 音乐
+      // Label order: Tempo, Dynamic Contrast, Volume, Reward Duration, Music
 
       // Expert Left Panel titles
       const expertLeftTitles = document.querySelectorAll('.expert-left .expert-panel-title');
@@ -300,58 +299,57 @@ class GameResultManager {
   }
 
   /**
-   * 绑定报告面板内的音乐参数控件
+   * Bind music parameter controls in report panel
    */
   bindReportMusicParams() {
-    // Tempo 滑块
+    // Tempo slider
     const tempoSlider = document.getElementById("report-param-tempo");
     const tempoValue = document.getElementById("report-param-tempo-value");
     if (tempoSlider && tempoValue) {
       tempoSlider.addEventListener("input", (e) => {
         const value = parseInt(e.target.value);
         tempoValue.textContent = value;
-        // 应用到音乐生成配置
+        // Apply to music generation config
         if (window.sessionConfig) {
           window.sessionConfig.rewardBpm = value;
         }
-        // 同步到 ExpertSettingsContext
+        // Sync to ExpertSettingsContext
         if (window.useExpertSettings) {
           window.useExpertSettings().dispatch({ type: 'SET_TEMPO', value });
         }
       });
     }
 
-    // 音量滑块
+    // Volume slider
     const volumeSlider = document.getElementById("report-param-volume");
     const volumeValue = document.getElementById("report-param-volume-value");
     if (volumeSlider && volumeValue) {
       volumeSlider.addEventListener("input", (e) => {
         const value = parseInt(e.target.value);
-        const db = 20 * Math.log10(Math.max(1e-6, value / 100));
-        volumeValue.textContent = `${db.toFixed(2)} dB`;
-        // 应用音量
+        volumeValue.textContent = value + "%";
+        // Apply volume
         if (window.popSynth) {
           window.popSynth.setVolume(value / 100);
         }
-        // 同步到 ExpertSettingsContext
+        // Sync to ExpertSettingsContext
         if (window.useExpertSettings) {
           window.useExpertSettings().dispatch({ type: 'SET_VOLUME', value: value / 100 });
         }
       });
     }
 
-    // 密度滑块
+    // Density slider
     const densitySlider = document.getElementById("report-param-density");
     const densityValue = document.getElementById("report-param-density-value");
     if (densitySlider && densityValue) {
       densitySlider.addEventListener("input", (e) => {
         const value = parseInt(e.target.value) / 100;
         densityValue.textContent = value.toFixed(1);
-        // 应用密度
+        // Apply density
         if (window.game?.bubbleManager) {
           window.game.bubbleManager.setDensity(value);
         }
-        // 同步到 ExpertSettingsContext
+        // Sync to ExpertSettingsContext
         if (window.useExpertSettings) {
           window.useExpertSettings().dispatch({ type: 'SET_DENSITY', value });
         }
@@ -360,19 +358,19 @@ class GameResultManager {
   }
 
   /**
-   * 初始化专家面板控件
+   * Initialize expert panel controls
    */
   initExpertControls() {
     // ... existing implementation ...
     // Note: I'm skipping re-implementation as it's not text-heavy, but I need to include it in the Write call
-    // Tempo 滑块
+    // Tempo slider
     const tempoSlider = document.getElementById("tempo-slider");
     const tempoDisplay = document.getElementById("tempo-display");
     if (tempoSlider && tempoDisplay) {
       tempoSlider.addEventListener("input", (e) => {
         const value = e.target.value;
         tempoDisplay.textContent = value;
-        // 应用到音乐生成配置
+        // Apply to music generation config
         if (window.sessionConfig) {
           window.sessionConfig.rewardBpm = parseInt(value);
         }
@@ -385,8 +383,7 @@ class GameResultManager {
     if (volumeSlider && volumeDisplay) {
       volumeSlider.addEventListener("input", (e) => {
         const value = e.target.value;
-        const db = 20 * Math.log10(Math.max(1e-6, value / 100));
-        volumeDisplay.textContent = `${Number(db).toFixed(2)} dB`;
+        volumeDisplay.textContent = value + "%";
         // 应用音量
         if (window.popSynth) {
           window.popSynth.setVolume(value / 100);
@@ -831,12 +828,16 @@ class GameResultManager {
     // session report removed
   }
   
+  /**
+   * 进入专家视图时，仅保留 tempo/contrast/volume 三项参数
+   */
   enforceMinimalExpertParams() {
     try {
       document.getElementById('harmony-param-item')?.classList.add('hidden');
       document.getElementById('instrument-param-item')?.classList.add('hidden');
       document.getElementById('duration-param-item')?.classList.add('hidden');
       document.querySelector('.segment-selector')?.classList.add('hidden');
+      // 确保测试模式视觉只显示参数区
       document.querySelector('.music-params-grid')?.classList.remove('hidden');
       document.getElementById('spectrum-analysis-area')?.classList.add('hidden');
     } catch (e) {
@@ -869,7 +870,6 @@ class GameResultManager {
     
     const maxTime = Math.max(...notes.map(n => n.dt || 0), durationSec * 1000);
     const positionCounts = {};
-    const lanePoints = { C: [], D: [], E: [], G: [], A: [] };
     
     notes.forEach((note, idx) => {
       const noteName = note.name?.[0] || laneMap[note.laneId] || "C";
@@ -895,54 +895,7 @@ class GameResultManager {
       }
       
       track.appendChild(dot);
-      lanePoints[noteName].push(leftPercent);
     });
-    
-    Object.keys(lanePoints).forEach(lane => {
-      const row = scatterEl.querySelector(`[data-lane="${lane}"]`);
-      const track = row?.querySelector(".scatter-track");
-      if (!track) return;
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("class", "scatter-overlay");
-      svg.setAttribute("viewBox", "0 0 100 100");
-      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      const xs = lanePoints[lane].slice().sort((a,b)=>a-b);
-      let d = "";
-      for (let i = 0; i < xs.length; i++) {
-        const x = Math.max(0, Math.min(100, xs[i]));
-        const cmd = i === 0 ? "M" : "L";
-        d += `${cmd} ${x} 50 `;
-      }
-      path.setAttribute("d", d.trim());
-      path.setAttribute("fill", "none");
-      path.setAttribute("stroke", laneColors[lane] || "#999");
-      path.setAttribute("stroke-width", "1");
-      path.setAttribute("stroke-opacity", "0.35");
-      svg.appendChild(path);
-      track.appendChild(svg);
-    });
-    
-    let axis = scatterEl.querySelector(".scatter-axis");
-    if (!axis) {
-      axis = document.createElement("div");
-      axis.className = "scatter-axis";
-      scatterEl.appendChild(axis);
-    }
-    axis.innerHTML = "";
-    const maxSec = Math.max(1, Math.round(maxTime / 1000));
-    const step = maxSec >= 10 ? 5 : Math.max(1, Math.round(maxSec / 2));
-    for (let t = 0; t <= maxSec; t += step) {
-      const x = (t / maxSec) * 100;
-      const tick = document.createElement("div");
-      tick.className = "axis-tick";
-      tick.style.left = `${x}%`;
-      axis.appendChild(tick);
-      const label = document.createElement("div");
-      label.className = "axis-label";
-      label.style.left = `${x}%`;
-      label.textContent = `${t}s`;
-      axis.appendChild(label);
-    }
   }
 
   /**
@@ -2236,7 +2189,6 @@ class GameResultManager {
    */
   bindSpectrumAnalysisButtons() {
     const generateBtn = document.getElementById('spectrum-generate-btn');
-    const importJsonBtn = document.getElementById('spectrum-import-json-btn');
     const exportPngBtn = document.getElementById('spectrum-export-png-btn');
     const exportJsonBtn = document.getElementById('spectrum-export-json-btn');
     const exportFullJsonBtn = document.getElementById('spectrum-export-fulljson-btn');
@@ -2265,11 +2217,6 @@ class GameResultManager {
         this.exportSpectrumFullJSON();
       });
     }
-    if (importJsonBtn) {
-      importJsonBtn.addEventListener('click', () => {
-        this.importSpectrumJSON();
-      });
-    }
     if (exportClickTrailBtn) {
       exportClickTrailBtn.addEventListener('click', () => {
         this.exportClickTrailPNG();
@@ -2280,33 +2227,6 @@ class GameResultManager {
         this.exportClickTrailJSON();
       });
     }
-  }
-  
-  importSpectrumJSON() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'application/json';
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file) return;
-      try {
-        const text = await file.text();
-        const data = JSON.parse(text);
-        this.lastSpectrumData = data;
-        const canvas = document.getElementById('spectrum-comparison-canvas');
-        if (!canvas) {
-          this.showMusicMessage('找不到画布');
-          return;
-        }
-        const comparison = new window.SpectrogramComparison();
-        comparison.drawComparison(canvas, data);
-        this.showMusicMessage('已从 JSON 导入并绘制');
-      } catch (e) {
-        console.error('[Spectrum] 导入失败:', e);
-        this.showMusicMessage('导入失败：' + e.message);
-      }
-    };
-    input.click();
   }
 
   /**
@@ -2485,38 +2405,28 @@ class GameResultManager {
     }
 
   /**
-   * 导出频谱图为 SVG（矢量容器，嵌入当前画布位图）
+   * 导出频谱图为 PNG
    */
   exportSpectrumPNG() {
-    const comparison = new window.SpectrogramComparison();
-    if (this.lastSpectrumData) {
-      comparison.exportPaperSVG(this.lastSpectrumData, `spectrum_canvas_${Date.now()}.svg`, { width: 1600, height: 900 });
-      this.showMusicMessage('SVG 已导出');
-      return;
-    }
-    // 回退：若没有缓存数据，则封装当前画布位图为 SVG
     const canvas = document.getElementById('spectrum-comparison-canvas');
     if (!canvas) {
-      this.showMusicMessage('请先生成频谱分析');
+      this.showMusicMessage('Please generate the spectrogram first');
       return;
     }
-    const pngDataUrl = canvas.toDataURL('image/png');
-    const width = canvas.width;
-    const height = canvas.height;
-    const svg =
-      `<?xml version="1.0" encoding="UTF-8"?>` +
-      `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">` +
-      `<rect x="0" y="0" width="${width}" height="${height}" fill="white"/>` +
-      `<image x="0" y="0" width="${width}" height="${height}" xlink:href="${pngDataUrl}" />` +
-      `</svg>`;
-    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
+    const off = document.createElement('canvas');
+    off.width = canvas.width;
+    off.height = canvas.height;
+    const ctx = off.getContext('2d');
+    ctx.drawImage(canvas, 0, 0);
+    const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [] };
+    const pat = this.analyzePattern(session.notes || []);
+    const labelMap = { sequential: 'Sequential', repetitive: 'Repetitive', exploratory: 'Exploratory' };
+    const modeLabel = labelMap[pat.patternType] || 'Exploratory';
     const a = document.createElement('a');
-    a.download = `spectrum_canvas_${Date.now()}.svg`;
-    a.href = url;
+    a.download = `spectrum_canvas_${Date.now()}.png`;
+    a.href = off.toDataURL('image/png');
     a.click();
-    URL.revokeObjectURL(url);
-    this.showMusicMessage('SVG 已导出');
+    this.showMusicMessage('PNG exported');
   }
 
   hideSpectrumMetrics() {
@@ -2602,99 +2512,6 @@ class GameResultManager {
     this.showMusicMessage('Minimal audit JSON exported');
   }
   
-  /**
-   * 导出当前会话报告（JSON）
-   * 结构示例：
-   * {
-   *   traceId: "trace_123",
-   *   patternLabel: "Sequential",
-   *   params: {
-   *     requested: { tempo, "accent ratio", "gain" },
-   *     effective: { tempo, "accent ratio", "gain" }
-   *   },
-   *   metrics: { peakLufs, lraEffective },
-   *   enforcementStatus: "clamped"|"pass"
-   * }
-   */
-  async exportSessionReport() {
-    const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [] };
-    if (!session.notes || session.notes.length < 2) {
-      this.showMusicMessage('会话数据不足，无法导出');
-      return;
-    }
-    try {
-      const comparison = new window.SpectrogramComparison();
-      const data = await comparison.generateComparisonData(session);
-      const pat = this.analyzePattern(session.notes || []);
-      const labelMap = { sequential: 'Sequential', repetitive: 'Repetitive', exploratory: 'Exploratory', mixed: 'Mixed', sequential_pentatonic: 'Sequential' };
-      const patternLabel = labelMap[pat.patternType] || 'Mixed';
-      const traceId = `trace_${Date.now()}`;
-      const requestedTempo = data.unconstrained?.rawParams?.rawBpm ?? null;
-      const requestedContrast = data.unconstrained?.rawParams?.rawContrast ?? null;
-      const requestedVolume = data.unconstrained?.rawParams?.rawVolume ?? null;
-      const effectiveTempo = data.constrained?.sequence?.tempos?.[0]?.qpm ?? null;
-      // 取最终对比度（优先 safeParams，再看 clampLog，否则回退到原始）
-      let effectiveContrast = undefined;
-      if (data.constrained?.safeParams?.safeContrast !== undefined) {
-        effectiveContrast = data.constrained.safeParams.safeContrast;
-      } else if (data.constrained?.clampLog) {
-        const cClamp = data.constrained.clampLog.find(c => c.param === 'contrast');
-        effectiveContrast = cClamp ? cClamp.clamped : data.unconstrained?.rawParams?.rawContrast;
-      } else {
-        effectiveContrast = data.unconstrained?.rawParams?.rawContrast;
-      }
-      // 音量（gain）取安全参数或原始，再转换为百分比显示
-      const effectiveVolume = (data.constrained?.safeParams?.safeVolume ?? requestedVolume);
-      const enforcementStatus = (data.constrained?.clampLog?.length || 0) > 0 ? 'clamped' : 'pass';
-      // 指标
-      const integratedLufs = (data.constrained?.loudness?.integrated !== undefined && data.constrained?.loudness?.integrated !== null)
-        ? Number(Number(data.constrained.loudness.integrated).toFixed(2))
-        : null;
-      const lraEffective = (data.unconstrained?.lra && data.constrained?.lra) ? Number((data.unconstrained.lra / data.constrained.lra).toFixed(2)) : null;
-      // onset density（约束版本音符密度，个/秒）
-      let onsetDensity = null;
-      const notesSafe = data.constrained?.sequence?.notes || [];
-      const durSafe = data.constrained?.sequence?.totalTime || (data.constrained?.loudness?.times?.slice(-1)[0] || null);
-      if (notesSafe.length && durSafe && durSafe > 0) {
-        onsetDensity = Number((notesSafe.length / durSafe).toFixed(2));
-      }
-      const fmt2 = (v) => (v === null || v === undefined) ? null : Number(Number(v).toFixed(2));
-      const record = {
-        traceId,
-        patternLabel,
-        params: {
-          requested: {
-            tempo: fmt2(requestedTempo),
-            "accent ratio": requestedContrast !== undefined && requestedContrast !== null ? `${(requestedContrast * 100).toFixed(2)}%` : null,
-            "gain": requestedVolume !== undefined && requestedVolume !== null ? `${(20 * Math.log10(Math.max(1e-6, requestedVolume))).toFixed(2)} dB` : null
-          },
-          effective: {
-            tempo: fmt2(effectiveTempo),
-            "accent ratio": effectiveContrast !== undefined && effectiveContrast !== null ? `${(effectiveContrast * 100).toFixed(2)}%` : null,
-            "gain": effectiveVolume !== undefined && effectiveVolume !== null ? `${(20 * Math.log10(Math.max(1e-6, effectiveVolume))).toFixed(2)} dB` : null
-          }
-        },
-        metrics: {
-          integratedLufs: fmt2(integratedLufs),
-          lraEffective: fmt2(lraEffective),
-          onsetDensity: fmt2(onsetDensity)
-        },
-        enforcementStatus
-      };
-      const blob = new Blob([JSON.stringify([record], null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `session_report_${Date.now()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      this.showMusicMessage('Session report exported');
-    } catch (e) {
-      console.error('[SessionReport] 导出失败:', e);
-      this.showMusicMessage('导出失败：' + e.message);
-    }
-  }
-  
   exportClickTrailPNG() {
     const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [], durationSec: 60 };
     const notes = session.notes || [];
@@ -2755,15 +2572,9 @@ class GameResultManager {
         const xx = paddingL + (time / maxTime) * plotW;
         const yy = yPos[lane];
         ctx.fillStyle = laneColors[lane] || '#999';
-        ctx.shadowColor = 'rgba(0,0,0,0.25)';
-        ctx.shadowBlur = 4;
         ctx.beginPath();
-        ctx.arc(xx, yy, 6, 0, Math.PI * 2);
+        ctx.arc(xx, yy, 3, 0, Math.PI * 2);
         ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#ffffff';
-        ctx.stroke();
-        ctx.shadowBlur = 0;
       });
     }
     ctx.fillStyle = '#0f172a';

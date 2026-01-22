@@ -1,6 +1,6 @@
 /**
- * Sidebar Controller - 右侧实时监控面板控制器
- * 管理实时数据更新、Lane 分布可视化
+ * Sidebar Controller - Real-time monitoring panel controller
+ * Manages real-time data updates and lane distribution visualization
  */
 
 (function() {
@@ -10,20 +10,20 @@
         constructor() {
             this.updateInterval = null;
             this.laneStats = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-            this.totalAttempts = 0;  // 总尝试次数（包括未命中）
-            this.successfulClicks = 0;  // 成功命中次数
+            this.totalAttempts = 0;  // Total attempts (including misses)
+            this.successfulClicks = 0;  // Successful hit count
             this.recentClicks = [];
-            this.maxRecentClicks = 16;  // 扩大窗口，降低抖动
+            this.maxRecentClicks = 16;  // Larger window to reduce jitter
             this.prevPatternProbs = { seq: 0.33, rep: 0.33, exp: 0.33 };
             this.lastPatternType = 'mixed';
-            this.hysteresis = { seqOn: 0.7, seqOff: 0.4 }; // 顺子开启/保持阈值
+            this.hysteresis = { seqOn: 0.7, seqOff: 0.4 }; // Sequential on/hold threshold
             
             this.elements = {};
             this.init();
         }
 
         init() {
-            // 等待 DOM 加载完成
+            // Wait for DOM to load
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', () => this.setup());
             } else {
@@ -127,7 +127,7 @@
         }
 
         bindEvents() {
-            // 侧边栏折叠/展开
+            // Sidebar collapse/expand
             if (this.elements.toggleBtn) {
                 this.elements.toggleBtn.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -136,13 +136,13 @@
                 });
             }
 
-            // 监听泡泡戳破事件（成功命中）
+            // Listen for bubble pop events (successful hits)
             window.addEventListener('bubble:popped', (e) => this.onBubblePopped(e.detail));
             
-            // 监听点击尝试事件（包括未命中）
+            // Listen for click attempt events (including misses)
             window.addEventListener('click:attempt', (e) => this.onClickAttempt(e.detail));
             
-            // 监听游戏回合事件
+            // Listen for game round events
             window.addEventListener('round:started', () => this.resetStats());
             window.addEventListener('round:ended', (ev) => {
                 this.onRoundEnded();
@@ -173,12 +173,12 @@
             this.successfulClicks++;
             this.totalAttempts++;
 
-            // 更新 Lane 统计
+            // Update lane statistics
             if (bubble.laneId && this.laneStats[bubble.laneId] !== undefined) {
                 this.laneStats[bubble.laneId]++;
             }
 
-            // 记录最近点击
+            // Record recent click
             this.recentClicks.unshift({
                 laneId: bubble.laneId,
                 note: bubble.note?.name || '?',
@@ -191,7 +191,7 @@
         }
 
         onClickAttempt(detail) {
-            // 记录未命中的点击尝试
+            // Record missed click attempts
             if (detail && !detail.success) {
                 this.totalAttempts++;
             }
@@ -217,14 +217,14 @@
         }
 
         updateStats() {
-            // 点击数（成功命中）
+            // Click count (successful hits)
             if (this.elements.rtClicks) {
                 this.elements.rtClicks.textContent = this.successfulClicks;
             }
 
             // Accuracy and BPM display removed as requested
 
-            // 主导 Lane
+            // Dominant lane
             if (this.elements.rtDominant) {
                 const dominant = this.getDominantLane();
                 if (dominant) {
@@ -288,7 +288,7 @@
                 4: '#60A5FA', 5: '#A78BFA'
             };
 
-            // 显示最多12个
+            // Show max 12 items
             const html = this.recentClicks.slice(0, 12).map(click => {
                 const color = laneColors[click.laneId] || '#999';
                 return `<span class="click-item" style="background: ${color};">${click.note}</span>`;
@@ -426,22 +426,22 @@
             }
             const seqRatio = Math.max(covered.size, coveredDown.size) / lanes.length;
 
-            // 检测重复模式
+            // Detect repetitive pattern
             const laneCounts = {};
             lanes.forEach(l => laneCounts[l] = (laneCounts[l] || 0) + 1);
             const maxRepeat = Math.max(...Object.values(laneCounts));
             const repRatio = maxRepeat / lanes.length;
 
-            // 检测探索模式
-            // 降低阈值：从 5 降低到 4 (只要用到 4 种音符就算探索)
+            // Detect exploratory pattern
+            // Lower threshold: from 5 to 4 (using 4 notes counts as exploratory)
             const uniqueLanes = new Set(lanes).size;
             const expRatio = uniqueLanes / 5;
 
-            // 归一化分数（与报告面板一致）
-            // 调整权重，提高探索型的相对得分
+            // Normalize scores (consistent with report panel)
+            // Adjust weights, increase exploratory relative score
             const seqRaw = Math.min(1, (seqRatio / 0.8) * 0.7 + (uniqueLanes / 5) * 0.3);
             const repRaw = Math.min(1, repRatio / 0.6);
-            // 提高 laneDiversity 权重 (0.6 -> 0.7) 降低 repRatio 惩罚 (0.4 -> 0.3)
+            // Increase laneDiversity weight (0.6 -> 0.7), reduce repRatio penalty (0.4 -> 0.3)
             const expRaw = Math.min(1, (uniqueLanes / 5) * 0.7 + (1 - repRatio) * 0.3);
             
             const total = seqRaw + repRaw + expRaw || 1;
@@ -451,7 +451,7 @@
                 exp: expRaw / total,
             };
             
-            const alpha = 0.6; // 加强平滑，避免频繁跳转
+            const alpha = 0.6; // Stronger smoothing to avoid frequent jumps
             probs = {
                 seq: alpha * this.prevPatternProbs.seq + (1 - alpha) * probs.seq,
                 rep: alpha * this.prevPatternProbs.rep + (1 - alpha) * probs.rep,

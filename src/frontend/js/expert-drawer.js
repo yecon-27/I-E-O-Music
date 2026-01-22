@@ -1,10 +1,10 @@
 /**
- * ExpertSideDrawer - 专家调试抽屉组件 (Enhanced)
- * 毛玻璃效果 + 全局状态管理 + 高性能参数更新
+ * ExpertSideDrawer - Expert Debug Drawer Component (Enhanced)
+ * Frosted glass effect + Global state management + High-performance parameter updates
  */
 
 // ============================================
-// 全局状态管理 Context
+// Global State Management Context
 // ============================================
 const ExpertSettingsContext = {
     state: {
@@ -16,7 +16,7 @@ const ExpertSettingsContext = {
         isMuted: true,
     },
     
-    // 初始安全预设值
+    // Initial safe preset values
     safePreset: {
         tempo: 125,
         volume: 0.7,
@@ -56,10 +56,10 @@ const ExpertSettingsContext = {
                 break;
         }
         
-        // 通知所有监听器
+        // Notify all listeners
         this.listeners.forEach(cb => cb(this.state, prevState, action));
         
-        // 同步到 Web Audio 引擎
+        // Sync to Web Audio engine
         this._syncToAudioEngine(action);
     },
     
@@ -73,7 +73,7 @@ const ExpertSettingsContext = {
     },
     
     _syncToAudioEngine(action) {
-        // 即时同步到安全层和音频引擎
+        // Immediately sync to safety layer and audio engine
         const se = window.safetyEnvelope;
         if (!se) return;
         
@@ -105,18 +105,18 @@ const ExpertSettingsContext = {
     }
 };
 
-// 导出全局 hook
+// Export global hook
 window.useExpertSettings = () => ExpertSettingsContext;
 
 // ============================================
-// 高性能参数更新器 (RAF + Debounce)
+// High-performance Parameter Updater (RAF + Debounce)
 // ============================================
 class ParameterUpdater {
     constructor() {
         this.pendingUpdates = new Map();
         this.rafId = null;
         this.lastUpdateTime = 0;
-        this.minInterval = 30; // 30ms 最小更新间隔
+        this.minInterval = 30; // 30ms minimum update interval
     }
     
     scheduleUpdate(paramName, value, callback) {
@@ -138,7 +138,7 @@ class ParameterUpdater {
             this.pendingUpdates.clear();
             this.lastUpdateTime = now;
         } else {
-            // 延迟到下一帧
+            // Delay to next frame
             this.rafId = requestAnimationFrame(() => this.flush());
             return;
         }
@@ -158,7 +158,7 @@ class ParameterUpdater {
 const paramUpdater = new ParameterUpdater();
 
 // ============================================
-// ExpertSideDrawer 主类
+// ExpertSideDrawer Main Class
 // ============================================
 class ExpertSideDrawer {
     constructor() {
@@ -239,7 +239,7 @@ class ExpertSideDrawer {
         this.ctx.dispatch({ type: 'RESET_TO_SAFE' });
         this.syncUIFromState(this.ctx.getState());
         
-        // 视觉反馈
+        // Visual feedback
         const panicBtn = this.element?.querySelector('#panic-reset-btn');
         if (panicBtn) {
             panicBtn.classList.add('activated');
@@ -312,7 +312,7 @@ class ExpertSideDrawer {
         const style = document.createElement('style');
         style.id = 'expert-drawer-styles';
         style.textContent = `
-            /* 专家抽屉 - 毛玻璃效果 + 品牌色 */
+            /* Expert drawer - Frosted glass effect + Brand colors */
             .expert-drawer {
                 position: fixed;
                 top: 50%;
@@ -341,7 +341,7 @@ class ExpertSideDrawer {
                 right: 0;
             }
             
-            /* 警告闪烁动画 */
+            /* Warning flash animation */
             .expert-drawer.warning-flash {
                 animation: warningFlash 0.6s ease-out;
             }
@@ -440,7 +440,7 @@ class ExpertSideDrawer {
                 color: #A5B4FC;
             }
             
-            /* Panic Button 样式 */
+            /* Panic Button styles */
             .panic-button {
                 width: 100%;
                 padding: 14px 20px;
@@ -514,7 +514,7 @@ class ExpertSideDrawer {
             
             .toggle-label { font-size: 13px; }
             
-            /* 垂直 Tempo Slider */
+            /* Vertical Tempo Slider */
             .tempo-section {
                 padding: 16px;
                 background: rgba(99, 102, 241, 0.08);
@@ -572,7 +572,7 @@ class ExpertSideDrawer {
                 cursor: grabbing;
             }
             
-            /* 72 BPM 吸附标记 */
+            /* 72 BPM snap marker */
             .snap-marker {
                 position: absolute;
                 left: 50%;
@@ -586,7 +586,7 @@ class ExpertSideDrawer {
                 box-shadow: 0 0 8px rgba(165, 180, 252, 0.5);
             }
             
-            /* 安全区域指示器 */
+            /* Safe zone indicator */
             .safe-zone-indicator {
                 position: absolute;
                 left: 50%;
@@ -627,7 +627,7 @@ class ExpertSideDrawer {
                 font-variant-numeric: tabular-nums;
             }
             
-            /* 其他参数滑块 */
+            /* Other parameter sliders */
             .param-row {
                 display: grid;
                 grid-template-columns: 50px 1fr 45px 20px;
@@ -710,7 +710,7 @@ class ExpertSideDrawer {
                 cursor: pointer;
             }
             
-            /* 确认框 */
+            /* Confirm box */
             .confirm-box {
                 background: rgba(239, 68, 68, 0.15);
                 border: 1px solid rgba(239, 68, 68, 0.3);
@@ -756,7 +756,7 @@ class ExpertSideDrawer {
                 background: rgba(75, 85, 99, 0.8);
             }
             
-            /* 实时状态 */
+            /* Real-time status */
             .stat-row {
                 display: flex;
                 justify-content: space-between;
@@ -770,7 +770,7 @@ class ExpertSideDrawer {
                 font-variant-numeric: tabular-nums;
             }
             
-            /* 安全检查 */
+            /* Safety checks */
             .check-item {
                 display: flex;
                 align-items: center;
@@ -802,7 +802,7 @@ class ExpertSideDrawer {
     }
 
     bindEvents() {
-        // 抽屉开关
+        // Drawer toggle
         this.element.querySelector('.drawer-handle').addEventListener('click', () => this.toggle());
         this.element.querySelector('.drawer-close').addEventListener('click', () => this.close());
 
@@ -840,13 +840,13 @@ class ExpertSideDrawer {
         const updateTempo = (rawValue) => {
             let value = rawValue;
             
-            // 72 BPM 吸附逻辑
+            // 72 BPM snap logic
             if (Math.abs(value - SNAP_VALUE) <= SNAP_THRESHOLD) {
                 value = SNAP_VALUE;
                 slider.value = SNAP_VALUE;
             }
             
-            // 使用 RAF 优化的更新器
+            // Use RAF optimized updater
             paramUpdater.scheduleUpdate('tempo', value, (name, val) => {
                 this.ctx.dispatch({ type: 'SET_TEMPO', value: val });
             });

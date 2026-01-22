@@ -1,6 +1,6 @@
 /**
- * 自闭症友好功能模块
- * 提供感官调节、可预测性增强和个性化支持
+ * Autism-Friendly Features Module
+ * Provides sensory adjustment, predictability enhancement, and personalized support
  */
 
 class AutismFriendlyFeatures {
@@ -44,10 +44,10 @@ class AutismFriendlyFeatures {
     }
     
     /**
-     * 设置事件监听器
+     * Setup event listeners
      */
     setupEventListeners() {
-        // 感官设置面板切换
+        // Sensory settings panel toggle
         const sensoryToggle = document.getElementById('sensory-panel-toggle');
         const sensoryPanel = document.getElementById('sensory-panel');
         
@@ -56,7 +56,7 @@ class AutismFriendlyFeatures {
                 sensoryPanel.classList.toggle('hidden');
             });
             
-            // 点击外部关闭面板
+            // Click outside to close panel
             document.addEventListener('click', (e) => {
                 if (!sensoryToggle.contains(e.target) && !sensoryPanel.contains(e.target)) {
                     sensoryPanel.classList.add('hidden');
@@ -64,7 +64,7 @@ class AutismFriendlyFeatures {
             });
         }
         
-        // 音量控制
+        // Volume control
         const soundVolume = document.getElementById('sound-volume');
         const soundVolumeValue = document.getElementById('sound-volume-value');
         if (soundVolume && soundVolumeValue) {
@@ -76,9 +76,9 @@ class AutismFriendlyFeatures {
             });
         }
         
-        // 动画强度由游戏速度控制，移除重复功能
+        // Animation intensity controlled by game speed, removed duplicate functionality
         
-        // 色彩模式切换
+        // Color mode toggle
         const colorMode = document.getElementById('color-mode');
         if (colorMode) {
             colorMode.addEventListener('change', (e) => {
@@ -88,7 +88,7 @@ class AutismFriendlyFeatures {
             });
         }
         
-        // 可预测模式
+        // Predictable mode
         const predictableMode = document.getElementById('predictable-mode');
         if (predictableMode) {
             predictableMode.addEventListener('change', (e) => {
@@ -100,54 +100,54 @@ class AutismFriendlyFeatures {
     }
     
     /**
-     * 应用音量设置
+     * Apply volume settings
      */
     applySoundVolume() {
         const isMuted = window.__panicMute === true;
         const volume = isMuted ? 0 : this.settings.soundVolume / 100;
         
-        // 应用到PopSynth音效
+        // Apply to PopSynth sound effects
         if (window.popSynth && typeof window.popSynth.setVolume === 'function') {
             window.popSynth.setVolume(volume);
-            console.log(`[Audio] 音效音量已设置为: ${this.settings.soundVolume}%`);
+            console.log(`[Audio] Sound effect volume set to: ${this.settings.soundVolume}%`);
         } else {
-            // 如果popSynth还没初始化，延迟应用
-            console.log('[Audio] PopSynth未就绪，将在初始化后应用音量设置');
+            // If popSynth not initialized yet, apply later
+            console.log('[Audio] PopSynth not ready, will apply volume settings after initialization');
             setTimeout(() => {
                 if (window.popSynth && typeof window.popSynth.setVolume === 'function') {
                     window.popSynth.setVolume(volume);
-                    console.log(`[Audio] 延迟应用音效音量: ${this.settings.soundVolume}%`);
+                    console.log(`[Audio] Delayed sound effect volume application: ${this.settings.soundVolume}%`);
                 }
             }, 1000);
         }
         
-        // 应用到Magenta背景音乐
+        // Apply to Magenta background music
         if (window.MAGENTA && window.MAGENTA.player) {
             try {
                 if (window.mm && window.mm.Player && window.mm.Player.tone) {
                     window.mm.Player.tone.Master.volume.value = 
                         20 * Math.log10(Math.max(0.01, volume));
-                    console.log(`🎵 背景音乐音量已设置为: ${this.settings.soundVolume}%`);
+                    console.log(`🎵 Background music volume set to: ${this.settings.soundVolume}%`);
                 }
             } catch (e) {
-                console.log('背景音乐音量调节失败:', e);
+                console.log('Background music volume adjustment failed:', e);
             }
         }
         
-        // 应用到其他可能的音频源
+        // Apply to other possible audio sources
         try {
-            // 如果有其他音频元素，也应用音量设置
+            // If there are other audio elements, also apply volume settings
             const audioElements = document.querySelectorAll('audio');
             audioElements.forEach(audio => {
                 audio.volume = volume;
             });
         } catch (e) {
-            console.log('HTML音频元素音量调节失败:', e);
+            console.log('HTML audio element volume adjustment failed:', e);
         }
     }
     
     /**
-     * 应用动画强度设置
+     * Apply animation intensity settings
      */
     applyAnimationIntensity() {
         document.body.classList.remove('low-animation', 'high-animation');
@@ -160,7 +160,7 @@ class AutismFriendlyFeatures {
     }
     
     /**
-     * 应用色彩模式
+     * Apply color mode
      */
     applyColorMode() {
         document.body.classList.remove('high-contrast', 'soft-colors');
@@ -176,28 +176,28 @@ class AutismFriendlyFeatures {
     }
     
     /**
-     * 应用可预测模式
+     * Apply predictable mode
      */
     applyPredictableMode() {
-        // 移除现有指示器
+        // Remove existing indicator
         const existingIndicator = document.querySelector('.predictable-mode-indicator');
         if (existingIndicator) {
             existingIndicator.remove();
         }
         
         if (this.settings.predictableMode) {
-            // 添加规律模式指示器
+            // Add regular mode indicator
             const indicator = document.createElement('div');
             indicator.className = 'predictable-mode-indicator';
-            indicator.textContent = '🔄 规律模式：泡泡按固定位置出现';
+            indicator.textContent = '🔄 Regular Mode: Bubbles appear at fixed positions';
             document.body.appendChild(indicator);
             
-            // 通知游戏引擎启用规律模式
+            // Notify game engine to enable regular mode
             if (window.game && window.game.bubbleManager) {
                 window.game.bubbleManager.setPredictableMode(true);
             }
         } else {
-            // 通知游戏引擎禁用规律模式
+            // Notify game engine to disable regular mode
             if (window.game && window.game.bubbleManager) {
                 window.game.bubbleManager.setPredictableMode(false);
             }
@@ -205,7 +205,7 @@ class AutismFriendlyFeatures {
     }
     
     /**
-     * 应用所有设置
+     * Apply all settings
      */
     applySettings() {
         this.applySoundVolume();
@@ -213,21 +213,21 @@ class AutismFriendlyFeatures {
         this.applyColorMode();
         this.applyPredictableMode();
         
-        // 更新UI显示
+        // Update UI display
         this.updateUIValues();
     }
     
     /**
-     * 当音频系统初始化完成后调用此方法
-     * 确保音量设置能正确应用
+     * Called when audio system initialization is complete
+     * Ensures volume settings are applied correctly
      */
     onAudioSystemReady() {
-        console.log('🔊 音频系统就绪，重新应用音量设置');
+        console.log('🔊 Audio system ready, reapplying volume settings');
         this.applySoundVolume();
     }
     
     /**
-     * 更新UI显示值
+     * Update UI display values
      */
     updateUIValues() {
         const soundVolume = document.getElementById('sound-volume');
@@ -237,7 +237,7 @@ class AutismFriendlyFeatures {
             soundVolumeValue.textContent = `${this.settings.soundVolume}%`;
         }
         
-        // 动画强度UI已移除
+        // Animation intensity UI removed
         
         const colorMode = document.getElementById('color-mode');
         if (colorMode) {
@@ -251,13 +251,13 @@ class AutismFriendlyFeatures {
     }
     
     /**
-     * 更新进度显示
+     * Update progress display
      */
     updateProgress(remainingMs, totalMs) {
         const countdownDisplay = document.getElementById('countdown-display');
         const progressFill = document.getElementById('progress-fill');
         
-        // 新的游戏进度指示器元素
+        // New game progress indicator elements
         const gameCountdownDisplay = document.getElementById('game-countdown-display');
         const gameProgressFill = document.getElementById('game-progress-fill');
         const gameProgressIndicator = document.getElementById('game-progress-indicator');
@@ -266,7 +266,7 @@ class AutismFriendlyFeatures {
         const progress = ((totalMs - remainingMs) / totalMs) * 100;
         const progressWidth = `${Math.max(0, Math.min(100, 100 - progress))}%`;
         
-        // 更新顶部小进度条
+        // Update top small progress bar
         if (countdownDisplay) {
             countdownDisplay.textContent = `${seconds}s`;
         }
@@ -275,7 +275,7 @@ class AutismFriendlyFeatures {
             progressFill.style.width = progressWidth;
         }
         
-        // 更新底部大进度指示器
+        // Update bottom large progress indicator
         if (gameCountdownDisplay) {
             gameCountdownDisplay.textContent = seconds;
         }
@@ -284,7 +284,7 @@ class AutismFriendlyFeatures {
             gameProgressFill.style.width = progressWidth;
         }
         
-        // 根据剩余时间更新进度条颜色
+        // Update progress bar color based on remaining time
         if (gameProgressIndicator) {
             gameProgressIndicator.classList.remove('warning', 'danger');
             if (seconds <= 10) {
@@ -296,42 +296,42 @@ class AutismFriendlyFeatures {
     }
     
     /**
-     * 显示成就提示
+     * Show achievement notification
      */
     showAchievement(message, type = 'success') {
-        // 用户已禁用成就弹窗，直接返回
+        // User has disabled achievement popups, return directly
         return;
     }
     
     /**
-     * 记录用户动作（用于分析协调性进步）
+     * Record user movement (for analyzing coordination progress)
      */
     recordMovement(x, y, timestamp = Date.now()) {
         this.sessionData.movements.push({ x, y, timestamp });
         
-        // 保持最近1000个动作记录
+        // Keep last 1000 movement records
         if (this.sessionData.movements.length > 1000) {
             this.sessionData.movements.shift();
         }
     }
     
     /**
-     * 记录失败事件（泡泡消失未被戳中）
+     * Record miss event (bubble disappeared without being popped)
      */
     recordMiss() {
         const now = Date.now();
         
-        // 如果距离上次成功超过5秒，重置连续计数
+        // If more than 5 seconds since last success, reset consecutive count
         if (now - this.sessionData.lastSuccessTime > 5000) {
             if (this.sessionData.consecutiveCount > 0) {
-                console.log(`连续成功中断，之前连续 ${this.sessionData.consecutiveCount} 个`);
+                console.log(`Consecutive success interrupted, previous consecutive: ${this.sessionData.consecutiveCount}`);
                 this.sessionData.consecutiveCount = 0;
             }
         }
     }
     
     /**
-     * 记录成功事件
+     * Record success event
      */
     recordSuccess(bubbleData) {
         const now = Date.now();
@@ -340,35 +340,35 @@ class AutismFriendlyFeatures {
             timestamp: now
         });
         
-        // 更新连续成功计数
-        if (now - this.sessionData.lastSuccessTime < 3000) { // 3秒内算连续
+        // Update consecutive success count
+        if (now - this.sessionData.lastSuccessTime < 3000) { // Within 3 seconds counts as consecutive
             this.sessionData.consecutiveCount++;
         } else {
-            this.sessionData.consecutiveCount = 1; // 重新开始计数
+            this.sessionData.consecutiveCount = 1; // Restart counting
         }
         this.sessionData.lastSuccessTime = now;
         
-        // 调试信息 - 帮助诊断25个泡泡后的问题
+        // Debug info - helps diagnose issues after 25 bubbles
         const totalCount = this.sessionData.successes.length;
-        console.log(`[Success] 成功记录: 总数=${totalCount}, 连续=${this.sessionData.consecutiveCount}`);
+        console.log(`[Success] Success recorded: total=${totalCount}, consecutive=${this.sessionData.consecutiveCount}`);
         
-        // 显示简单的即时反馈（不与成就冲突）
+        // Show simple instant feedback (doesn't conflict with achievements)
         this.showSimpleFeedback();
         
-        // 检查是否达成成就
+        // Check if achievement unlocked
         this.checkAchievements();
     }
     
     /**
-     * 显示简单的即时反馈
+     * Show simple instant feedback
      */
     showSimpleFeedback() {
-        // 用户已禁用即时反馈，直接返回
+        // User has disabled instant feedback, return directly
         return;
     }
     
     /**
-     * 检查成就
+     * Check achievements
      */
     checkAchievements() {
         const successes = this.sessionData.successes;
@@ -427,29 +427,29 @@ class AutismFriendlyFeatures {
             total100: false
         };
         
-        // 🔥 关键修复：重置会话数据，包括泡泡总数
+        // 🔥 Critical fix: Reset session data including bubble count
         this.sessionData.consecutiveCount = 0;
         this.sessionData.lastSuccessTime = 0;
-        this.sessionData.successes = []; // 清空成功记录数组
-        this.sessionData.movements = []; // 清空移动记录数组
-        this.sessionData.attempts = []; // 清空尝试记录数组
-        this.achievements = []; // 清空成就记录
+        this.sessionData.successes = []; // Clear success records array
+        this.sessionData.movements = []; // Clear movement records array
+        this.sessionData.attempts = []; // Clear attempt records array
+        this.achievements = []; // Clear achievement records
         
-        // 重新开始会话追踪
+        // Restart session tracking
         this.startSessionTracking();
         
-        console.log('🏆 成就系统已完全重置，泡泡计数归零');
+        console.log('🏆 Achievement system fully reset, bubble count zeroed');
     }
     
     /**
-     * 获取会话报告
+     * Get session report
      */
     getSessionReport() {
         const duration = Date.now() - this.sessionData.startTime;
         const movements = this.sessionData.movements;
         const successes = this.sessionData.successes;
         
-        // 计算协调性指标
+        // Calculate coordination metrics
         let totalDistance = 0;
         let smoothness = 0;
         
@@ -463,7 +463,7 @@ class AutismFriendlyFeatures {
                 totalDistance += distance;
             }
             
-            // 平滑度 = 平均移动距离的倒数（越小越平滑）
+            // Smoothness = inverse of average movement distance (smaller = smoother)
             smoothness = movements.length / totalDistance;
         }
         
@@ -479,14 +479,14 @@ class AutismFriendlyFeatures {
     }
     
     /**
-     * 保存设置到本地存储
+     * Save settings to local storage
      */
     saveSettings() {
         localStorage.setItem('autismFriendlySettings', JSON.stringify(this.settings));
     }
     
     /**
-     * 从本地存储加载设置
+     * Load settings from local storage
      */
     loadSettings() {
         const saved = localStorage.getItem('autismFriendlySettings');
@@ -494,7 +494,7 @@ class AutismFriendlyFeatures {
             try {
                 this.settings = { ...this.settings, ...JSON.parse(saved) };
             } catch (e) {
-                console.log('设置加载失败，使用默认设置');
+                console.log('Settings load failed, using defaults');
             }
         }
     }

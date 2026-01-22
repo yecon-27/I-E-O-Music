@@ -1,6 +1,6 @@
 /**
- * SessionLogger - 专家审计模式的数据埋点系统
- * 记录游戏过程中的所有参数变动、用户行为和安全拦截事件
+ * SessionLogger - Expert audit mode data logging system
+ * Records all parameter changes, user behavior, and safety interception events during gameplay
  */
 class SessionLogger {
     constructor() {
@@ -8,21 +8,21 @@ class SessionLogger {
         this.startTime = null;
         this.isRecording = false;
         
-        // 时间轴数据
+        // Timeline data
         this.timeline = {
-            // 因果对齐数据：每秒记录 (System_BPM, User_Click_Frequency)
+            // Causal alignment data: per-second (System_BPM, User_Click_Frequency)
             causalAlignment: [],
-            // 参数变动记录
+            // Parameter change records
             paramChanges: [],
-            // 用户点击事件
+            // User click events
             userClicks: [],
-            // 安全拦截日志
+            // Safety interception logs
             interceptedEvents: [],
-            // 泡泡戳破事件
+            // Bubble pop events
             bubblePops: [],
         };
         
-        // 安全检查结果
+        // Safety check results
         this.safetyChecks = {
             scaleCheck: { passed: true, details: [] },
             densityCheck: { passed: true, details: [] },
@@ -30,7 +30,7 @@ class SessionLogger {
             volumeCheck: { passed: true, details: [] },
         };
         
-        // 统计数据
+        // Statistics
         this.stats = {
             totalClicks: 0,
             successfulPops: 0,
@@ -39,7 +39,7 @@ class SessionLogger {
             paramAdjustments: 0,
         };
         
-        // 每秒采样定时器
+        // Per-second sampling timer
         this.samplingInterval = null;
         this.lastClickCount = 0;
         this.clicksThisSecond = 0;
@@ -50,14 +50,14 @@ class SessionLogger {
     }
     
     /**
-     * 开始记录
+     * Start recording
      */
     startRecording() {
         this.sessionId = this.generateSessionId();
         this.startTime = performance.now();
         this.isRecording = true;
         
-        // 重置数据
+        // Reset data
         this.timeline = {
             causalAlignment: [],
             paramChanges: [],
@@ -73,27 +73,27 @@ class SessionLogger {
             paramAdjustments: 0,
         };
         
-        // 开始每秒采样
+        // Start per-second sampling
         this.startSampling();
         
-        console.log('[SessionLogger] 开始记录, sessionId:', this.sessionId);
+        console.log('[SessionLogger] Recording started, sessionId:', this.sessionId);
     }
     
     /**
-     * 停止记录
+     * Stop recording
      */
     stopRecording() {
         this.isRecording = false;
         this.stopSampling();
         
         const duration = (performance.now() - this.startTime) / 1000;
-        console.log(`[SessionLogger] 停止记录, 时长: ${duration.toFixed(1)}s`);
+        console.log(`[SessionLogger] Recording stopped, duration: ${duration.toFixed(1)}s`);
         
         return this.exportSession();
     }
     
     /**
-     * 开始每秒采样
+     * Start per-second sampling
      */
     startSampling() {
         this.samplingInterval = setInterval(() => {
@@ -110,7 +110,7 @@ class SessionLogger {
                 gameSpeed: window.game?.gameSpeed || 1.0,
             });
             
-            // 重置本秒点击计数
+            // Reset click count for this second
             this.clicksThisSecond = 0;
         }, 1000);
     }
@@ -123,7 +123,7 @@ class SessionLogger {
     }
     
     /**
-     * 记录用户点击
+     * Record user click
      */
     recordClick(x, y, hit = false) {
         if (!this.isRecording) return;
@@ -146,7 +146,7 @@ class SessionLogger {
     }
     
     /**
-     * 记录泡泡戳破
+     * Record bubble pop
      */
     recordBubblePop(bubble) {
         if (!this.isRecording) return;
@@ -162,7 +162,7 @@ class SessionLogger {
     }
     
     /**
-     * 记录参数变动
+     * Record parameter change
      */
     recordParamChange(paramName, oldValue, newValue, source = 'user') {
         if (!this.isRecording) return;
@@ -180,7 +180,7 @@ class SessionLogger {
     }
     
     /**
-     * 记录安全拦截事件
+     * Record safety interception event
      */
     recordInterception(eventType, originalValue, clampedValue, rule) {
         if (!this.isRecording) return;
@@ -196,7 +196,7 @@ class SessionLogger {
         
         this.stats.interceptedNotes++;
         
-        // 更新安全检查状态
+        // Update safety check status
         if (rule.includes('tempo')) {
             this.safetyChecks.tempoCheck.passed = false;
             this.safetyChecks.tempoCheck.details.push({ t: elapsed, value: originalValue });
@@ -204,7 +204,7 @@ class SessionLogger {
     }
     
     /**
-     * 运行安全检查
+     * Run safety checks
      */
     runSafetyChecks(melodySpec) {
         const checks = {
@@ -225,7 +225,7 @@ class SessionLogger {
         
         return {
             passed: violations.length === 0,
-            details: violations.length > 0 ? [`${violations.length} 个音符超出五声音阶`] : [],
+            details: violations.length > 0 ? [`${violations.length} notes outside pentatonic scale`] : [],
         };
     }
     
@@ -234,10 +234,10 @@ class SessionLogger {
         const duration = spec?.durationSec || 60;
         const density = noteCount / duration;
         
-        const maxDensity = 2; // 每秒最多2个音符
+        const maxDensity = 2; // Max 2 notes per second
         return {
             passed: density <= maxDensity,
-            details: density > maxDensity ? [`密度 ${density.toFixed(2)}/s 超过阈值 ${maxDensity}/s`] : [],
+            details: density > maxDensity ? [`Density ${density.toFixed(2)}/s exceeds threshold ${maxDensity}/s`] : [],
         };
     }
     
@@ -248,7 +248,7 @@ class SessionLogger {
         return {
             passed: bpm >= safeRange.min && bpm <= safeRange.max,
             details: (bpm < safeRange.min || bpm > safeRange.max) 
-                ? [`BPM ${bpm} 超出安全范围 [${safeRange.min}, ${safeRange.max}]`] 
+                ? [`BPM ${bpm} outside safe range [${safeRange.min}, ${safeRange.max}]`] 
                 : [],
         };
     }
@@ -260,12 +260,12 @@ class SessionLogger {
         
         return {
             passed: maxVel <= 100,
-            details: maxVel > 100 ? [`最大力度 ${maxVel} 超过阈值 100`] : [],
+            details: maxVel > 100 ? [`Max velocity ${maxVel} exceeds threshold 100`] : [],
         };
     }
     
     /**
-     * 导出会话数据
+     * Export session data
      */
     exportSession() {
         const endTime = performance.now();
@@ -284,7 +284,7 @@ class SessionLogger {
     }
     
     /**
-     * 下载会话 JSON
+     * Download session JSON
      */
     downloadJSON(filename) {
         const data = this.exportSession();
@@ -298,6 +298,6 @@ class SessionLogger {
     }
 }
 
-// 全局单例
+// Global singleton
 window.sessionLogger = new SessionLogger();
 window.SessionLogger = SessionLogger;

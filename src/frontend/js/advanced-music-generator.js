@@ -1,14 +1,14 @@
 /**
- * 安全音乐奖励生成器（鼠标版泡泡任务）
- * 依据 PRD：固定 lane→note 映射、记录 actionTrace、模式分析、生成 10–15 秒安全音乐 reward。
+ * Safe Music Reward Generator (Mouse Bubble Task)
+ * Per PRD: fixed lane→note mapping, record actionTrace, pattern analysis, generate 10-15s safe music reward.
  */
 
 const LANE_DEFS = [
-  { id: 1, color: "#e34f4f", note: "C4" }, // 红
-  { id: 2, color: "#f28c28", note: "D4" }, // 橙
-  { id: 3, color: "#f2c14f", note: "E4" }, // 黄
-  { id: 4, color: "#3e7ab8", note: "G4" }, // 蓝
-  { id: 5, color: "#4b4ba8", note: "A4" }, // 靛
+  { id: 1, color: "#e34f4f", note: "C4" }, // red
+  { id: 2, color: "#f28c28", note: "D4" }, // orange
+  { id: 3, color: "#f2c14f", note: "E4" }, // yellow
+  { id: 4, color: "#3e7ab8", note: "G4" }, // blue
+  { id: 5, color: "#4b4ba8", note: "A4" }, // indigo
 ];
 
 const DEFAULT_SESSION_CONFIG = {
@@ -21,10 +21,10 @@ const DEFAULT_SESSION_CONFIG = {
   rewardBpm: 125,
   rewardDurationSec: 10,
   expertMode: false,
-  // 新增参数
-  dynamicContrast: 0.1, // 0-0.5, 动态对比度
-  harmonyType: 'I-V', // 和声组合: 'I-V', 'I-IV', 'I-vi', 'I-IV-V', 'I-vi-IV-V'
-  instrument: 'piano', // 乐器: 'piano', 'epiano', 'guitar'
+  // Additional parameters
+  dynamicContrast: 0.1, // 0-0.5, dynamic contrast
+  harmonyType: 'I-V', // harmony type: 'I-V', 'I-IV', 'I-vi', 'I-IV-V', 'I-vi-IV-V'
+  instrument: 'piano', // instrument: 'piano', 'epiano', 'guitar'
 };
 
 const REWARD_SETTINGS = {

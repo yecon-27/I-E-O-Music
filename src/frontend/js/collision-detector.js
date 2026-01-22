@@ -4,10 +4,10 @@
  */
 class CollisionDetector {
     constructor() {
-        // Collision configuration - 增加容错范围适配手腕检测
+        // Collision configuration - increased tolerance for wrist detection
         this.config = {
-            handRadius: 35, // 增大虚拟手部尺寸
-            tolerance: 25,  // 增大容错范围，适配手腕位置
+            handRadius: 35, // Increased virtual hand size
+            tolerance: 25,  // Increased tolerance for wrist position
             cooldownTime: 100, // Prevent multiple pops of same bubble (ms)
             vibrationEnabled: false // Haptic feedback (if supported)
         };
@@ -64,7 +64,7 @@ class CollisionDetector {
         collisions.forEach(collision => {
             this.notifyCollisionCallbacks(collision);
             
-            // 记录成功事件到自闭症友好功能模块
+            // Record success event to autism-friendly features module
             if (window.autismFeatures) {
                 window.autismFeatures.recordSuccess({
                     bubbleId: collision.bubble.id,
@@ -74,7 +74,7 @@ class CollisionDetector {
                 });
             }
             
-            // 记录戳泡泡事件到手部数据追踪器
+            // Record bubble pop event to hand data tracker
             if (window.gameApp?.poseDetector?.handDataTracker) {
                 window.gameApp.poseDetector.handDataTracker.recordPop(true);
             }
@@ -194,7 +194,7 @@ class CollisionDetector {
     }
     
     /**
-     * Render a single hand cursor - 手形光标
+     * Render a single hand cursor - hand cursor
      */
     renderHandCursor(ctx, hand, handType, effect, currentTime) {
         ctx.save();
@@ -239,7 +239,7 @@ class CollisionDetector {
     }
     
     /**
-     * Draw hand shape - 绘制手形
+     * Draw hand shape - draw hand shape
      */
     drawHandShape(ctx, x, y, size, handType, color) {
         // Method 1: Use emoji with enhanced effects
@@ -273,31 +273,31 @@ class CollisionDetector {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
-        // Background for label - 使用柔和的半透明背景
+        // Background for label - using soft semi-transparent background
         const labelY = y + size * 1.3;
-        const labelText = handType === 'leftHand' ? '左手' : 'hand';
+        const labelText = handType === 'leftHand' ? 'L' : 'R';
         const labelWidth = ctx.measureText(labelText).width + 12;
         const labelHeight = size * 0.45;
         
-        // 柔和的圆角背景
+        // Soft rounded background
         ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
         ctx.beginPath();
         const radius = labelHeight / 2;
         ctx.roundRect(x - labelWidth/2, labelY - labelHeight/2, labelWidth, labelHeight, radius);
         ctx.fill();
         
-        // 柔和的边框
+        // Soft border
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
         ctx.lineWidth = 1;
         ctx.stroke();
         
-        // 文字使用柔和的深灰色
+        // Text using soft dark gray
         ctx.fillStyle = '#6B7280';
         ctx.fillText(labelText, x, labelY);
     }
     
     /**
-     * Draw hand effects - 手部特效
+     * Draw hand effects - hand effects
      */
     drawHandEffects(ctx, x, y, size, color) {
         // Draw small sparkles around the hand
@@ -322,25 +322,25 @@ class CollisionDetector {
     }
     
     /**
-     * Draw custom hand shape - 自定义手形绘制 (备用方法)
+     * Draw custom hand shape - custom hand drawing (backup method)
      */
     drawCustomHandShape(ctx, x, y, size, handType, color) {
         ctx.fillStyle = color;
         ctx.strokeStyle = this.darkenColor(color, 0.3);
         ctx.lineWidth = 2;
         
-        // Draw palm (手掌)
+        // Draw palm
         ctx.beginPath();
         ctx.ellipse(x, y, size * 0.6, size * 0.8, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
         
-        // Draw fingers (手指)
+        // Draw fingers
         const fingerPositions = [
-            { dx: -size * 0.4, dy: -size * 0.7, length: size * 0.5 }, // 小指
-            { dx: -size * 0.15, dy: -size * 0.9, length: size * 0.7 }, // 无名指
-            { dx: size * 0.1, dy: -size * 0.95, length: size * 0.8 }, // 中指
-            { dx: size * 0.35, dy: -size * 0.85, length: size * 0.7 }, // 食指
+            { dx: -size * 0.4, dy: -size * 0.7, length: size * 0.5 }, // Pinky
+            { dx: -size * 0.15, dy: -size * 0.9, length: size * 0.7 }, // Ring
+            { dx: size * 0.1, dy: -size * 0.95, length: size * 0.8 }, // Middle
+            { dx: size * 0.35, dy: -size * 0.85, length: size * 0.7 }, // Index
         ];
         
         fingerPositions.forEach(finger => {
@@ -356,7 +356,7 @@ class CollisionDetector {
             ctx.stroke();
         });
         
-        // Draw thumb (拇指)
+        // Draw thumb
         const thumbX = handType === 'leftHand' ? x - size * 0.7 : x + size * 0.7;
         const thumbY = y - size * 0.2;
         ctx.beginPath();

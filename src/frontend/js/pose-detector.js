@@ -46,7 +46,7 @@ class PoseDetector {
     this.poseCanvas = null;
     this.poseCtx = null;
 
-    // 手部数据追踪器
+    // Hand data tracker
     this.handDataTracker = null;
 
     this.isInitialized = false;
@@ -59,7 +59,7 @@ class PoseDetector {
     try {
       console.log('Initializing MediaPipe pose detection...');
       
-      // 初始化手部数据追踪器
+      // Initialize hand data tracker
       if (window.HandDataTracker) {
         this.handDataTracker = new window.HandDataTracker();
       }
@@ -79,7 +79,7 @@ class PoseDetector {
       console.error('Failed to initialize MediaPipe pose detection:', err);
       console.log('Falling back to mouse control...');
       
-      // 即使在鼠标模式下也初始化数据追踪器
+      // Initialize data tracker even in mouse mode
       if (window.HandDataTracker && !this.handDataTracker) {
         this.handDataTracker = new window.HandDataTracker();
       }
@@ -113,13 +113,13 @@ class PoseDetector {
   }
 
   /**
-   * Set up camera for pose detection - 使用右侧面板
+   * Set up camera for pose detection - using side panel
    */
   async setupCamera() {
-    // 确保先清理旧的流
+    // Ensure old stream is cleaned up first
     this.stop();
 
-    // 使用右侧面板中的video元素
+    // Use video element in side panel
     this.videoElement = document.getElementById("pose-video");
     if (!this.videoElement) {
       throw new Error("Pose video element not found in panel");
@@ -138,7 +138,7 @@ class PoseDetector {
       this.videoElement.srcObject = stream;
       console.log("Camera access granted");
 
-      // 页面卸载时清理
+      // Clean up on page unload
       window.addEventListener('beforeunload', () => {
         this.stop();
       });
@@ -154,10 +154,10 @@ class PoseDetector {
       let errorMessage = "Camera access required for pose detection";
       
       if (error.name === 'NotReadableError' || error.message.includes('Device in use')) {
-        errorMessage = "摄像头被其他程序占用 (NotReadableError)。请关闭其他使用摄像头的程序（如 Zoom, Teams, 或其他浏览器标签页）后刷新页面重试。";
-        alert(errorMessage); // 强提示
+        errorMessage = "Camera is in use by another program (NotReadableError). Please close other programs using the camera (e.g., Zoom, Teams, or other browser tabs) and refresh the page.";
+        alert(errorMessage);
       } else if (error.name === 'NotAllowedError') {
-        errorMessage = "摄像头访问被拒绝。请在浏览器设置中允许此网站访问摄像头。";
+        errorMessage = "Camera access denied. Please allow camera access in browser settings.";
         alert(errorMessage);
       }
       
@@ -182,7 +182,7 @@ class PoseDetector {
 
     // Create Pose instance
     this.pose = new window.Pose({
-      locateFile: (file) => `vendor/mediapipe/pose/${file}`  // ✅ 本地
+      locateFile: (file) => `vendor/mediapipe/pose/${file}`  // local files
     });
 
     // Configure pose detection
@@ -202,16 +202,16 @@ class PoseDetector {
   }
 
   /**
-   * Create pose visualization overlay - 使用右侧面板
+   * Create pose visualization overlay - using side panel
    */
   createPoseOverlay() {
-    // 使用右侧面板中的canvas元素
+    // Use canvas element in side panel
     this.poseCanvas = document.getElementById("pose-canvas");
     if (!this.poseCanvas) {
       throw new Error("Pose canvas element not found in panel");
     }
     
-    // 设置canvas尺寸
+    // Set canvas dimensions
     this.poseCanvas.width = 320;
     this.poseCanvas.height = 240;
     this.poseCtx = this.poseCanvas.getContext("2d");
@@ -265,7 +265,7 @@ class PoseDetector {
   }
 
   /**
-   * Handle pose detection results - 修复镜像问题
+   * Handle pose detection results - fix mirror issue
    */
   onPoseResults(results) {
     // Clear pose overlay
@@ -277,7 +277,7 @@ class PoseDetector {
         this.poseCanvas.height
       );
       
-      // 应用镜像变换到canvas绘制
+      // Apply mirror transform to canvas drawing
       this.poseCtx.save();
       this.poseCtx.scale(-1, 1);
       this.poseCtx.translate(-this.poseCanvas.width, 0);
@@ -292,7 +292,7 @@ class PoseDetector {
       }
     }
 
-    // Extract hand positions (不镜像，直接使用原始坐标)
+    // Extract hand positions (no mirror, use raw coordinates)
     if (results.poseLandmarks) {
       this.updateHandPositions(results.poseLandmarks);
     }
@@ -369,7 +369,7 @@ class PoseDetector {
     const h = this.poseCanvas.height;
     const visibilityThreshold = 0.5;
 
-    // Tokyo2020 authentic colors - 使用更明显的对比色
+    // Tokyo2020 authentic colors - use more visible contrast colors
     const bgColor = "#643321"; // Tokyo2020 brown background
     const figureColor = "#FFFFFF"; // White figure
 
@@ -537,33 +537,33 @@ class PoseDetector {
   }
 
   /**
-   * Update hand positions from pose landmarks - 戳泡泡逻辑
+   * Update hand positions from pose landmarks - bubble popping logic
    */
   updateHandPositions(landmarks) {
     // MediaPipe landmark indices for hands
     const LEFT_WRIST = 15;
     const RIGHT_WRIST = 16;
-    const LEFT_INDEX = 19;  // 左手食指尖
-    const RIGHT_INDEX = 20; // 右手食指尖
+    const LEFT_INDEX = 19;  // Left index finger tip
+    const RIGHT_INDEX = 20; // Right index finger tip
 
-    // 戳泡泡规则：使用手腕位置（适配Tokyo2020小人，小人没有手指）
+    // Bubble popping rule: use wrist position (for Tokyo2020 pictogram which has no fingers)
     
-    // Update left hand position - 直接使用手腕
+    // Update left hand position - use wrist directly
     const leftWrist = landmarks[LEFT_WRIST];
     let leftHandPoint = null;
     
     if (leftWrist && leftWrist.visibility > 0.5) {
-      // 使用手腕位置（Tokyo2020小人的手部位置）
+      // Use wrist position (Tokyo2020 pictogram hand position)
       leftHandPoint = leftWrist;
     }
     
     if (leftHandPoint) {
-      // 恢复镜像转换 - MediaPipe坐标需要镜像才能匹配用户直觉
+      // Restore mirror transform - MediaPipe coordinates need mirroring to match user intuition
       const x = leftHandPoint.x * this.canvasWidth;
       const y = leftHandPoint.y * this.canvasHeight;
 
       this.handPositions.leftHand = {
-        x: this.canvasWidth - x, // 镜像x坐标，让右手出现在右侧
+        x: this.canvasWidth - x, // Mirror x coordinate so right hand appears on right side
         y: y,
         visible: true,
         confidence: leftHandPoint.visibility,
@@ -573,22 +573,22 @@ class PoseDetector {
       this.handPositions.leftHand.visible = false;
     }
 
-    // Update right hand position - 直接使用手腕
+    // Update right hand position - use wrist directly
     const rightWrist = landmarks[RIGHT_WRIST];
     let rightHandPoint = null;
     
     if (rightWrist && rightWrist.visibility > 0.5) {
-      // 使用手腕位置（Tokyo2020小人的手部位置）
+      // Use wrist position (Tokyo2020 pictogram hand position)
       rightHandPoint = rightWrist;
     }
     
     if (rightHandPoint) {
-      // 恢复镜像转换 - MediaPipe坐标需要镜像才能匹配用户直觉
+      // Restore mirror transform - MediaPipe coordinates need mirroring to match user intuition
       const x = rightHandPoint.x * this.canvasWidth;
       const y = rightHandPoint.y * this.canvasHeight;
 
       this.handPositions.rightHand = {
-        x: this.canvasWidth - x, // 镜像x坐标，让右手出现在右侧
+        x: this.canvasWidth - x, // Mirror x coordinate so right hand appears on right side
         y: y,
         visible: true,
         confidence: rightHandPoint.visibility,
@@ -601,7 +601,7 @@ class PoseDetector {
     // Apply smoothing
     this.applySmoothingToHands();
     
-    // 更新手部数据追踪
+    // Update hand data tracking
     if (this.handDataTracker) {
       this.handDataTracker.updateHandPosition(
         'leftHand', 
@@ -639,7 +639,7 @@ class PoseDetector {
   }
   
   /**
-   * 更新手势状态显示 - 包含坐标调试信息
+   * Update hand status display - includes coordinate debug info
    */
   updateHandStatus() {
     const leftStatus = document.getElementById('left-hand-status');
@@ -648,7 +648,7 @@ class PoseDetector {
     
     if (leftStatus) {
       if (this.handPositions.leftHand.visible) {
-        const icon = '✋'; // Tokyo2020小人只有手腕，显示手掌
+        const icon = '✋'; // Tokyo2020 pictogram only has wrist, show palm
         const x = Math.round(this.handPositions.leftHand.x);
         const y = Math.round(this.handPositions.leftHand.y);
         leftStatus.textContent = `${icon} (${x},${y})`;
@@ -675,10 +675,10 @@ class PoseDetector {
     if (gestureStatus) {
       const activeHands = [this.handPositions.leftHand.visible, this.handPositions.rightHand.visible].filter(Boolean).length;
       if (activeHands > 0) {
-        gestureStatus.textContent = `检测到 ${activeHands} 只手`;
+        gestureStatus.textContent = `Detected ${activeHands} hand(s)`;
         gestureStatus.style.color = '#4CAF50';
       } else {
-        gestureStatus.textContent = '未检测到手势';
+        gestureStatus.textContent = 'No gesture detected';
         gestureStatus.style.color = '#757575';
       }
     }
@@ -733,7 +733,7 @@ class PoseDetector {
       const x = (event.clientX - rect.left) * scaleX;
       const y = (event.clientY - rect.top) * scaleY;
 
-      // Simulate right hand position - 保持与手势检测一致的坐标系
+      // Simulate right hand position - keep consistent with gesture detection coordinate system
       this.handPositions.rightHand = {
         x: x,
         y: y,
@@ -747,7 +747,7 @@ class PoseDetector {
 
       this.handPositions.leftHand.visible = false;
 
-      // 更新手部数据追踪 (鼠标模式)
+      // Update data tracking (mouse mode)
       if (this.handDataTracker) {
         this.handDataTracker.updateHandPosition('rightHand', x, y, true);
         this.handDataTracker.updateHandPosition('leftHand', 0, 0, false);
@@ -783,7 +783,7 @@ class PoseDetector {
       this.handPositions.rightHand.visible = false;
       this.handPositions.leftHand.visible = false;
       
-      // 更新数据追踪 - 鼠标离开
+      // Update data tracking - mouse left
       if (this.handDataTracker) {
         this.handDataTracker.updateHandPosition('rightHand', 0, 0, false);
         this.handDataTracker.updateHandPosition('leftHand', 0, 0, false);

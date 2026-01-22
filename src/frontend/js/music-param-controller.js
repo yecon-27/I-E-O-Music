@@ -1,13 +1,13 @@
 /**
- * 音乐参数调整控制器
- * 支持测试模式和收敛模式，用于专家调整音乐参数并收敛安全区间
+ * Music Parameter Controller
+ * Supports test mode and converge mode for experts to adjust music parameters and converge safe ranges
  */
 class MusicParamController {
     constructor() {
-        // 模式: 'test' | 'converge' | 'spectrum'
+        // Mode: 'test' | 'converge' | 'spectrum'
         this.mode = 'test';
         
-        // 默认安全区间定义
+        // Default safe range definitions
         this.safeRanges = {
             tempo: { min: 120, max: 130, absMin: 100, absMax: 140, unit: 'BPM' },
             contrast: { min: 0, max: 20, absMin: 0, absMax: 50, unit: '%' },
@@ -16,12 +16,12 @@ class MusicParamController {
             duration: { min: 8, max: 20, absMin: 8, absMax: 20, unit: 's' },
         };
         
-        // 三档预设
+        // Three-tier presets
         this.presets = {
             relaxed: {
                 tempo: { min: 60, max: 180, absMin: 40, absMax: 200, unit: 'BPM' },
-                contrast: { min: 0, max: 100, absMin: 0, absMax: 100, unit: '%' },   // Accent ratio 0.0–1.0 显示为 0–100%
-                volume: { min: 0, max: 100, absMin: 0, absMax: 100, unit: '%' }      // Gain dB 映射到百分比滑块
+                contrast: { min: 0, max: 100, absMin: 0, absMax: 100, unit: '%' },   // Accent ratio 0.0-1.0 displayed as 0-100%
+                volume: { min: 0, max: 100, absMin: 0, absMax: 100, unit: '%' }      // Gain dB mapped to percentage slider
             },
             default: {
                 tempo: { min: 120, max: 130, absMin: 80, absMax: 160, unit: 'BPM' },
@@ -36,11 +36,11 @@ class MusicParamController {
         };
         this.currentPreset = 'default';
         
-        // 安全和声选项
+        // Safe harmony options
         this.safeHarmony = ['I-V'];
         this.allHarmonyOptions = ['I-V', 'I-IV', 'I-VI', 'I-IV-V', 'I-VI-IV-V'];
         
-        // 当前参数
+        // Current parameters
         this.currentParams = {
             tempo: 125,
             contrast: 10,
@@ -52,22 +52,22 @@ class MusicParamController {
             segmentEndSec: 10
         };
         
-        // 收敛后的参数（用于提交到数据库）
+        // Converged parameters (for database submission)
         this.convergedParams = null;
         
-        // 回调
+        // Callbacks
         this.onParamChange = null;
         this.onWarning = null;
         this.onSubmit = null;
         
-        // 播放状态
+        // Playback state
         this.isPlaying = false;
         
         this.initialized = false;
     }
     
     /**
-     * 初始化控制器
+     * Initialize controller
      */
     init() {
         if (this.initialized) return;
@@ -94,9 +94,9 @@ class MusicParamController {
             }
             
             this.initialized = true;
-            console.log('[MusicParamController] 初始化完成');
+            console.log('[MusicParamController] Initialized');
         } catch (e) {
-            console.error('[MusicParamController] 初始化失败:', e);
+            console.error('[MusicParamController] Initialization failed:', e);
         }
     }
 
@@ -112,7 +112,7 @@ class MusicParamController {
          const rightPanelTitle = document.querySelector('.expert-right .expert-panel-title');
          if (rightPanelTitle) rightPanelTitle.textContent = window.i18n ? window.i18n.t('report.musicParams') : 'Music Parameters';
 
-        // Labels with Safe Range (现在只有4个: Tempo, Contrast, Volume, Harmony)
+        // Labels with Safe Range (only 4: Tempo, Contrast, Volume, Harmony)
         const labels = document.querySelectorAll('.music-params-grid label');
         if (labels.length >= 4) {
             // labels[0] = Tempo (BPM)
@@ -126,7 +126,7 @@ class MusicParamController {
                 if (warning) warning.textContent = this.t('expert.warning.unsafe');
             }
 
-            // labels[1] = 动态对比度
+            // labels[1] = Dynamic Contrast
             const contrastLabel = labels[1];
             if (contrastLabel) {
                 const span = contrastLabel.querySelector('span:first-child');
@@ -137,22 +137,18 @@ class MusicParamController {
                 if (warning) warning.textContent = this.t('expert.warning.unsafe');
             }
 
-            // labels[2] = 音量
+            // labels[2] = Volume
             const volumeLabel = labels[2];
             if (volumeLabel) {
                 const span = volumeLabel.querySelector('span:first-child');
                 if (span) {
-                    const vmin = this.safeRanges.volume.min;
-                    const vmax = this.safeRanges.volume.max;
-                    const dbMin = (20 * Math.log10(Math.max(1e-6, vmin / 100))).toFixed(1);
-                    const dbMax = (20 * Math.log10(Math.max(1e-6, vmax / 100))).toFixed(1);
-                    span.innerHTML = `${this.t('expert.volume')} <span class="param-safe-range">${this.t('expert.safeRange')}${dbMin}–${dbMax} dB</span>`;
+                    span.innerHTML = `${this.t('expert.volume')} <span class="param-safe-range">${this.t('expert.safeRange')}${this.safeRanges.volume.min}-${this.safeRanges.volume.max}${this.safeRanges.volume.unit}</span>`;
                 }
                 const warning = volumeLabel.querySelector('.param-warning-badge');
                 if (warning) warning.textContent = this.t('expert.warning.unsafe');
             }
 
-            // labels[3] = 音乐
+            // labels[3] = Harmony
             const harmonyLabel = labels[3];
             if (harmonyLabel) {
                 const span = harmonyLabel.querySelector('span:first-child');
@@ -248,32 +244,32 @@ class MusicParamController {
             }
             const ctx = segCanvas.getContext('2d');
             
-            // 获取canvas的CSS显示尺寸
+            // Get canvas CSS display dimensions
             const rect = segCanvas.getBoundingClientRect();
             let displayWidth = rect.width;
             let displayHeight = rect.height;
             
-            // 如果尺寸不对，使用默认值并稍后重试
+            // If dimensions are invalid, use defaults and retry later
             if (displayWidth < 10 || displayHeight < 10) {
                 displayWidth = 560;
                 displayHeight = 120;
-                // 延迟重绘
+                // Delayed redraw
                 setTimeout(() => drawSegment(), 100);
             }
             
-            // 设置canvas的实际像素尺寸
+            // Set canvas actual pixel dimensions
             segCanvas.width = Math.floor(displayWidth);
             segCanvas.height = Math.floor(displayHeight);
             
             const w = segCanvas.width;
             const h = segCanvas.height;
-            const spectrumH = h - 28; // 频谱图高度，留出底部刻度空间
+            const spectrumH = h - 28; // Spectrum height, leaving space for bottom scale
             
-            // 背景
+            // Background
             ctx.fillStyle = '#f8fafc';
             ctx.fillRect(0, 0, w, h);
             
-            // 绘制波形（占位或真实数据）
+            // Draw waveform (placeholder or real data)
             const seq = window.lastGeneratedSequence;
             ctx.fillStyle = '#c7d2fe';
             
@@ -295,19 +291,19 @@ class MusicParamController {
                     ctx.fillRect(x, spectrumH - barH, barWidth - 2, barH);
                 }
             } else {
-                // 占位波形 - 模拟音频波形
+                // Placeholder waveform - simulated audio waveform
                 const barCount = 60;
                 const barWidth = w / barCount;
                 for (let i = 0; i < barCount; i++) {
                     const x = i * barWidth;
-                    // 使用多个正弦波叠加模拟真实波形
+                    // Use multiple sine waves to simulate real waveform
                     const noise = Math.sin(i * 0.3) * 0.3 + Math.sin(i * 0.7) * 0.2 + Math.sin(i * 0.1) * 0.4;
                     const barH = (noise * 0.5 + 0.5) * (spectrumH * 0.6) + 15;
                     ctx.fillRect(x + 1, spectrumH - barH, barWidth - 2, barH);
                 }
             }
             
-            // 选中片段高亮
+            // Selected segment highlight
             const start = this.currentParams.segmentStartSec || 0;
             const end = this.currentParams.segmentEndSec || 15;
             const startX = (start / 20) * w;
@@ -316,7 +312,7 @@ class MusicParamController {
             ctx.fillStyle = 'rgba(99, 102, 241, 0.15)';
             ctx.fillRect(startX, 0, Math.max(2, endX - startX), spectrumH);
             
-            // 边界线
+            // Boundary lines
             ctx.strokeStyle = '#6366f1';
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -328,11 +324,11 @@ class MusicParamController {
             ctx.lineTo(endX, spectrumH);
             ctx.stroke();
             
-            // 边界手柄（三角形）
+            // Boundary handles (triangles)
             ctx.fillStyle = '#6366f1';
             const handleSize = 6;
             
-            // 左手柄
+            // Left handle
             ctx.beginPath();
             ctx.moveTo(startX, spectrumH);
             ctx.lineTo(startX - handleSize, spectrumH + handleSize + 2);
@@ -340,7 +336,7 @@ class MusicParamController {
             ctx.closePath();
             ctx.fill();
             
-            // 右手柄
+            // Right handle
             ctx.beginPath();
             ctx.moveTo(endX, spectrumH);
             ctx.lineTo(endX - handleSize, spectrumH + handleSize + 2);
@@ -348,7 +344,7 @@ class MusicParamController {
             ctx.closePath();
             ctx.fill();
             
-            // 时间刻度
+            // Time scale
             const rulerY = spectrumH + 16;
             ctx.strokeStyle = '#e5e7eb';
             ctx.lineWidth = 1;
@@ -389,7 +385,7 @@ class MusicParamController {
             let end = this.currentParams.segmentEndSec;
             const durSafe = this.convergedParams?.duration || this.safeRanges?.duration || { min: 8, max: 20 };
             
-            // 确保最小时长
+            // Ensure minimum duration
             if (end - start < 8) {
                 if (source === 'start') {
                     end = Math.min(20, start + 8);
@@ -398,11 +394,11 @@ class MusicParamController {
                 }
             }
             
-            // 边界检查
+            // Boundary check
             start = Math.max(0, Math.min(start, 20));
-            end = Math.max(durSafe.min, Math.min(end, 20)); // 注意：最大不超过20s
+            end = Math.max(durSafe.min, Math.min(end, 20)); // Note: max is 20s
             
-            // 再次确保时长（如果边界检查导致时长不足）
+            // Re-ensure duration (if boundary check caused insufficient duration)
             if (end - start < 8) {
                 if (start > 20 - 8) start = 20 - 8;
                 end = start + 8;
@@ -441,28 +437,28 @@ class MusicParamController {
             });
         }
         
-        // 初始化
+        // Initialize
         const savedStart = parseFloat(localStorage.getItem('expert.segmentStartSec') || '0');
         const savedEnd = parseFloat(localStorage.getItem('expert.segmentEndSec') || '10');
         this.currentParams.segmentStartSec = Math.max(0, Math.min(20, savedStart));
         this.currentParams.segmentEndSec = Math.max(8, Math.min(20, savedEnd));
         enforceBounds('init');
         
-        // 暴露drawSegment到实例，以便外部调用
+        // Expose drawSegment to instance for external calls
         this.drawSegment = drawSegment;
         
-        // 初始绘制
+        // Initial draw
         drawSegment();
         
-        // 延迟重绘，确保canvas可见后正确绘制
+        // Delayed redraw to ensure canvas is visible before drawing
         setTimeout(() => drawSegment(), 200);
         setTimeout(() => drawSegment(), 500);
         
-        // ===== Canvas拖动交互（替代HTML滑块）=====
+        // ===== Canvas drag interaction (replaces HTML sliders) =====
         if (segCanvas) {
             const canvasWrapper = segCanvas.closest('.segment-canvas-wrapper');
             let dragging = null; // 'start' | 'end' | null
-            const handleHitRadius = 15; // 手柄点击检测半径
+            const handleHitRadius = 15; // Handle click detection radius
             
             const getCanvasX = (e) => {
                 const rect = segCanvas.getBoundingClientRect();
@@ -484,25 +480,25 @@ class MusicParamController {
                 return segCanvas.height - 28;
             };
             
-            // 检测点击位置是否在手柄附近
+            // Detect if click position is near handle
             const hitTest = (x, y) => {
                 const spectrumH = getSpectrumHeight();
                 const startX = timeToX(this.currentParams.segmentStartSec || 0);
                 const endX = timeToX(this.currentParams.segmentEndSec || 15);
-                const handleY = spectrumH + 4; // 三角形中心Y位置
+                const handleY = spectrumH + 4; // Triangle center Y position
                 
-                // 检测是否点击了起始手柄
+                // Detect if start handle was clicked
                 const distStart = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - handleY, 2));
                 if (distStart < handleHitRadius) return 'start';
                 
-                // 检测是否点击了结束手柄
+                // Detect if end handle was clicked
                 const distEnd = Math.sqrt(Math.pow(x - endX, 2) + Math.pow(y - handleY, 2));
                 if (distEnd < handleHitRadius) return 'end';
                 
                 return null;
             };
             
-            // 更新光标样式
+            // Update cursor style
             const updateCursor = (x, y) => {
                 if (dragging) {
                     segCanvas.style.cursor = 'ew-resize';
@@ -512,7 +508,7 @@ class MusicParamController {
                 segCanvas.style.cursor = hit ? 'ew-resize' : 'default';
             };
             
-            // 鼠标/触摸按下
+            // Mouse/touch down
             const onPointerDown = (e) => {
                 const rect = segCanvas.getBoundingClientRect();
                 const x = getCanvasX(e);
@@ -525,7 +521,7 @@ class MusicParamController {
                 }
             };
             
-            // 鼠标/触摸移动
+            // Mouse/touch move
             const onPointerMove = (e) => {
                 const rect = segCanvas.getBoundingClientRect();
                 const x = getCanvasX(e);
@@ -534,11 +530,11 @@ class MusicParamController {
                 if (dragging) {
                     const time = xToTime(x);
                     if (dragging === 'start') {
-                        this.currentParams.segmentStartSec = Math.round(time * 2) / 2; // 0.5s步进
+                        this.currentParams.segmentStartSec = Math.round(time * 2) / 2; // 0.5s step
                         enforceBounds('start');
                         try { localStorage.setItem('expert.segmentStartSec', String(this.currentParams.segmentStartSec)); } catch {}
                     } else if (dragging === 'end') {
-                        this.currentParams.segmentEndSec = Math.round(time * 2) / 2; // 0.5s步进
+                        this.currentParams.segmentEndSec = Math.round(time * 2) / 2; // 0.5s step
                         enforceBounds('end');
                         try { localStorage.setItem('expert.segmentEndSec', String(this.currentParams.segmentEndSec)); } catch {}
                     }
@@ -548,7 +544,7 @@ class MusicParamController {
                 }
             };
             
-            // 鼠标/触摸释放
+            // Mouse/touch release
             const onPointerUp = () => {
                 if (dragging && canvasWrapper) {
                     canvasWrapper.classList.remove(`dragging-start`);
@@ -558,26 +554,26 @@ class MusicParamController {
                 segCanvas.style.cursor = 'default';
             };
             
-            // 绑定事件
+            // Bind events
             segCanvas.addEventListener('mousedown', onPointerDown);
             segCanvas.addEventListener('mousemove', onPointerMove);
             segCanvas.addEventListener('mouseup', onPointerUp);
             segCanvas.addEventListener('mouseleave', onPointerUp);
             
-            // 触摸支持
+            // Touch support
             segCanvas.addEventListener('touchstart', onPointerDown, { passive: false });
             segCanvas.addEventListener('touchmove', onPointerMove, { passive: false });
             segCanvas.addEventListener('touchend', onPointerUp);
             segCanvas.addEventListener('touchcancel', onPointerUp);
             
-            // 全局鼠标释放（防止拖出canvas后无法释放）
+            // Global mouse release (prevent stuck state when dragging outside canvas)
             document.addEventListener('mouseup', onPointerUp);
             document.addEventListener('touchend', onPointerUp);
         }
     }
     
     /**
-     * 绑定模式切换按钮
+     * Bind mode toggle buttons
      */
     bindModeToggle() {
         const testBtn = document.getElementById('param-mode-test');
@@ -595,7 +591,7 @@ class MusicParamController {
             paramActions?.classList.toggle('hidden', mode !== 'test');
             presetsArea?.classList.toggle('hidden', mode !== 'test');
             
-            // 测试模式仅保留三项参数，其余隐藏
+            // Test mode only shows three parameters, hide others
             const harmonyItem = document.getElementById('harmony-param-item');
             const instrumentItem = document.getElementById('instrument-param-item');
             const segmentSelector = document.querySelector('.segment-selector');
@@ -649,12 +645,12 @@ class MusicParamController {
         const preset = this.presets[name];
         if (!preset) return;
         
-        // 更新安全区间
+        // Update safe ranges
         this.safeRanges.tempo = { ...preset.tempo };
         this.safeRanges.contrast = { ...preset.contrast };
         this.safeRanges.volume = { ...preset.volume };
         
-        // 更新滑条的绝对范围与当前值（设为预设范围中位数）
+        // Update slider absolute ranges and current values (set to preset range midpoint)
         const tempoSlider = document.getElementById('report-param-tempo');
         const tempoValue = document.getElementById('report-param-tempo-value');
         if (tempoSlider) {
@@ -669,7 +665,7 @@ class MusicParamController {
         
         const contrastSlider = document.getElementById('report-param-contrast');
         const contrastValue = document.getElementById('report-param-contrast-value');
-            if (contrastSlider) {
+        if (contrastSlider) {
             contrastSlider.min = String(preset.contrast.absMin);
             contrastSlider.max = String(preset.contrast.absMax);
             const contrastMid = Math.round((preset.contrast.min + preset.contrast.max) / 2);
@@ -687,21 +683,18 @@ class MusicParamController {
             const volumeMid = Math.round((preset.volume.min + preset.volume.max) / 2);
             volumeSlider.value = String(volumeMid);
             this.currentParams.volume = volumeMid;
-                if (volumeValue) {
-                    const db = 20 * Math.log10(Math.max(1e-6, volumeMid / 100));
-                    volumeValue.textContent = `${db.toFixed(2)} dB`;
-                }
+            if (volumeValue) volumeValue.textContent = volumeMid + '%';
             this.updateSliderStyle(volumeSlider, 'volume', volumeMid);
         }
         
-        // 刷新安全标签文本
+        // Refresh safe label text
         this.updateTexts();
         this.updateAllSliderStyles();
     }
     
     
     /**
-     * 绑定滑动条事件
+     * Bind slider events
      */
     bindSliders() {
         const sliders = [
@@ -717,12 +710,12 @@ class MusicParamController {
             let warningEl = document.getElementById(warningId);
             
             if (!slider) {
-                // 如果找不到滑动条，忽略（可能是因为UI还没加载或某些参数不需要）
+                // If slider not found, skip (UI may not be loaded or param not needed)
                 return;
             }
             
             if (!warningEl) {
-                // 尝试动态创建警告元素
+                // Try to dynamically create warning element
                 const item = slider.closest('.param-item');
                 const labelEl = item?.querySelector('label');
                 if (labelEl) {
@@ -734,19 +727,19 @@ class MusicParamController {
                 }
             }
             
-            // 设置安全范围数据属性
+            // Set safe range data attributes
             const range = this.safeRanges[param];
             if (range) {
                 slider.dataset.safeMin = range.min;
                 slider.dataset.safeMax = range.max;
-                // 同步滑动条绝对区间（Tempo）
+                // Sync slider absolute range (Tempo)
                 if (param === 'tempo') {
                     slider.min = String(range.absMin);
                     slider.max = String(range.absMax);
-                    // 无条件覆盖初始值，避免HTML默认值残留
+                    // Override initial value to avoid HTML default residue
                     slider.value = String(this.currentParams.tempo || 125);
                 }
-                // 非tempo参数也强制与当前参数对齐
+                // Non-tempo params also align with current params
                 if (param !== 'tempo') {
                     slider.value = String(this.currentParams[param]);
                 }
@@ -756,49 +749,35 @@ class MusicParamController {
                 const value = parseInt(e.target.value);
                 this.currentParams[param] = value;
                 
-                // 更新显示
+                // Update display
                 if (valueEl) {
-                    if (param === 'tempo') {
-                        valueEl.textContent = value;
-                    } else if (param === 'volume') {
-                        const db = 20 * Math.log10(Math.max(1e-6, value / 100));
-                        valueEl.textContent = `${db.toFixed(2)} dB`;
-                    } else {
-                        valueEl.textContent = value + '%';
-                    }
+                    valueEl.textContent = param === 'tempo' ? value : value + '%';
                 }
                 
-                // 检查是否超出安全范围
+                // Check if out of safe range
                 const isUnsafe = this.isOutOfSafeRange(param, value);
                 this.updateWarning(warningEl, isUnsafe);
                 this.updateSliderStyle(slider, param, value);
                 
-                // 触发回调
+                // Trigger callback
                 this.onParamChange?.({ param, value, isUnsafe });
             });
             
-            // 初始化样式
-            // 初始化显示值为当前滑块值（若已被重置为默认）
+            // Initialize style
+            // Initialize display value to current slider value (if reset to default)
             const initVal = parseInt(slider.value);
             if (valueEl) {
-                if (param === 'tempo') {
-                    valueEl.textContent = initVal;
-                } else if (param === 'volume') {
-                    const db = 20 * Math.log10(Math.max(1e-6, initVal / 100));
-                    valueEl.textContent = `${db.toFixed(2)} dB`;
-                } else {
-                    valueEl.textContent = initVal + '%';
-                }
+                valueEl.textContent = param === 'tempo' ? initVal : initVal + '%';
             }
             this.updateSliderStyle(slider, param, initVal);
-            // 初始化警告状态
+            // Initialize warning state
             const isUnsafe = this.isOutOfSafeRange(param, initVal);
             this.updateWarning(warningEl, isUnsafe);
         });
     }
 
     /**
-     * 绑定和声选项按钮
+     * Bind harmony option buttons
      */
     bindHarmonyOptions() {
         const container = document.getElementById('harmony-options');
@@ -809,25 +788,25 @@ class MusicParamController {
         const buttons = container.querySelectorAll('.harmony-btn');
         buttons.forEach(btn => {
             btn.addEventListener('click', () => {
-                // 移除其他按钮的active状态
+                // Remove active state from other buttons
                 buttons.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 
                 const value = btn.dataset.value;
                 this.currentParams.harmony = value;
                 
-                // 检查是否为非安全选项
+                // Check if non-safe option
                 const isUnsafe = !this.safeHarmony.includes(value);
                 this.updateWarning(warningEl, isUnsafe);
                 
-                // 触发回调
+                // Trigger callback
                 this.onParamChange?.({ param: 'harmony', value, isUnsafe });
             });
         });
     }
     
     /**
-     * 绑定乐器选项按钮
+     * Bind instrument option buttons
      */
     bindInstrumentOptions() {
         const container = document.getElementById('instrument-options');
@@ -838,24 +817,24 @@ class MusicParamController {
         const buttons = container.querySelectorAll('.instrument-btn');
         buttons.forEach(btn => {
             btn.addEventListener('click', () => {
-                // 移除其他按钮的active状态
+                // Remove active state from other buttons
                 buttons.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 
                 const value = btn.dataset.value;
                 this.currentParams.instrument = value;
                 
-                // 触发回调
+                // Trigger callback
                 this.onParamChange?.({ param: 'instrument', value, isUnsafe: false });
             });
         });
     }
 
     /**
-     * 绑定操作按钮
+     * Bind action buttons
      */
     bindActionButtons() {
-        // 预览按钮
+        // Preview button
         const previewBtn = document.getElementById('param-preview-btn');
         const stopBtn = document.getElementById('param-stop-btn');
         
@@ -865,14 +844,14 @@ class MusicParamController {
             });
         }
         
-        // 暂停按钮
+        // Stop button
         if (stopBtn) {
             stopBtn.addEventListener('click', () => {
                 this.stopMusic();
             });
         }
         
-        // 重置按钮
+        // Reset button
         const resetBtn = document.getElementById('param-reset-btn');
         if (resetBtn) {
             resetBtn.addEventListener('click', () => {
@@ -882,15 +861,15 @@ class MusicParamController {
     }
     
     /**
-     * 设置模式
+     * Set mode
      */
     setMode(mode) {
         this.mode = mode;
-        console.log(`[MusicParamController] 模式切换: ${mode}`);
+        console.log(`[MusicParamController] Mode switched: ${mode}`);
     }
     
     /**
-     * 检查参数是否超出安全区间
+     * Check if parameter is out of safe range
      */
     isOutOfSafeRange(param, value) {
         const range = this.safeRanges[param];
@@ -899,7 +878,7 @@ class MusicParamController {
     }
     
     /**
-     * 更新警告显示
+     * Update warning display
      */
     updateWarning(warningEl, show) {
         if (!warningEl) {
@@ -907,7 +886,7 @@ class MusicParamController {
         }
         if (show) {
             warningEl.classList.remove('hidden');
-            // 强制显示，使用 cssText 覆盖 !important
+            // Force display using cssText to override !important
             warningEl.style.cssText = 'display: inline-block !important;';
         } else {
             warningEl.classList.add('hidden');
@@ -916,7 +895,7 @@ class MusicParamController {
     }
     
     /**
-     * 更新滑动条样式（安全区间高亮）
+     * Update slider style (safe range highlight)
      */
     updateSliderStyle(slider, param, value) {
         const range = this.safeRanges[param];
@@ -926,17 +905,17 @@ class MusicParamController {
         const max = parseInt(slider.max);
         const totalRange = max - min;
         
-        // 计算安全区间在滑动条上的位置百分比
+        // Calculate safe range position percentage on slider
         const safeStartPercent = ((range.min - min) / totalRange) * 100;
         const safeEndPercent = ((range.max - min) / totalRange) * 100;
         const currentPercent = ((value - min) / totalRange) * 100;
         
-        // 使用CSS变量设置渐变背景
+        // Use CSS variables to set gradient background
         slider.style.setProperty('--safe-start', safeStartPercent + '%');
         slider.style.setProperty('--safe-end', safeEndPercent + '%');
         slider.style.setProperty('--current', currentPercent + '%');
         
-        // 添加/移除unsafe类
+        // Add/remove unsafe class
         const isUnsafe = this.isOutOfSafeRange(param, value);
         const item = slider.closest('.param-item');
         if (isUnsafe) {
@@ -949,7 +928,7 @@ class MusicParamController {
     }
     
     /**
-     * 更新所有滑动条样式
+     * Update all slider styles
      */
     updateAllSliderStyles() {
         const sliders = [
@@ -967,7 +946,7 @@ class MusicParamController {
     }
     
     /**
-     * 更新收敛摘要
+     * Update converge summary
      */
     updateConvergeSummary() {
         const tempoEl = document.getElementById('converge-tempo');
@@ -980,10 +959,7 @@ class MusicParamController {
         
         if (tempoEl) tempoEl.textContent = this.currentParams.tempo;
         if (contrastEl) contrastEl.textContent = this.currentParams.contrast + '%';
-        if (volumeEl) {
-            const db = 20 * Math.log10(Math.max(1e-6, this.currentParams.volume / 100));
-            volumeEl.textContent = `${db.toFixed(2)} dB`;
-        }
+        if (volumeEl) volumeEl.textContent = this.currentParams.volume + '%';
         if (harmonyEl) harmonyEl.textContent = this.currentParams.harmony;
         if (durationMinEl && this.convergedDuration) durationMinEl.textContent = this.convergedDuration.min;
         if (durationMaxEl && this.convergedDuration) durationMaxEl.textContent = this.convergedDuration.max;
@@ -991,28 +967,28 @@ class MusicParamController {
     }
     
     /**
-     * 预览音乐
+     * Preview music
      */
     previewMusic() {
-        console.log('[MusicParamController] 预览音乐，参数:', this.currentParams);
+        console.log('[MusicParamController] Preview music, params:', this.currentParams);
         if (this.mode !== 'test') {
-            console.warn('[MusicParamController] 仅测试模式允许预览范围内的音乐');
+            console.warn('[MusicParamController] Only test mode allows music preview');
             return;
         }
         
-        // 先停止当前播放
+        // Stop current playback first
         this.stopMusic();
         
-        // 应用参数到音乐生成器
+        // Apply parameters to music generator
         if (window.sessionConfig) {
-            // 标记为专家模式，确保使用手动设置的参数
+            // Mark as expert mode to ensure manual parameters are used
             window.sessionConfig.expertMode = true;
             window.sessionConfig.expertOverride = true;
             
             window.sessionConfig.rewardBpm = this.currentParams.tempo;
             window.sessionConfig.dynamicContrast = this.currentParams.contrast / 100;
             window.sessionConfig.harmonyType = this.currentParams.harmony;
-            window.sessionConfig.instrument = this.currentParams.instrument || 'piano'; // 默认钢琴
+            window.sessionConfig.instrument = this.currentParams.instrument || 'piano'; // Default piano
             const baseDuration = Math.max(8, Math.min(20, (this.currentParams.segmentEndSec ?? 15) - (this.currentParams.segmentStartSec ?? 0)));
             const finalDuration = this.testDurationRange
                 ? Math.max(this.testDurationRange.min, Math.min(this.testDurationRange.max, baseDuration))
@@ -1021,7 +997,7 @@ class MusicParamController {
             window.sessionConfig.segmentEndSec = this.currentParams.segmentEndSec ?? (window.sessionConfig.segmentStartSec + finalDuration);
             window.sessionConfig.rewardDurationSec = finalDuration;
             
-            // 根据音量值设置音量级别
+            // Set volume level based on volume value
             if (this.currentParams.volume <= 50) {
                 window.sessionConfig.volumeLevel = 'low';
             } else if (this.currentParams.volume <= 75) {
@@ -1031,17 +1007,17 @@ class MusicParamController {
             }
         }
         
-        // 如果有 popSynth，直接设置音量
+        // If popSynth exists, set volume directly
         if (window.popSynth) {
             window.popSynth.setVolume(this.currentParams.volume / 100);
         }
         
-        // 总是根据当前参数重新生成音乐（而不是复用旧的）
+        // Always regenerate music based on current params (don't reuse old)
         try {
             const session = window.game?.getLastSession?.() || { notes: [] };
             if (typeof window.createRichTestMusic === 'function') {
                 window.lastGeneratedSequence = window.createRichTestMusic(session);
-                console.log('[MusicParamController] 已根据测试参数重新生成音乐', {
+                console.log('[MusicParamController] Regenerated music with test params', {
                     bpm: window.sessionConfig?.rewardBpm,
                     contrast: window.sessionConfig?.dynamicContrast,
                     harmony: window.sessionConfig?.harmonyType,
@@ -1053,13 +1029,13 @@ class MusicParamController {
                     window.dispatchEvent(new CustomEvent('sequence:updated', { detail: { sequence: window.lastGeneratedSequence } })); 
                 } catch {}
             } else {
-                console.warn('[MusicParamController] createRichTestMusic 函数不存在');
+                console.warn('[MusicParamController] createRichTestMusic function not found');
             }
         } catch (err) {
-            console.error('[MusicParamController] 生成音乐失败:', err);
+            console.error('[MusicParamController] Failed to generate music:', err);
         }
         
-        // 延迟播放，确保之前的播放已停止
+        // Delayed playback to ensure previous playback has stopped
         setTimeout(() => {
             const playBtn = document.getElementById('play-music-btn');
             if (playBtn) playBtn.click();
@@ -1068,36 +1044,36 @@ class MusicParamController {
     }
     
     /**
-     * 暂停音乐
+     * Stop music
      */
     stopMusic() {
-        console.log('[MusicParamController] 暂停音乐');
+        console.log('[MusicParamController] Stop music');
         
-        // 停止 Magenta 播放器 (多种可能的引用)
+        // Stop Magenta player (multiple possible references)
         const player = window.rewardPlayer || window.MAGENTA?.player || window.gameApp?.MAGENTA?.player;
         if (player) {
             try {
                 player.stop();
             } catch (e) {
-                console.warn('[stopMusic] 停止 Magenta 播放器失败:', e);
+                console.warn('[stopMusic] Failed to stop Magenta player:', e);
             }
         }
         
-        // 停止 popSynth
+        // Stop popSynth
         if (window.popSynth?.stopAll) {
             try {
                 window.popSynth.stopAll();
             } catch (e) {
-                console.warn('[stopMusic] 停止 popSynth 失败:', e);
+                console.warn('[stopMusic] Failed to stop popSynth:', e);
             }
         }
         
-        // 尝试停止 Tone.js
+        // Try to stop Tone.js
         if (window.Tone?.Transport) {
             try {
                 window.Tone.Transport.stop();
             } catch (e) {
-                console.warn('[stopMusic] 停止 Tone.js 失败:', e);
+                console.warn('[stopMusic] Failed to stop Tone.js:', e);
             }
         }
         
@@ -1105,7 +1081,7 @@ class MusicParamController {
     }
     
     /**
-     * 重置到默认值
+     * Reset to defaults
      */
     resetToDefaults() {
         this.currentParams = {
@@ -1119,7 +1095,7 @@ class MusicParamController {
             segmentEndSec: 15
         };
         
-        // 更新滑动条
+        // Update sliders
         const tempoSlider = document.getElementById('report-param-tempo');
         const contrastSlider = document.getElementById('report-param-contrast');
         const volumeSlider = document.getElementById('report-param-volume');
@@ -1144,7 +1120,7 @@ class MusicParamController {
             this.updateSliderStyle(volumeSlider, 'volume', 70);
         }
         
-        // 重置和声选项
+        // Reset harmony options
         const harmonyBtns = document.querySelectorAll('.harmony-btn');
         harmonyBtns.forEach(btn => {
             btn.classList.remove('active');
@@ -1153,7 +1129,7 @@ class MusicParamController {
             }
         });
 
-        // 重置乐器选项
+        // Reset instrument options
         const instrumentBtns = document.querySelectorAll('.instrument-btn');
         instrumentBtns.forEach(btn => {
             btn.classList.remove('active');
@@ -1162,25 +1138,25 @@ class MusicParamController {
             }
         });
         
-        // 隐藏所有警告（使用 updateWarning 方法确保一致性）
+        // Hide all warnings (use updateWarning method for consistency)
         ['tempo-warning', 'contrast-warning', 'volume-warning', 'harmony-warning', 'instrument-warning'].forEach(id => {
             const el = document.getElementById(id);
             this.updateWarning(el, false);
         });
         
-        // 更新收敛摘要
+        // Update converge summary
         if (this.mode === 'converge') {
             this.updateConvergeSummary();
         }
         
-        console.log('[MusicParamController] 已重置到默认值');
+        console.log('[MusicParamController] Reset to defaults');
     }
     
     /**
-     * 提交收敛后的参数到数据库
+     * Submit converged parameters to database
      */
     async submitConvergedParams() {
-        // 收集上下界参数
+        // Collect upper/lower bound parameters
         const tempoMin = parseInt(document.getElementById('converge-tempo-min')?.value) || 100;
         const tempoMax = parseInt(document.getElementById('converge-tempo-max')?.value) || 140;
         const contrastMin = parseInt(document.getElementById('converge-contrast-min')?.value) || 0;
@@ -1191,13 +1167,13 @@ class MusicParamController {
         const durationMax = parseInt(document.getElementById('converge-duration-max')?.value) || 20;
         const durationSel = parseInt(document.getElementById('converge-duration-selected')?.value) || Math.max(durationMin, Math.min(durationMax, 15));
         
-        // 收集安全和声选项（从按钮组）
+        // Collect safe harmony options (from button group)
         const harmonyBtnsContainer = document.getElementById('converge-harmony-btns');
         const safeHarmonies = harmonyBtnsContainer 
             ? Array.from(harmonyBtnsContainer.querySelectorAll('.converge-harmony-btn.selected')).map(btn => btn.dataset.value)
             : ['I-V'];
 
-        // 收集安全乐器选项（从按钮组）
+        // Collect safe instrument options (from button group)
         const instrumentBtnsContainer = document.getElementById('converge-instrument-btns');
         const safeInstruments = instrumentBtnsContainer
             ? Array.from(instrumentBtnsContainer.querySelectorAll('.daw-instrument-btn.selected')).map(btn => btn.dataset.value)
@@ -1213,21 +1189,21 @@ class MusicParamController {
             timestamp: Date.now()
         };
         
-        console.log('[MusicParamController] 提交收敛参数:', this.convergedParams);
+        console.log('[MusicParamController] Submit converged params:', this.convergedParams);
         
-        // 显示提交结果
+        // Show submit result
         const submitBtn = document.getElementById('param-submit-btn');
         const originalText = submitBtn?.innerHTML;
         
         try {
-            // TODO: 实际的数据库提交逻辑
+            // TODO: Actual database submission logic
             // const response = await fetch('/api/converged-params', {
             //     method: 'POST',
             //     headers: { 'Content-Type': 'application/json' },
             //     body: JSON.stringify(this.convergedParams)
             // });
             
-            // 模拟提交成功
+            // Simulate successful submission
             if (submitBtn) {
                 submitBtn.innerHTML = `
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1238,10 +1214,10 @@ class MusicParamController {
                 submitBtn.classList.add('success');
             }
             
-            // 触发回调
+            // Trigger callback
             this.onSubmit?.({ params: this.convergedParams });
             
-            // 3秒后恢复按钮
+            // Restore button after 3 seconds
             setTimeout(() => {
                 if (submitBtn) {
                     submitBtn.classList.remove('success');
@@ -1255,7 +1231,7 @@ class MusicParamController {
             }, 3000);
             
         } catch (error) {
-            console.error('[MusicParamController] 提交失败:', error);
+            console.error('[MusicParamController] Submit failed:', error);
             if (submitBtn) {
                 submitBtn.innerHTML = this.t('expert.msg.failed');
                 submitBtn.classList.add('error');
@@ -1271,21 +1247,21 @@ class MusicParamController {
     }
     
     /**
-     * 获取当前参数
+     * Get current parameters
      */
     getParams() {
         return { ...this.currentParams };
     }
     
     /**
-     * 获取收敛后的参数
+     * Get converged parameters
      */
     getConvergedParams() {
         return this.convergedParams ? { ...this.convergedParams } : null;
     }
     
     /**
-     * 绑定DAW风格双滑块
+     * Bind DAW-style dual sliders
      */
     bindDawDualSliders() {
         const sliders = document.querySelectorAll('.daw-dual-slider');
@@ -1296,7 +1272,7 @@ class MusicParamController {
             const trackFill = container.querySelector('.daw-track-fill');
             const param = container.dataset.param;
             const scope = container.dataset.scope || 'converge';
-            // 覆盖数据集范围以适配最新安全区间
+            // Override dataset range to match latest safe range
             if (param === 'tempo') {
                 container.dataset.min = String(this.safeRanges.tempo.absMin);
                 container.dataset.max = String(this.safeRanges.tempo.absMax);
@@ -1320,11 +1296,11 @@ class MusicParamController {
                 trackFill.style.left = leftPercent + '%';
                 trackFill.style.right = rightPercent + '%';
                 
-                // 更新数值显示
+                // Update value display
                 if (minValEl) minValEl.textContent = minVal;
                 if (maxValEl) maxValEl.textContent = maxVal;
                 
-                // 记录范围
+                // Record range
                 if (param === 'duration') {
                     if (scope === 'converge') {
                         this.convergedDuration = { min: minVal, max: maxVal };
@@ -1334,7 +1310,7 @@ class MusicParamController {
                 }
             };
             
-            // 确保min不超过max
+            // Ensure min doesn't exceed max
             minSlider.addEventListener('input', () => {
                 const minVal = parseInt(minSlider.value);
                 const maxVal = parseInt(maxSlider.value);
@@ -1344,7 +1320,7 @@ class MusicParamController {
                 updateTrackFill();
             });
             
-            // 确保max不小于min
+            // Ensure max doesn't go below min
             maxSlider.addEventListener('input', () => {
                 const minVal = parseInt(minSlider.value);
                 const maxVal = parseInt(maxSlider.value);
@@ -1354,7 +1330,7 @@ class MusicParamController {
                 updateTrackFill();
             });
             
-            // 初始化
+            // Initialize
             if (param === 'tempo') {
                 minSlider.min = String(rangeMin);
                 minSlider.max = String(rangeMax);
@@ -1366,7 +1342,7 @@ class MusicParamController {
             updateTrackFill();
         });
         
-        // 绑定DAW和声按钮
+        // Bind DAW harmony buttons
         const harmonyBtns = document.querySelectorAll('.daw-harmony-btn');
         harmonyBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -1376,7 +1352,7 @@ class MusicParamController {
     }
     
     /**
-     * 播放收敛动画
+     * Play converge animation
      */
     playConvergeAnimation() {
         const sliders = document.querySelectorAll('.daw-dual-slider');
@@ -1391,7 +1367,7 @@ class MusicParamController {
             
             if (!trackFill || !minSlider || !maxSlider) return;
             
-            // 获取安全区间
+            // Get safe range
             const safeRange = this.safeRanges[param];
             if (!safeRange) return;
             
@@ -1399,18 +1375,18 @@ class MusicParamController {
             const targetLeft = ((safeRange.min - rangeMin) / range) * 100;
             const targetRight = 100 - ((safeRange.max - rangeMin) / range) * 100;
             
-            // 设置CSS变量用于动画
+            // Set CSS variables for animation
             trackFill.style.setProperty('--converge-left', targetLeft + '%');
             trackFill.style.setProperty('--converge-right', targetRight + '%');
             
-            // 先设置为全开状态
+            // Set to fully open state first
             trackFill.style.left = '0%';
             trackFill.style.right = '0%';
             
-            // 触发动画
+            // Trigger animation
             trackFill.classList.add('animating');
             
-            // 动画结束后更新滑块位置
+            // Update slider positions after animation ends
             setTimeout(() => {
                 trackFill.classList.remove('animating');
                 minSlider.value = safeRange.min;
@@ -1418,7 +1394,7 @@ class MusicParamController {
                 trackFill.style.left = targetLeft + '%';
                 trackFill.style.right = targetRight + '%';
                 
-                // 更新数值显示
+                // Update value display
                 const minValEl = document.getElementById(`converge-${param}-min-val`);
                 const maxValEl = document.getElementById(`converge-${param}-max-val`);
                 if (minValEl) minValEl.textContent = safeRange.min;
@@ -1428,15 +1404,15 @@ class MusicParamController {
     }
 }
 
-// 全局单例
+// Global singleton
 window.musicParamController = new MusicParamController();
 
-// DOM加载完成后初始化
+// Initialize after DOM loaded
 document.addEventListener('DOMContentLoaded', () => {
-    // 延迟初始化，确保其他组件已加载
+    // Delayed initialization to ensure other components are loaded
     setTimeout(() => {
         window.musicParamController.init();
     }, 100);
 });
 
-console.log('🎵 音乐参数控制器已加载');
+console.log('🎵 Music Parameter Controller loaded');

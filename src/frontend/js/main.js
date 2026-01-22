@@ -1,10 +1,10 @@
-/**
+﻿/**
  * Main application entry point
  * Handles initialization, UI interactions, and game coordination
  */
 
-// --- Magenta UMD 全局兜底获取 ---
-// ---- 安全获取 Magenta UMD 全局 ----
+// --- Magenta UMD global fallback ---
+// ---- Safely get Magenta UMD global ----
 const mm =
   window.mm ||
   (window.magenta && window.magenta.music) ||
@@ -12,7 +12,7 @@ const mm =
   window.magentaMusic || null;
 
 if (!mm || !mm.MusicRNN) {
-  console.error('[Magenta] UMD 未就绪：请检查 index.html 是否在 main.js 之前引入 tf.min.js 与 music.js');
+  console.error('[Magenta] UMD not ready: check if index.html includes tf.min.js and music.js before main.js');
 }
 
 // Global game instance
@@ -67,7 +67,7 @@ let pausedBySettings = false;
 let panicMuted = false;
 // currentLang is now managed by i18n.js
 
-// SVG图标定义
+// SVG icon definitions
 const ICONS = {
     pause: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>',
     play: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>',
@@ -399,12 +399,12 @@ function initializeUIElements() {
     elements.bubbleCount = document.getElementById('bubble-count');
     syncSessionElements();
 
-    // 如果缺少设置 UI，尝试注入
+    // If settings UI is missing, try to inject
     ensureSessionSettingsUI();
     syncSessionElements();
     refreshPanicButtons();
     
-    // 初始化分段选择器
+    // Initialize segmented controls
     initSegmentedControls();
     
     // Verify all elements were found
@@ -429,11 +429,11 @@ function ensureSessionSettingsUI() {
             controls = document.createElement('div');
             controls.className = 'controls';
             header.appendChild(controls);
-            console.warn('[SettingsUI] .controls 不存在，已创建回退容器');
+            console.warn('[SettingsUI] .controls not found, created fallback container');
         }
     }
     if (!controls) {
-        console.warn('[SettingsUI] 未找到控件容器，跳过 UI 注入');
+        console.warn('[SettingsUI] Control container not found, skipping UI injection');
         return;
     }
     if (controls && !document.getElementById('session-settings-btn')) {
@@ -461,67 +461,67 @@ function ensureSessionSettingsUI() {
         const modal = document.createElement('div');
         modal.id = 'session-settings-modal';
       modal.className = 'settings-modal hidden';
-      // 注意：这里的内容也会被 updateUIText 更新，但初始结构需要保持
+      // Note: content will be updated by updateUIText, but initial structure needs to be maintained
       modal.innerHTML = `
           <div class="settings-panel">
             <div class="settings-header">
-                <h2>游戏设置</h2>
-                <p class="settings-subtitle">调整感官体验，让游戏更适合你</p>
+                <h2>Game Settings</h2>
+                <p class="settings-subtitle">Adjust sensory experience to suit you</p>
             </div>
             
             <div class="settings-scroll-area">
                 <div class="settings-grid">
                 <div class="settings-field">
-                    <label for="session-volume">音量大小</label>
+                    <label for="session-volume">Volume</label>
                     <select id="session-volume">
-                    <option value="low">柔和 (Low)</option>
-                    <option value="medium" selected>标准 (Medium)</option>
-                    <option value="high">响亮 (High)</option>
+                    <option value="low">Soft (Low)</option>
+                    <option value="medium" selected>Standard (Medium)</option>
+                    <option value="high">Loud (High)</option>
                     </select>
                 </div>
                 <div class="settings-field">
-                    <label for="session-density">泡泡数量</label>
+                    <label for="session-density">Bubble Count</label>
                     <select id="session-density">
-                    <option value="sparse">少一点 (Sparse)</option>
-                    <option value="normal" selected>正常 (Normal)</option>
+                    <option value="sparse">Fewer (Sparse)</option>
+                    <option value="normal" selected>Normal</option>
                     </select>
                 </div>
                 <div class="settings-field">
-                    <label for="session-timbre">乐器音色</label>
+                    <label for="session-timbre">Instrument</label>
                     <select id="session-timbre">
-                    <option value="soft" selected>柔和钢琴 (Soft)</option>
-                    <option value="bright">明亮小提琴 (Bright)</option>
+                    <option value="soft" selected>Soft Piano</option>
+                    <option value="bright">Bright Violin</option>
                     </select>
                 </div>
                 <div class="settings-field">
-                    <label for="session-latency">声音延迟</label>
+                    <label for="session-latency">Sound Delay</label>
                     <select id="session-latency">
-                    <option value="0" selected>即时 (Immediate)</option>
-                    <option value="500">稍慢 (0.5s Delay)</option>
+                    <option value="0" selected>Immediate</option>
+                    <option value="500">Delayed (0.5s)</option>
                     </select>
                 </div>
                 <div class="settings-field">
-                    <label for="session-immediate">点击反馈</label>
+                    <label for="session-immediate">Click Feedback</label>
                     <select id="session-immediate">
-                    <option value="full" selected>声音+视觉 (Full)</option>
-                    <option value="visual">仅视觉 (Visual-only)</option>
-                    <option value="off">关闭 (Off)</option>
+                    <option value="full" selected>Sound+Visual (Full)</option>
+                    <option value="visual">Visual Only</option>
+                    <option value="off">Off</option>
                     </select>
                 </div>
                 <div class="settings-field">
-                    <label for="session-reward">结束音乐</label>
+                    <label for="session-reward">End Music</label>
                     <select id="session-reward">
-                    <option value="on" selected>开启 (On)</option>
-                    <option value="off">关闭 (Off)</option>
+                    <option value="on" selected>On</option>
+                    <option value="off">Off</option>
                     </select>
                 </div>
                 </div>
             </div>
 
             <div class="settings-actions">
-              <button id="session-reset-btn" class="result-btn secondary small">恢复默认</button>
-              <button id="session-start-btn" class="result-btn primary small">开始游戏</button>
-              <button id="session-close-btn" class="result-btn secondary small">关闭</button>
+              <button id="session-reset-btn" class="result-btn secondary small">Reset</button>
+              <button id="session-start-btn" class="result-btn primary small">Start Game</button>
+              <button id="session-close-btn" class="result-btn secondary small">Close</button>
             </div>
           </div>
         `;
@@ -534,7 +534,7 @@ function ensureSessionSettingsUI() {
  */
   async function initializeGame() {
     try {
-      // ① 固定随机种子
+      // 1. Fix random seed
       if (!window.__LEVEL_SEED) {
         const u32 = new Uint32Array(1);
         try { crypto.getRandomValues(u32); } catch { u32[0] = Math.floor(Math.random() * 2**32); }
@@ -542,15 +542,15 @@ function ensureSessionSettingsUI() {
       }
       console.log('[Game Seed]', window.__LEVEL_SEED);
   
-      // ② 创建并初始化游戏引擎
+      // 2. Create and initialize game engine
       game = new GameEngine('game-canvas');
-      // 将游戏实例暴露到全局，供结果窗口等模块统一使用
+      // Expose game instance globally for result window and other modules
       window.game = game;
       const initialized = await game.init();
       if (!initialized) throw new Error('Failed to initialize game engine');
       console.log('Game engine ready');
 
-      // ③ 确保游戏结果管理器已初始化
+      // 3. Ensure game result manager is initialized
       if (typeof GameResultManager !== 'undefined') {
         if (!window.gameResultManager) {
           window.gameResultManager = new GameResultManager();
@@ -560,13 +560,13 @@ function ensureSessionSettingsUI() {
         console.warn('GameResultManager not found');
       }
 
-      // 预热 Magenta（边玩边下模型/音色）
+      // Warm up Magenta (download model/sounds while playing)
       initMusicRNN().catch(err => console.warn('[Magenta warmup failed]', err));
   
-      // （可选）额外加一个 keydown 解锁兜底；pointerdown 已在 GameEngine 里加过
+      // (Optional) Add keydown unlock fallback; pointerdown already added in GameEngine
       window.addEventListener('keydown', () => window.popSynth?.resume?.(), { once: true });
 
-      // 默认弹出设置窗口，等待专家点击“开始本轮”
+      // Show settings modal by default, wait for expert to click Start Round
       openSessionSettingsModal();
   
     } catch (e) {
@@ -589,19 +589,19 @@ function setupEventListeners() {
 
     // Session settings
     if (elements.sessionModal) {
-        // 使用事件委托处理模态框内的所有点击，确保动态内容也能响应
+        // Use event delegation to handle all clicks in modal, ensuring dynamic content responds
         elements.sessionModal.addEventListener('click', (e) => {
             const target = e.target;
             
-            // 开始按钮
+            // Start button
             if (target.id === 'session-start-btn') {
                 handleStartRound();
             }
-            // 关闭按钮
+            // Close button
             else if (target.id === 'session-close-btn') {
                 closeSessionSettingsModal();
             }
-            // 恢复默认按钮
+            // Reset button
             else if (target.id === 'session-reset-btn') {
                 resetSessionForm();
             }
@@ -611,7 +611,7 @@ function setupEventListeners() {
     if (elements.sessionSettingsBtn) {
         elements.sessionSettingsBtn.addEventListener('click', () => openSessionSettingsModal());
     } else {
-        console.warn('[SettingsUI] 设置按钮未找到');
+        console.warn('[SettingsUI] Settings button not found');
     }
 
     if (elements.panicMuteBtn) {
@@ -748,7 +748,7 @@ function setupResponsiveHandling() {
  * Show encouragement message with fade animation
  */
 function showEncouragementMessage(message, duration = 2000) {
-    // 用户已禁用反馈，不显示
+    // User has disabled feedback, don't show
     return;
 }
 
@@ -822,12 +822,12 @@ function startStatusUpdates() {
       if (game) {
         const state = game.getState();
   
-        // ✅ 查询剩余时间并更新进度条
+        // Query remaining time and update progress bar
         if (typeof game.getRoundRemainingMs === 'function') {
           const remainingMs = game.getRoundRemainingMs();
-          const totalMs = game.roundDurationMs || 60000; // 默认60秒
+          const totalMs = game.roundDurationMs || 60000; // Default 60s
           
-          // 更新自闭症友好的进度显示
+          // Update autism-friendly progress display
           if (window.autismFeatures) {
             window.autismFeatures.updateProgress(remainingMs, totalMs);
           }
@@ -860,7 +860,7 @@ function updateSessionPresetLabel(config) {
     elements.sessionPreset.textContent = `Preset: ${config.volumeLevel} / ${config.rhythmDensity} / ${config.timbre}`;
 }
 
-// 初始化分段选择器
+// Initialize segmented controls
 function initSegmentedControls() {
     const controls = document.querySelectorAll('.segmented-control');
     controls.forEach(control => {
@@ -870,11 +870,11 @@ function initSegmentedControls() {
         
         segments.forEach(segment => {
             segment.addEventListener('click', () => {
-                // 移除所有active状态
+                // Remove all active states
                 segments.forEach(s => s.classList.remove('active'));
-                // 添加当前active状态
+                // Add current active state
                 segment.classList.add('active');
-                // 更新隐藏input的值
+                // Update hidden input value
                 if (hiddenInput) {
                     hiddenInput.value = segment.dataset.value;
                 }
@@ -883,7 +883,7 @@ function initSegmentedControls() {
     });
 }
 
-// 更新分段选择器的选中状态
+// Update segmented control selected state
 function updateSegmentedControl(fieldId, value) {
     const control = document.querySelector(`.segmented-control[data-field="${fieldId}"]`);
     if (!control) return;
@@ -907,13 +907,13 @@ function loadSessionSettingsForm(config) {
     if (!elements.sessionModal) return;
     const normalized = normalizeSessionConfig(config);
     
-    // 更新分段选择器（只更新界面上存在的设置项）
+    // Update segmented controls (only update settings that exist in UI)
     updateSegmentedControl('session-volume', normalized.volumeLevel || 'medium');
     updateSegmentedControl('session-timbre', normalized.timbre || 'piano');
     updateSegmentedControl('session-latency', String(normalized.feedbackLatencyMs ?? 0));
     updateSegmentedControl('session-immediate', normalized.immediateToneMode || 'full');
     
-    // 同时更新隐藏的input值（兼容旧代码）
+    // Also update hidden input values (for backward compatibility)
     if(elements.sessionVolume) elements.sessionVolume.value = normalized.volumeLevel || 'medium';
     if(elements.sessionDensity) elements.sessionDensity.value = normalized.rhythmDensity || 'normal';
     if(elements.sessionTimbre) elements.sessionTimbre.value = normalized.timbre || 'piano';
@@ -979,7 +979,7 @@ function openSessionSettingsModal() {
         syncSessionElements();
     }
     if (!elements.sessionModal) {
-        console.warn('[SettingsUI] session-settings-modal 缺失，请确认加载了最新 index.html');
+        console.warn('[SettingsUI] session-settings-modal missing, please confirm latest index.html is loaded');
         return;
     }
     const config = getCurrentSessionConfig();
@@ -1024,7 +1024,7 @@ function handleStartRound() {
         statusUpdatesStarted = true;
     }
 
-    // 重置成就与结果统计
+    // Reset achievements and result statistics
     if (window.autismFeatures) {
         window.autismFeatures.resetAchievements();
     }
@@ -1041,7 +1041,7 @@ function handleStartRound() {
 
                 if (window.gameResultManager) {
                     window.gameResultManager.endGame();
-                    console.log('📊 游戏结果已显示');
+                    console.log('📊 Game results displayed');
                 }
 
                 const enableMusicGeneration = window.enableAIMusic || false;
@@ -1055,12 +1055,12 @@ function handleStartRound() {
                                 downloadMidi: false,
                             });
                         } catch (musicError) {
-                            console.warn('🎵 音乐生成失败，但不影响游戏结果:', musicError);
+                            console.warn('🎵 Music generation failed, but game results unaffected', musicError);
                         }
                     }, 100);
                 } else {
                     window.lastGeneratedSequence = createRichTestMusic(session);
-                    console.log('🎵 音乐生成已禁用，使用丰富测试序列');
+                    console.log('🎵 Music generation disabled, using rich test sequence');
                     window.gameResultManager?.updateDebugPanel?.();
                     try { window.dispatchEvent(new CustomEvent('sequence:updated', { detail: { sequence: window.lastGeneratedSequence } })); } catch {}
                 }
@@ -1092,46 +1092,46 @@ window.sessionUI = {
     close: closeSessionSettingsModal
 };
 
-// ===== Magenta MusicRNN（固定 CPU 后端）=====
+// ===== Magenta MusicRNN (fixed CPU backend) =====
 const MAGENTA = {
     model: null,
     player: null,
     stepsPerQuarter: 4,
     qpm: 120,
-    __backend: null,   // 记录当前模型所在后端
+    __backend: null,   // Record current model backend
 };
   
   async function initMusicRNN({ forceReload = false, backend = 'cpu' } = {}) {
     const mm = window.mm;
     if (!mm || !mm.MusicRNN) {
-      console.error('[Magenta] UMD 未加载：确认 index.html 里 tf.min.js 和 vendor/magenta/music.js 在 main.js 之前引入');
+      console.error('[Magenta] UMD not loaded: confirm index.html includes tf.min.js and vendor/magenta/music.js before main.js');
       return;
     }
   
     const tfjs = window.tf;
     if (tfjs && tfjs.getBackend() !== backend) {
-      await tfjs.setBackend(backend);   // ← 关键：先选好后端，再初始化模型
+      await tfjs.setBackend(backend);   // Key: select backend before initializing model
       await tfjs.ready();
     }
   
-    // 同一后端且已初始化则直接返回
+    // Same backend and already initialized, return directly
     if (!forceReload && MAGENTA.model && MAGENTA.__backend === backend) {
       return;
     }
   
-    // 如果之前用的是别的后端，重建模型（避免权重丢失）
+    // If previously using different backend, rebuild model (avoid weight loss)
     try { MAGENTA.model?.dispose?.(); } catch {}
     MAGENTA.model = new mm.MusicRNN('../../vendor/magenta/checkpoints/music_rnn/melody_rnn');
     await MAGENTA.model.initialize();
   
-    // 创建SoundFont播放器以确保使用正确的音色
+    // Create SoundFont player to ensure correct sound
     if (!MAGENTA.player) {
       try {
-        // 尝试使用SoundFont播放器（如果可用）
+        // Try using SoundFont player (if available)
         MAGENTA.player = new mm.SoundFontPlayer('https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus');
-        console.log('🎹 使用SoundFont播放器（钢琴音色）');
+        console.log('🎹 Using SoundFont player (piano sound)');
         
-        // 预加载常用乐器采样，防止首次播放报错
+        // Preload common instrument samples to prevent first play errors
         // 0: Piano, 4: E.Piano, 24: Guitar (Nylon), 9: Percussion (Standard Kit)
         const preloadSeq = {
           notes: [
@@ -1143,24 +1143,24 @@ const MAGENTA = {
           totalTime: 0.1
         };
         MAGENTA.player.loadSamples(preloadSeq).then(() => {
-            console.log('✅ 常用乐器采样预加载完成');
+            console.log('✅ Common instrument samples preloaded');
         }).catch(err => {
-            console.warn('⚠️ 乐器采样预加载失败:', err);
+            console.warn('⚠️ Instrument sample preload failed', err);
         });
 
       } catch (e) {
-        // 降级到普通播放器
+        // Fallback to default player
         MAGENTA.player = new mm.Player();
-        console.log('🎵 使用默认播放器');
+        console.log('🎵 Using default player');
       }
     }
     MAGENTA.__backend = backend;
-    // 暴露到全局，供结果弹窗播放使用
+    // Expose to global for result popup playback
     window.MAGENTA = MAGENTA;
     console.log('[Magenta] MusicRNN ready on backend =', backend);
 }
   
-  // 量化（保持你原来的逻辑）
+  // Quantize (keep original logic)
   function sessionToQuantized(session, sustainSec = 0.2) {
     const notes = [...session.notes].sort((a, b) => a.dt - b.dt);
     const ns = {
@@ -1177,22 +1177,22 @@ const MAGENTA = {
     return mm.sequences.quantizeNoteSequence(ns, MAGENTA.stepsPerQuarter);
   }
   
-  // 生成 + 播放（临时切到 CPU 执行 continueSequence，避免 multinomial 报错）
+  // Generate + play (temporarily switch to CPU for continueSequence to avoid multinomial error)
   async function generateMelodyFromSession(session, {
     primerBars = 2,
     continueSteps = 128,
     temperature = 1.1,
     downloadMidi = true,
   } = {}) {
-    // 确保 CPU 上初始化（很重要）
+    // Ensure CPU initialization (important)
     await initMusicRNN({ backend: 'cpu' });
   
     if (!session?.notes?.length) {
-      window.gameApp?.showEncouragementMessage?.('本局没有采到音符', 1200);
+      window.gameApp?.showEncouragementMessage?.('No notes collected this round', 1200);
       return;
     }
   
-    // 取用户 primer
+    // Get user primer
     const qns = sessionToQuantized(session);
     const primerSteps = Math.min(primerBars * 16, qns.totalQuantizedSteps);
     const primer = mm.sequences.clone(qns);
@@ -1201,19 +1201,19 @@ const MAGENTA = {
   
     let cont = null;
 
-    // 为每次生成引入轻微随机扰动（增强差异性）
+    // Add slight random perturbation for each generation (enhance diversity)
     const tempAdj = temperature + (Math.random() - 0.5) * 0.25; // ±0.125
-    const stepsAdj = Math.max(32, continueSteps + Math.floor((Math.random() - 0.5) * 24)); // ±12 步
+    const stepsAdj = Math.max(32, continueSteps + Math.floor((Math.random() - 0.5) * 24)); // ±12 steps
     console.log('[Magenta] sampling params:', { temperature: tempAdj.toFixed(3), continueSteps: stepsAdj });
   
-    // 1) 用户 primer
+    // 1) User primer
     try {
       cont = await MAGENTA.model.continueSequence(primer, stepsAdj, tempAdj);
     } catch (err) {
       console.warn('[Magenta] user-primer continue failed:', err);
     }
   
-    // 2) 为空则用内置 seed（已随机化）
+    // 2) If empty, use built-in seed (randomized)
     if (!cont?.notes?.length) {
       console.warn('[Magenta] empty with user primer, retry with fallback seed');
       const seed = buildFallbackSeed();
@@ -1224,7 +1224,7 @@ const MAGENTA = {
       }
     }
   
-    // 3) 还不行用贪心（temperature = 0.0）
+    // 3) If still empty, use greedy (temperature = 0.0)
     if (!cont?.notes?.length) {
       console.warn('[Magenta] fallback to greedy decoding (temperature=0)');
       const seed = buildFallbackSeed();
@@ -1232,7 +1232,7 @@ const MAGENTA = {
         cont = await MAGENTA.model.continueSequence(seed, stepsAdj, 0.0);
       } catch (err3) {
         console.error('[Magenta] greedy also failed:', err3);
-        showEncouragementMessage('AI 生成失败：查看控制台错误', 1500);
+        showEncouragementMessage('AI generation failed: check console errors', 1500);
         return;
       }
     }
@@ -1244,7 +1244,7 @@ const MAGENTA = {
   
     try { await mm.Player.tone?.context?.resume?.(); } catch {}
   
-    // 仅生成，不自动播放（由用户点击播放）
+    // Only generate, don't auto-play (user clicks to play)
     window.lastGeneratedSequence = full;
     window.gameResultManager?.updateDebugPanel?.();
     try { window.dispatchEvent(new CustomEvent('sequence:updated', { detail: { sequence: full } })); } catch {}
@@ -1253,16 +1253,16 @@ const MAGENTA = {
   
     if (downloadMidi) {
       try {
-        // 改进MIDI生成，确保有声音
+        // Improve MIDI generation to ensure sound
         const enhancedSequence = enhanceMidiSequence(full);
         
-        // 验证序列结构
+        // Validate sequence structure
         if (!enhancedSequence || !Array.isArray(enhancedSequence.notes)) {
-          console.warn('⚠️ 增强序列结构无效，跳过MIDI下载');
+          console.warn('⚠️ Enhanced sequence structure invalid, skipping MIDI download');
           return;
         }
         
-        console.log('🎵 准备转换MIDI，序列信息:', {
+        console.log('🎵 Preparing MIDI conversion, sequence info:', {
           notes: enhancedSequence.notes.length,
           totalTime: enhancedSequence.totalTime,
           ticksPerQuarter: enhancedSequence.ticksPerQuarter
@@ -1271,7 +1271,7 @@ const MAGENTA = {
         const midi = mm.sequenceProtoToMidi(enhancedSequence);
         
         if (!midi || !midi.length) {
-          console.warn('⚠️ MIDI转换结果为空');
+          console.warn('⚠️ MIDI conversion result empty');
           return;
         }
         
@@ -1283,21 +1283,21 @@ const MAGENTA = {
         a.click();
         URL.revokeObjectURL(url);
         
-        console.log('✅ MIDI文件已下载，包含', enhancedSequence.notes?.length || 0, '个音符');
+        console.log('✅ MIDI file downloaded, contains', enhancedSequence.notes?.length || 0, 'notes');
       } catch (midiError) {
-        console.warn('⚠️ MIDI下载失败:', midiError);
-        // 不抛出错误，让音乐播放继续进行
+        console.warn('⚠️ MIDI download failed:', midiError);
+        // Don't throw error, let music playback continue
       }
     }
   }
 
   /**
-   * 增强MIDI序列，确保MIDI文件有声音
+   * Enhance MIDI sequence to ensure MIDI file has sound
    */
   function enhanceMidiSequence(sequence) {
     if (!sequence || !sequence.notes || sequence.notes.length === 0) {
-      console.warn('⚠️ 序列为空，创建默认音符');
-      // 创建一个简单的默认序列
+      console.warn('⚠️ Sequence empty, creating default notes');
+      // Create a simple default sequence
       return {
         ticksPerQuarter: 220,
         totalTime: 4.0,
@@ -1312,25 +1312,25 @@ const MAGENTA = {
       };
     }
     
-    // 复制原序列
+    // Copy original sequence
     const enhanced = JSON.parse(JSON.stringify(sequence));
     
-    // 确保所有必需的属性存在
+    // Ensure all required properties exist
     enhanced.ticksPerQuarter = enhanced.ticksPerQuarter || 220;
     enhanced.tempos = Array.isArray(enhanced.tempos) && enhanced.tempos.length > 0 
       ? enhanced.tempos 
       : [{ time: 0, qpm: 120 }];
     
-    // 确保notes是数组
+    // Ensure notes is array
     if (!Array.isArray(enhanced.notes)) {
       enhanced.notes = [];
     }
     
-    // 增强音符
+    // Enhance notes
     enhanced.notes = enhanced.notes.map(note => {
       const enhancedNote = { ...note };
       
-      // 确保音符有合理的持续时间（至少0.1秒）
+      // Ensure note has reasonable duration (at least 0.1s)
       if (!enhancedNote.endTime || enhancedNote.endTime <= enhancedNote.startTime) {
         enhancedNote.endTime = enhancedNote.startTime + 0.25;
       }
@@ -1340,20 +1340,20 @@ const MAGENTA = {
         enhancedNote.endTime = enhancedNote.startTime + 0.25;
       }
       
-      // 确保音符有合理的力度
+      // Ensure note has reasonable velocity
       enhancedNote.velocity = enhancedNote.velocity || 80;
       if (enhancedNote.velocity < 30) {
         enhancedNote.velocity = 60;
       }
       
-      // 确保音符在合理的音高范围内
+      // Ensure note is in reasonable pitch range
       if (enhancedNote.pitch < 21) enhancedNote.pitch = 60; // C4
       if (enhancedNote.pitch > 108) enhancedNote.pitch = 72; // C5
       
       return enhancedNote;
     });
     
-    // 确保总时长合理
+    // Ensure total time is reasonable
     if (enhanced.notes.length > 0) {
       const maxEndTime = Math.max(...enhanced.notes.map(n => n.endTime));
       enhanced.totalTime = Math.max(enhanced.totalTime || 0, maxEndTime + 0.5);
@@ -1361,23 +1361,23 @@ const MAGENTA = {
       enhanced.totalTime = 2.0;
     }
     
-    // 添加乐器信息（钢琴）
+    // Add instrument info (piano)
     if (!Array.isArray(enhanced.instrumentInfos) || enhanced.instrumentInfos.length === 0) {
       enhanced.instrumentInfos = [
         {
-          instrument: 0, // 钢琴
+          instrument: 0, // Piano
           program: 0,
           isDrum: false
         }
       ];
     }
     
-    // 添加其他可能需要的属性
+    // Add other potentially needed properties
     enhanced.keySignatures = enhanced.keySignatures || [];
     enhanced.timeSignatures = enhanced.timeSignatures || [];
     enhanced.controlChanges = enhanced.controlChanges || [];
     
-    console.log('🎵 MIDI序列已增强:', {
+    console.log('🎵 MIDI sequence enhanced:', {
       notes: enhanced.notes.length,
       totalTime: enhanced.totalTime,
       ticksPerQuarter: enhanced.ticksPerQuarter,
@@ -1389,8 +1389,8 @@ const MAGENTA = {
   }
   
   /**
-   * 创建丰富的测试音乐序列
-   * 改为调用安全的儿歌风格生成器（AdvancedMusicGenerator）
+   * Create rich test music sequence
+   * Calls safe nursery rhyme style generator (AdvancedMusicGenerator)
    */
   function createRichTestMusic(session) {
     try {
@@ -1414,18 +1414,18 @@ const MAGENTA = {
     }
   }
   
-  // 生成主旋律
+  // Generate main melody
   function generateMelody(notes, scale, duration, channel, program) {
     let currentTime = 0;
     const noteLength = 0.5;
     
     while (currentTime < duration - 2) {
-      if (Math.random() < 0.15) { // 15%概率休息
+      if (Math.random() < 0.15) { // 15% chance to rest
         currentTime += noteLength;
         continue;
       }
       
-      const pitch = scale[Math.floor(Math.random() * scale.length)] + 12; // 高八度
+      const pitch = scale[Math.floor(Math.random() * scale.length)] + 12; // One octave higher
       const velocity = 70 + Math.floor(Math.random() * 30);
       const length = noteLength * (0.7 + Math.random() * 0.6);
       
@@ -1442,15 +1442,15 @@ const MAGENTA = {
     }
   }
   
-  // 生成和声
+  // Generate harmony
   function generateHarmony(notes, scale, duration, channel, program) {
-    const chordInterval = 2.0; // 每2秒一个和弦
+    const chordInterval = 2.0; // One chord every 2 seconds
     
     for (let time = 0; time < duration - 2; time += chordInterval) {
       const rootIndex = Math.floor(Math.random() * scale.length);
       const root = scale[rootIndex];
       
-      // 三和弦
+      // Triad
       const chordNotes = [
         { pitch: root, interval: 0 },
         { pitch: scale[(rootIndex + 2) % scale.length], interval: 0.1 },
@@ -1470,13 +1470,13 @@ const MAGENTA = {
     }
   }
   
-  // 生成低音线
+  // Generate bass line
   function generateBassLine(notes, scale, duration, channel, program) {
     let currentTime = 0;
-    const noteLength = 1.0; // 低音较长
+    const noteLength = 1.0; // Bass notes are longer
     
     while (currentTime < duration - 1) {
-      const pitch = scale[Math.floor(Math.random() * 3)] - 24; // 低两个八度
+      const pitch = scale[Math.floor(Math.random() * 3)] - 24; // Two octaves lower
       const velocity = 60 + Math.floor(Math.random() * 20);
       
       notes.push({
@@ -1492,18 +1492,18 @@ const MAGENTA = {
     }
   }
   
-  // 生成对位旋律
+  // Generate counter melody
   function generateCounterMelody(notes, scale, duration, channel, program) {
-    let currentTime = 0.25; // 稍微错开
+    let currentTime = 0.25; // Slightly offset
     const noteLength = 0.75;
     
     while (currentTime < duration - 2) {
-      if (Math.random() < 0.3) { // 30%概率休息
+      if (Math.random() < 0.3) { // 30% chance to rest
         currentTime += noteLength;
         continue;
       }
       
-      const pitch = scale[Math.floor(Math.random() * scale.length)] + 6; // 中等音域
+      const pitch = scale[Math.floor(Math.random() * scale.length)] + 6; // Mid range
       const velocity = 55 + Math.floor(Math.random() * 25);
       
       notes.push({
@@ -1519,20 +1519,20 @@ const MAGENTA = {
     }
   }
   
-  // 生成装饰音
+  // Generate ornaments
   function generateOrnaments(notes, scale, duration, channel, program) {
     const ornamentTimes = [];
     for (let i = 0; i < duration; i += 4) {
-      if (Math.random() < 0.7) { // 70%概率添加装饰
+      if (Math.random() < 0.7) { // 70% chance to add ornament
         ornamentTimes.push(i + Math.random() * 2);
       }
     }
     
     ornamentTimes.forEach(time => {
-      const pitch = scale[Math.floor(Math.random() * scale.length)] + 24; // 高音区
+      const pitch = scale[Math.floor(Math.random() * scale.length)] + 24; // High register
       const velocity = 40 + Math.floor(Math.random() * 30);
       
-      // 快速的装饰音符
+      // Fast ornament notes
       for (let i = 0; i < 3; i++) {
         notes.push({
           pitch: pitch + i * 2,
@@ -1546,21 +1546,21 @@ const MAGENTA = {
     });
   }
   
-  // 生成打击乐
+  // Generate percussion
   function generatePercussion(notes, duration) {
-    // 添加基本的鼓点
+    // Add basic drum pattern
     for (let time = 0; time < duration; time += 1) {
-      // 底鼓 (每拍)
+      // Bass drum (every beat)
       notes.push({
         pitch: 36, // Bass Drum
         startTime: time,
         endTime: time + 0.1,
         velocity: 80,
-        instrument: 9, // 打击乐通道
+        instrument: 9, // Percussion channel
         program: 0
       });
       
-      // 军鼓 (反拍)
+      // Snare drum (off-beat)
       if (time % 2 === 1) {
         notes.push({
           pitch: 38, // Snare Drum
@@ -1572,7 +1572,7 @@ const MAGENTA = {
         });
       }
       
-      // 踩镲 (每半拍)
+      // Hi-hat (every half beat)
       if (Math.random() < 0.6) {
         notes.push({
           pitch: 42, // Closed Hi-hat
@@ -1586,40 +1586,40 @@ const MAGENTA = {
     }
   }
   
-  // 添加动态变化
+  // Add dynamic changes
   function addDynamicChanges(notes, duration) {
     notes.forEach(note => {
       const timeRatio = note.startTime / duration;
       
-      // 渐强渐弱
+      // Crescendo and decrescendo
       if (timeRatio < 0.2) {
-        // 开始部分渐强
+        // Beginning crescendo
         note.velocity = Math.floor(note.velocity * (0.5 + timeRatio * 2.5));
       } else if (timeRatio > 0.8) {
-        // 结束部分渐弱
+        // Ending decrescendo
         note.velocity = Math.floor(note.velocity * (1 - (timeRatio - 0.8) * 2));
       }
       
-      // 确保力度在合理范围内
+      // Ensure velocity is in reasonable range
       note.velocity = Math.max(20, Math.min(127, note.velocity));
     });
   }
 
-  // 将增强函数暴露到全局
+  // Expose enhancement functions to global
   window.enhanceMidiSequence = enhanceMidiSequence;
   window.createRichTestMusic = createRichTestMusic;
 
-  // ---------- A) 通用 helper：临时切到 CPU 执行一段函数（带日志） ----------
+  // ---------- A) Generic helper: temporarily switch to CPU for function execution (with logging) ----------
 async function withCPU(fn) {
     const tf = window.tf;
-    if (!tf) throw new Error('TFJS (tf.min.js) 未加载');
+    if (!tf) throw new Error('TFJS (tf.min.js) not loaded');
     const prev = tf.getBackend?.() || 'cpu';
     try {
       if (prev !== 'cpu') {
         await tf.setBackend('cpu');
         await tf.ready();
       }
-      // 调试确认确实在 CPU
+      // Debug confirm using CPU
       console.log('[TFJS] using backend:', tf.getBackend());
       return await fn();
     } finally {
@@ -1632,12 +1632,12 @@ async function withCPU(fn) {
   }
   
   function buildFallbackSeed(qpm = MAGENTA.qpm, spq = MAGENTA.stepsPerQuarter) {
-    // 使用不同的简单动机和随机根音，避免兜底时每次都一样
+    // Use different simple motifs and random root notes to avoid same fallback every time
     const patterns = [
-      [0, 4, 7, 12],   // 大三和弦分解 (C-E-G-C)
-      [0, 3, 7, 10],   // 小调色彩
-      [0, 5, 7, 12],   // sus4 色彩
-      [0, 2, 4, 7],    // 级进片段
+      [0, 4, 7, 12],   // Major triad arpeggio (C-E-G-C)
+      [0, 3, 7, 10],   // Minor color
+      [0, 5, 7, 12],   // sus4 color
+      [0, 2, 4, 7],    // Stepwise fragment
     ];
     const base = 48 + Math.floor(Math.random() * 24); // C3..B4
     const pat = patterns[Math.floor(Math.random() * patterns.length)];
@@ -1656,7 +1656,7 @@ async function withCPU(fn) {
     return mm.sequences.quantizeNoteSequence(seed, spq);
   }
   
-  // 便于调试
+  // For debugging
   Object.assign(window.gameApp, {
     initMusicRNN,
     buildFallbackSeed,

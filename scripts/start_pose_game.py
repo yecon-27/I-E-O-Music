@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-启动完整的泡泡游戏系统
-包括WebSocket服务器和HTTP服务器
+Start the complete bubble game system
+Including WebSocket server and HTTP server
 """
 
 import subprocess
@@ -11,41 +11,41 @@ import threading
 import os
 
 def start_websocket_server():
-    """启动WebSocket服务器"""
+    """Start WebSocket server"""
     try:
-        print("🔌 启动WebSocket服务器...")
+        print("Starting WebSocket server...")
         os.chdir('src/backend')
         subprocess.run([sys.executable, 'pose_websocket_server.py'], check=True)
     except Exception as e:
-        print(f"❌ WebSocket服务器启动失败: {e}")
+        print(f"WebSocket server failed to start: {e}")
 
 def start_http_server():
-    """启动HTTP服务器"""
+    """Start HTTP server"""
     try:
-        print("🌐 启动HTTP服务器...")
-        time.sleep(2)  # 等待WebSocket服务器启动
+        print("Starting HTTP server...")
+        time.sleep(2)  # Wait for WebSocket server to start
         os.chdir('../..')
         subprocess.run([sys.executable, 'scripts/start_https_server.py'], check=True)
     except Exception as e:
-        print(f"❌ HTTP服务器启动失败: {e}")
+        print(f"HTTP server failed to start: {e}")
 
 def main():
-    print("🎮 启动泡泡游戏系统")
+    print("Starting Bubble Game System")
     print("=" * 50)
     
     try:
-        # 启动WebSocket服务器（后台）
+        # Start WebSocket server (background)
         websocket_thread = threading.Thread(target=start_websocket_server)
         websocket_thread.daemon = True
         websocket_thread.start()
         
-        # 启动HTTP服务器（前台）
+        # Start HTTP server (foreground)
         start_http_server()
         
     except KeyboardInterrupt:
-        print("\n👋 游戏系统已停止")
+        print("\nGame system stopped")
     except Exception as e:
-        print(f"❌ 系统启动失败: {e}")
+        print(f"System failed to start: {e}")
 
 if __name__ == "__main__":
     main()

@@ -1,4 +1,4 @@
-// js/audio-notes.js  —— 普通脚本版本（无 export）
+// js/audio-notes.js  —— Plain script version (no export)
 const SCALES = {
     pentatonic_major: [0, 2, 4, 7, 9],
     pentatonic_minor: [0, 3, 5, 7, 10],
@@ -30,5 +30,5 @@ const SCALES = {
     return { midi, freq, name: midiName(midi), rootMidi, scale };
   }
   
-  // ★ 掛到全局，给 BubbleManager 用
+  // ★ Attach to global, for BubbleManager use
   window.AudioNotes = { pickNoteForBubble, midiToFreq, SCALES };

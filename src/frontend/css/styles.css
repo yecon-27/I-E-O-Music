@@ -65,7 +65,7 @@
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* 统一滚动条样式，减少平台差异 */
+/* Unified scrollbar styles for cross-platform consistency */
 ::-webkit-scrollbar {
     width: 6px; /* Slimmer scrollbar */
     height: 6px;
@@ -85,7 +85,7 @@
 }
 
 body {
-    /* Modern Font Stack: Inter (优先) -> System Fonts */
+    /* Modern Font Stack: Inter (preferred) -> System Fonts */
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
     background: linear-gradient(135deg, #FAFBFC 0%, #F3F4F6 100%);
     color: var(--text-primary);
@@ -100,10 +100,10 @@ body {
     letter-spacing: -0.011em; /* Tighter tracking for modern look */
 }
 
-/* 统一表单控件的基础样式 */
+/* Unified form control base styles */
 button, input, select, textarea {
-    font-family: inherit; /* 继承 body 字体，防止表单元素回退到默认字体 */
-    appearance: none;     /* 移除各系统默认的 UI 渲染 */
+    font-family: inherit; /* Inherit body font to prevent fallback to default */
+    appearance: none;     /* Remove system default UI rendering */
     -webkit-appearance: none;
     -moz-appearance: none;
 }
@@ -113,7 +113,7 @@ button, input, select, textarea {
     flex-direction: column;
     min-height: 100vh;
     width: 100%;
-    max-width: 1200px; /* 改为 max-width 增加弹性 */
+    max-width: 1200px; /* Use max-width for flexibility */
     margin: 0 auto;
     padding: 20px;
 }
@@ -134,19 +134,19 @@ button, input, select, textarea {
     align-items: center;
     padding: var(--space-sm) var(--space-xl);
     
-    /* A. 毛玻璃特效 - Refined Glassmorphism */
+    /* A. Glassmorphism effect */
     background: rgba(255, 255, 255, 0.65);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     
-    /* B. 弱化投影，使用细边框 */
+    /* B. Subtle border, no shadow */
     border: 1px solid rgba(255, 255, 255, 0.4);
     border-bottom: 1px solid rgba(99, 102, 241, 0.08);
-    box-shadow: none; /* 移除投影 */
+    box-shadow: none; /* Remove shadow */
     
-    /* C. 平板优化 - 横向撑满 */
+    /* C. Tablet optimization - full width */
     border-radius: 0;
-    margin: 0 calc(-1 * var(--space-xl)); /* 负边距撑满 */
+    margin: 0 calc(-1 * var(--space-xl)); /* Negative margin for full width */
     margin-bottom: var(--space-md);
     padding-left: var(--space-xl);
     padding-right: var(--space-xl);
@@ -157,7 +157,7 @@ button, input, select, textarea {
     position: relative;
 }
 
-/* D. 音高标识整合到控制栏底部 */
+/* D. Pitch indicator integrated into control bar bottom */
 .game-header::after {
     content: '';
     position: absolute;
@@ -188,7 +188,7 @@ button, input, select, textarea {
     gap: var(--space-sm);
 }
 
-/* Header Sections Alignment - 平板双手持握优化 */
+/* Header Sections Alignment - Tablet two-hand grip optimization */
 .header-left {
     justify-content: flex-start;
     /* 左侧：参数、语言 */
@@ -3574,8 +3574,8 @@ body.high-animation * {
 .scatter-row {
     display: flex;
     align-items: center;
-    height: 28px;
-    margin-bottom: 6px;
+    height: 24px;
+    margin-bottom: 4px;
 }
 
 .scatter-row:last-child {
@@ -3591,7 +3591,7 @@ body.high-animation * {
 
 .scatter-track {
     flex: 1;
-    height: 24px;
+    height: 20px;
     position: relative;
     background: rgba(0, 0, 0, 0.02);
     border-radius: 4px;
@@ -3599,23 +3599,21 @@ body.high-animation * {
 
 .scatter-dot {
     position: absolute;
-    width: 14px;
-    height: 14px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     top: 50%;
     transform: translateY(-50%);
-    opacity: 0.95;
-    border: 2px solid rgba(255,255,255,0.95);
-    box-shadow: 0 0 6px rgba(0, 0, 0, 0.25);
+    opacity: 0.7;
     transition: transform 0.15s ease;
 }
 
 .scatter-dot.highlight {
-    width: 20px;
-    height: 20px;
+    width: 14px;
+    height: 14px;
     opacity: 1;
-    border: 3px solid rgba(255, 255, 255, 1);
-    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
 }
 
 

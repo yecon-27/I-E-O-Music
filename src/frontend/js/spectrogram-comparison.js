@@ -1,24 +1,24 @@
 /**
  * Spectrogram Comparison Tool
- * 用于生成 unconstrained vs constrained 音乐的声纹图对比
- * 简化版：使用-mel spectrogram 和 loudness contour 可视化
+ * Generates unconstrained vs constrained music spectrogram comparison
+ * Uses log-mel spectrogram and loudness contour visualization
  */
 
 class SpectrogramComparison {
   constructor() {
     this.sampleRate = 44100;
     this.fftSize = 2048;
-    this.hopSize = 1024;  // 增大步进，减少帧数
-    this.numMelBins = 64; // 减少 Mel bins
+    this.hopSize = 1024;
+    this.numMelBins = 64;
     this.minFreq = 20;
     this.maxFreq = 8000;
     this.focusLowerRatio = 0.30;
     this.loudnessFocusTopRatio = 0.10;
     
-    // 固定随机种子，确保可重现
+    // Fixed random seed for reproducibility
     this.fixedSeed = 42;
     
-    // 安全包络边界（用于标注）
+    // Safety envelope bounds (for annotation)
     this.envelopeBounds = {
       loudnessMax: -14, // LUFS
       loudnessMin: -30,
@@ -27,9 +27,9 @@ class SpectrogramComparison {
   }
 
   /**
-   * 生成对比数据
-   * @param {Object} session - 游戏会话数据
-   * @returns {Object} 包含两个版本的音频数据和分析结果
+   * Generate comparison data
+   * @param {Object} session - Game session data
+   * @returns {Object} Audio data and analysis results for both versions
    */
   async generateComparisonData(session) {
     if (!session || !session.notes || session.notes.length < 2) {
@@ -42,7 +42,7 @@ class SpectrogramComparison {
     if (!GenCtor) throw new TypeError('AdvancedMusicGenerator is not available');
     const generator = new GenCtor();
     
-    // 设置固定种子
+    // Set fixed seed
     if (window.sessionConfig) {
       generator.setSessionConfig({ ...window.sessionConfig, randomSeed: this.fixedSeed });
     }
@@ -52,28 +52,28 @@ class SpectrogramComparison {
     const uncCfg = { ...baseCfg, randomSeed: this.fixedSeed, expertMode: true, expertOverride: true };
     generator.setSessionConfig(uncCfg);
 
-    // 生成无约束版本
+    // Generate unconstrained version
     const unconstrainedResult = generator.generateReward(actions, generator.getSessionConfig(), { skipEnvelope: true });
     
-    // 生成约束版本
+    // Generate constrained version
     const conCfg = { ...baseCfg, randomSeed: this.fixedSeed, expertMode: false, expertOverride: false };
     delete conCfg.dynamicContrast;
     generator.setSessionConfig(conCfg);
     const constrainedResult = generator.generateReward(actions, generator.getSessionConfig(), { skipEnvelope: false });
 
-    // 渲染为音频
+    // Render to audio
     const unconstrainedAudio = await this.renderToAudioBuffer(unconstrainedResult.sequence);
     const constrainedAudio = await this.renderToAudioBuffer(constrainedResult.sequence);
 
-    // 计算频谱图
+    // Compute spectrograms
     const unconstrainedSpec = this.computeLogMelSpectrogram(unconstrainedAudio);
     const constrainedSpec = this.computeLogMelSpectrogram(constrainedAudio);
 
-    // 计算响度轮廓
+    // Compute loudness contours
     const unconstrainedLoudness = this.computeLoudnessContour(unconstrainedAudio);
     const constrainedLoudness = this.computeLoudnessContour(constrainedAudio);
 
-    // 计算 LRA (Loudness Range)
+    // Compute LRA (Loudness Range)
     const unconstrainedLRA = this.computeLRA(unconstrainedLoudness);
     const constrainedLRA = this.computeLRA(constrainedLoudness);
 
@@ -104,7 +104,7 @@ class SpectrogramComparison {
   }
 
   /**
-   * 将音乐序列渲染为 AudioBuffer
+   * Render music sequence to AudioBuffer
    */
   async renderToAudioBuffer(sequence) {
     const duration = (sequence.totalTime || 20) + 1;
@@ -129,7 +129,7 @@ class SpectrogramComparison {
       osc.type = 'sine';
       osc.frequency.value = freq;
       
-      // ADSR 包络
+      // ADSR envelope
       const attackTime = 0.01;
       const decayTime = 0.1;
       const sustainLevel = 0.7;
@@ -153,7 +153,7 @@ class SpectrogramComparison {
   }
 
   /**
-   * 计算 Log-Mel Spectrogram
+   * Compute Log-Mel Spectrogram
    */
   computeLogMelSpectrogram(audioBuffer) {
     const data = audioBuffer.getChannelData(0);
@@ -202,7 +202,7 @@ class SpectrogramComparison {
   }
 
   /**
-   * 创建 Mel bin 对应的频率范围
+   * Create Mel bin frequency ranges
    */
   createMelBinRanges() {
     const melMin = this.hzToMel(this.minFreq);
@@ -228,7 +228,7 @@ class SpectrogramComparison {
   }
 
   /**
-   * 创建 Hann 窗
+   * Create Hann window
    */
   createHannWindow(size) {
     const window = new Float32Array(size);
@@ -239,7 +239,7 @@ class SpectrogramComparison {
   }
 
   /**
-   * 创建 Mel 滤波器组
+   * Create Mel filterbank
    */
   createMelFilterbank() {
     const melMin = this.hzToMel(this.minFreq);
@@ -281,15 +281,15 @@ class SpectrogramComparison {
   }
 
   /**
-   * 简化的频谱能量计算（不使用完整 DFT）
-   * 保留此方法以备需要精确计算时使用
+   * Simplified spectral energy computation
+   * Kept for precise calculation when needed
    */
   computeFFTMagnitude(frame) {
-    // 简化版本：直接返回时域能量分布
+    // Simplified version: return time-domain energy distribution
     const numBins = frame.length / 2 + 1;
     const magnitudes = new Float32Array(numBins);
     
-    // 简单的能量估计
+    // Simple energy estimation
     for (let k = 0; k < numBins; k++) {
       const idx = Math.floor(k * 2);
       if (idx < frame.length) {
@@ -301,12 +301,12 @@ class SpectrogramComparison {
   }
 
   /**
-   * 计算响度轮廓 (简化的 LUFS 近似)
+   * Compute loudness contour (simplified LUFS approximation)
    */
   computeLoudnessContour(audioBuffer) {
     const data = audioBuffer.getChannelData(0);
-    const windowSize = Math.floor(this.sampleRate * 0.4); // 400ms 窗口
-    const hopSize = Math.floor(this.sampleRate * 0.1); // 100ms 步进
+    const windowSize = Math.floor(this.sampleRate * 0.4); // 400ms window
+    const hopSize = Math.floor(this.sampleRate * 0.1); // 100ms hop
     
     const raw = [];
     const times = [];
@@ -332,7 +332,7 @@ class SpectrogramComparison {
   }
 
   /**
-   * 计算 LRA (Loudness Range)
+   * Compute LRA (Loudness Range)
    */
   computeLRA(loudnessContour) {
     const src = Array.isArray(loudnessContour.gated) && loudnessContour.gated.length >= 4
@@ -351,27 +351,27 @@ class SpectrogramComparison {
   }
 
   /**
-   * 计算其他指标
+   * Compute additional metrics
    */
   computeMetrics(audioBuffer, loudnessContour) {
     const data = audioBuffer.getChannelData(0);
     
-    // 峰值
+    // Peak
     let peak = 0;
     for (let i = 0; i < data.length; i++) {
       peak = Math.max(peak, Math.abs(data[i]));
     }
     const peakDb = 20 * Math.log10(Math.max(peak, 1e-10));
     
-    // 平均响度
+    // Average loudness
     const avgLoudness = loudnessContour.values.reduce((a, b) => a + b, 0) / loudnessContour.values.length;
     
-    // 响度标准差
+    // Loudness standard deviation
     const loudnessStd = Math.sqrt(
       loudnessContour.values.reduce((sum, v) => sum + Math.pow(v - avgLoudness, 2), 0) / loudnessContour.values.length
     );
     
-    // 能量变化率（排除结尾静音落差与异常尖峰）
+    // Energy change rate (excluding trailing silence and anomalous spikes)
     const values = loudnessContour.values;
     const times = loudnessContour.times;
     const totalT = times.length ? times[times.length - 1] : 0;
@@ -394,18 +394,18 @@ class SpectrogramComparison {
   }
 
   /**
-   * 绘制对比图
+   * Draw comparison chart
    */
   drawComparison(canvas, comparisonData) {
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
     
-    // 记录最近一次绘制的数据，便于语言切换后重绘
+    // Store last drawn data for redraw on language change
     this._lastCanvas = canvas;
     this._lastData = comparisonData;
     
-    // 清空画布
+    // Clear canvas
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
     
@@ -415,17 +415,17 @@ class SpectrogramComparison {
     const padding = 48;
     const labelHeight = 30;
     
-    // 子图标识
+    // Draw titles
     ctx.fillStyle = '#111111';
     ctx.font = '12px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText('(a)', padding + 8, labelHeight + 14);
-    ctx.fillText('(b)', halfWidth + padding + 8, labelHeight + 14);
+    ctx.textAlign = 'center';
+    ctx.fillText('(a) ' + (window.i18n ? window.i18n.t('spectro.title.left') : 'Unconstrained Baseline'), halfWidth / 2, 18);
+    ctx.fillText('(b) ' + (window.i18n ? window.i18n.t('spectro.title.right') : 'Constraint-First Output'), halfWidth + halfWidth / 2, 18);
     
     const rangeUnc = this.getDisplayRange(comparisonData.unconstrained.spectrogram);
     const rangeCon = this.getDisplayRange(comparisonData.constrained.spectrogram);
     
-    // 绘制频谱图
+    // Draw spectrograms
     const durUnc = (comparisonData.unconstrained?.loudness?.times?.[comparisonData.unconstrained.loudness.times.length - 1]) || 0;
     const durCon = (comparisonData.constrained?.loudness?.times?.[comparisonData.constrained.loudness.times.length - 1]) || 0;
     this.drawSpectrogram(ctx, comparisonData.unconstrained.spectrogram, 
@@ -445,14 +445,13 @@ class SpectrogramComparison {
     ctx.rotate(-Math.PI / 2);
     ctx.fillText('Frequency (kHz)', 0, 0);
     ctx.restore();
-    // 右侧不再重复频率纵向标签
     
-    // 绘制响度轮廓
+    // Draw loudness contours
     const loudnessY = specHeight + 20;
     this.drawLoudnessContour(ctx, comparisonData.unconstrained.loudness,
       padding, loudnessY, halfWidth - padding * 2, loudnessHeight, comparisonData.envelopeBounds, false);
     this.drawLoudnessContour(ctx, comparisonData.constrained.loudness,
-      halfWidth + padding, loudnessY, halfWidth - padding * 2, loudnessHeight, comparisonData.envelopeBounds, false);
+      halfWidth + padding, loudnessY, halfWidth - padding * 2, loudnessHeight, comparisonData.envelopeBounds, true);
     ctx.save();
     ctx.fillStyle = '#111111';
     ctx.font = '12px Arial';
@@ -462,14 +461,14 @@ class SpectrogramComparison {
     ctx.fillText('Loudness (LUFS)', 0, 0);
     ctx.restore();
     
-    // 轴标签（共享 X）
+    // Axis labels (shared X)
     ctx.fillStyle = '#111111';
     ctx.font = '12px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('Time (s)', halfWidth / 2, specHeight + loudnessHeight + 36);
     ctx.fillText('Time (s)', halfWidth + halfWidth / 2, specHeight + loudnessHeight + 36);
     
-    // 绘制分隔线
+    // Draw separator line
     ctx.strokeStyle = '#cccccc';
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -479,7 +478,7 @@ class SpectrogramComparison {
   }
 
   /**
-   * 绘制频谱图
+   * Draw spectrogram
    */
   drawSpectrogram(ctx, specData, x, y, width, height, minDb, maxDb, durationSec = 0) {
     const { data, numFrames, numMelBins } = specData;
@@ -512,8 +511,6 @@ class SpectrogramComparison {
       }
     }
     
-    // 轴外标签已统一，不在图内绘制标题
-
     ctx.strokeStyle = '#111111';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -613,7 +610,7 @@ class SpectrogramComparison {
     return a[idx];
   }
   /**
-   * 绘制响度轮廓
+   * Draw loudness contour
    */
   drawLoudnessContour(ctx, loudnessData, x, y, width, height, bounds, showBounds) {
     const { values, times } = loudnessData;
@@ -683,7 +680,7 @@ class SpectrogramComparison {
     }
     ctx.stroke();
     
-    // 坐标轴与刻度
+    // Axes and ticks
     ctx.strokeStyle = '#111111';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -708,7 +705,7 @@ class SpectrogramComparison {
   }
 
   /**
-   * Viridis 色图
+   * Viridis colormap
    */
   viridisColormap(t) {
     const colors = [
@@ -789,9 +786,9 @@ class SpectrogramComparison {
     ctx.fillStyle = text;
     ctx.font = `${22 * scale}px system-ui`;
     ctx.textAlign = 'left';
-    ctx.fillText('', padding, 40 * scale);
+    ctx.fillText('Spectrogram + Loudness Comparison', padding, 40 * scale);
 
-    // 参数区：原始参数 vs 约束后参数
+    // Parameters: raw vs constrained
     const rawBpm = comparisonData.unconstrained?.sequence?.tempos?.[0]?.qpm || comparisonData.unconstrained?.rawParams?.rawBpm || 0;
     const safeBpm = comparisonData.constrained?.sequence?.tempos?.[0]?.qpm || 0;
     const rawContrast = comparisonData.unconstrained?.rawParams?.rawContrast ?? null;
@@ -813,8 +810,8 @@ class SpectrogramComparison {
     ctx.textAlign = 'left';
     ctx.fillStyle = subtext;
     ctx.font = `${16 * scale}px system-ui`;
-    ctx.fillText('原始参数', padding + 16 * scale, 88 * scale);
-    ctx.fillText('约束后参数', halfWidth + padding + 16 * scale, 88 * scale);
+    ctx.fillText('Raw Params', padding + 16 * scale, 88 * scale);
+    ctx.fillText('Constrained Params', halfWidth + padding + 16 * scale, 88 * scale);
     ctx.fillStyle = text;
     ctx.font = `${18 * scale}px system-ui`;
     ctx.fillText(`BPM: ${Math.round(rawBpm)}`, padding + 16 * scale, 114 * scale);
@@ -834,21 +831,15 @@ class SpectrogramComparison {
       padding + 4 * scale, headerHeight + 8 * scale, halfWidth - padding * 2 - 8 * scale, specHeight - labelHeight, rangeUnc.min, rangeUnc.max);
     this.drawSpectrogram(ctx, comparisonData.constrained.spectrogram,
       halfWidth + padding + 4 * scale, headerHeight + 8 * scale, halfWidth - padding * 2 - 8 * scale, specHeight - labelHeight, rangeCon.min, rangeCon.max);
-    // 移除论文版色标尺
+    
     const loudnessY = headerHeight + specHeight + 20 * scale;
-    ctx.fillStyle = '#111111';
-    ctx.font = `${16 * scale}px system-ui`;
-    ctx.textAlign = 'left';
-    ctx.fillText('(a)', padding + 12 * scale, headerHeight + 18 * scale);
-    ctx.fillText('(b)', halfWidth + padding + 12 * scale, headerHeight + 18 * scale);
     this.roundRect(ctx, padding, loudnessY, halfWidth - padding * 2, loudnessHeight, 16 * scale, '#ffffff', border);
     this.roundRect(ctx, halfWidth + padding, loudnessY, halfWidth - padding * 2, loudnessHeight, 16 * scale, '#ffffff', border);
     this.drawLoudnessContour(ctx, comparisonData.unconstrained.loudness,
       padding + 4 * scale, loudnessY + 6 * scale, halfWidth - padding * 2 - 8 * scale, loudnessHeight - 12 * scale, comparisonData.envelopeBounds, false);
     this.drawLoudnessContour(ctx, comparisonData.constrained.loudness,
       halfWidth + padding + 4 * scale, loudnessY + 6 * scale, halfWidth - padding * 2 - 8 * scale, loudnessHeight - 12 * scale, comparisonData.envelopeBounds, false);
-    // 右侧不再重复频率纵向标签
-    // 右侧不再重复频率纵向标签
+    
     ctx.save();
     ctx.fillStyle = '#111111';
     ctx.font = `${14 * scale}px system-ui`;
@@ -857,7 +848,7 @@ class SpectrogramComparison {
     ctx.rotate(-Math.PI / 2);
     ctx.fillText('Loudness (LUFS)', 0, 0);
     ctx.restore();
-    // 右侧不再重复响度纵向标签
+    
     const metricsY = height - 25 * scale;
     ctx.fillStyle = text;
     ctx.font = `${14 * scale}px monospace`;
@@ -875,97 +866,6 @@ class SpectrogramComparison {
     link.click();
   }
 
-  /**
-   * 导出矢量版 SVG（纯矢量：频谱格子 + 响度路径）
-   */
-  exportPaperSVG(comparisonData, filename = 'spectrogram_paper.svg', options = {}) {
-    const width = options.width || 1600;
-    const height = options.height || 900;
-    const halfWidth = width / 2;
-    const headerHeight = 140;
-    const specHeight = Math.floor(height * 0.34);
-    const loudnessHeight = Math.floor(height * 0.36);
-    const padding = 48;
-    const labelHeight = 50;
-    const leftX = padding + 4;
-    const rightX = halfWidth + padding + 4;
-    const specY = headerHeight + 8;
-    const leftW = halfWidth - padding * 2 - 8;
-    const rightW = leftW;
-    const buildSpectro = (spec, x, y, w, h) => {
-      const { data, numFrames, numMelBins } = spec;
-      const secondsPerFrame = spec.sampleRate ? (spec.hopSize / spec.sampleRate) : 0;
-      const capSec = 10;
-      const framesToDraw = secondsPerFrame > 0 ? Math.min(numFrames, Math.floor(capSec / secondsPerFrame)) : numFrames;
-      const visibleBins = Math.max(1, Math.floor(numMelBins * (this.focusLowerRatio || 0.30)));
-      const range = this.getDisplayRange(spec);
-      const minDbEff = Math.max(range.min, -60);
-      const maxDbEff = range.max;
-      const cellW = w / Math.max(1, framesToDraw);
-      const cellH = h / visibleBins;
-      let out = '';
-      for (let i = 0; i < framesToDraw; i++) {
-        for (let j = 0; j < visibleBins; j++) {
-          const v0 = data[i][j];
-          const vL = data[Math.max(i - 1, 0)][j];
-          const vR = data[Math.min(i + 1, framesToDraw - 1)][j];
-          const value = (v0 + vL + vR) / 3;
-          const normalized = (value - minDbEff) / (maxDbEff - minDbEff);
-          const color = this.viridisColormap(Math.max(0, Math.min(1, normalized)));
-          const rx = x + i * cellW;
-          const ry = y + h - (j + 1) * cellH;
-          out += `<rect x="${rx.toFixed(2)}" y="${ry.toFixed(2)}" width="${Math.ceil(cellW)}" height="${Math.ceil(cellH)}" fill="${color}"/>`;
-        }
-      }
-      return out;
-    };
-    const buildLoud = (loud, x, y, w, h) => {
-      const values = loud.values || [];
-      const times = loud.times || [];
-      const visMin = -30, visMax = -10;
-      const visRange = Math.max(1e-6, visMax - visMin);
-      const capSec = 10;
-      let d = '';
-      const len = Math.max(2, values.length);
-      for (let i = 0; i < len; i++) {
-        const t = Math.min(capSec, times[i] || 0);
-        const px = x + (t / capSec) * w;
-        const v = Math.max(visMin, Math.min(visMax, values[i]));
-        const py = y + h - ((v - visMin) / visRange) * h;
-        d += (i === 0 ? 'M' : 'L') + ` ${px.toFixed(2)} ${py.toFixed(2)} `;
-      }
-      return `<path d="${d.trim()}" fill="none" stroke="#111111" stroke-width="2"/>`;
-    };
-    const buildColorbar = (x, y, w, h) => {
-      let out = '';
-      const steps = 64;
-      for (let i = 0; i < steps; i++) {
-        const t = i / (steps - 1);
-        const yy = y + h - Math.round(t * h);
-        out += `<rect x="${x}" y="${yy}" width="${w}" height="${Math.ceil(h / steps) + 1}" fill="${this.viridisColormap(t)}"/>`;
-      }
-      return out;
-    };
-    let svg = `<?xml version="1.0" encoding="UTF-8"?>`;
-    svg += `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
-    svg += `<rect x="0" y="0" width="${width}" height="${height}" fill="#ffffff"/>`;
-    svg += `<text x="${padding + 12}" y="${40}" font-family="system-ui,Arial" font-size="22" fill="#0f172a">(a)</text>`;
-    svg += `<text x="${halfWidth + padding + 12}" y="${40}" font-family="system-ui,Arial" font-size="22" fill="#0f172a">(b)</text>`;
-    svg += buildSpectro(comparisonData.unconstrained.spectrogram, leftX, specY, leftW, specHeight - labelHeight);
-    svg += buildSpectro(comparisonData.constrained.spectrogram, rightX, specY, rightW, specHeight - labelHeight);
-    svg += buildColorbar(width - padding - 20, specY + 8, 14, specHeight - labelHeight - 16);
-    const loudY = headerHeight + specHeight + 20;
-    svg += buildLoud(comparisonData.unconstrained.loudness, leftX, loudY + 6, leftW, loudnessHeight - 12);
-    svg += buildLoud(comparisonData.constrained.loudness, rightX, loudY + 6, rightW, loudnessHeight - 12);
-    svg += `</svg>`;
-    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.download = filename;
-    a.href = url;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
   roundRect(ctx, x, y, w, h, r, fill, stroke) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -989,7 +889,7 @@ class SpectrogramComparison {
   }
 
   /**
-   * 导出对比图为 PNG
+   * Export comparison as PNG
    */
   exportAsPNG(canvas, filename = 'spectrogram_comparison.png') {
     const link = document.createElement('a');
@@ -999,7 +899,7 @@ class SpectrogramComparison {
   }
 
   /**
-   * 导出数据为 JSON（用于进一步分析）
+   * Export data as JSON (for further analysis)
    */
   exportDataAsJSON(comparisonData, filename = 'comparison_data.json') {
     const exportData = {
@@ -1038,7 +938,7 @@ class SpectrogramComparison {
   }
 
   /**
-   * 导出完整频谱与响度数据（包含数组）
+   * Export full spectrum and loudness data (including arrays)
    */
   exportFullDataAsJSON(comparisonData, filename = 'spectrum_full_data.json') {
     const pickSpectro = (spec) => ({
@@ -1149,12 +1049,7 @@ SpectrogramComparison.prototype.exportCurrentComparisonPNG300DPI = function(file
   link.click();
 };
 
-SpectrogramComparison.prototype.exportCurrentComparisonSVG = function(filename = 'spectrogram_comparison.svg', options = {}) {
-  if (this._lastData) {
-    this.exportPaperSVG(this._lastData, filename, options);
-  }
-};
-// 监听语言切换事件，重绘频谱文本
+// Listen for language change events to redraw spectrogram text
 try {
   window.addEventListener('languageChanged', () => {
     const inst = window._spectroInstance;
@@ -1164,9 +1059,6 @@ try {
   });
 } catch {}
 
-// 导出到全局
+// Export to global
 window.SpectrogramComparison = SpectrogramComparison;
-// 缓存单例用于语言切换回调
 window._spectroInstance = window._spectroInstance || new SpectrogramComparison();
-
-console.log('📊 Spectrogram Comparison Tool 已加载');
