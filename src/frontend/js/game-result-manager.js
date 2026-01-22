@@ -706,6 +706,34 @@ class GameResultManager {
   }
 
   /**
+   * Export session report as JSON file
+   */
+  exportSessionReport() {
+    const session = window.game?.getLastSession?.() || null;
+    const traceId = window.sessionLogger?.sessionId || `session_${Date.now()}`;
+    const cfg = { ...(window.sessionConfig || {}) };
+    
+    const report = {
+      traceId,
+      exportedAt: new Date().toISOString(),
+      session: session,
+      config: cfg,
+      stats: this.calculateStats(),
+      gameData: this.gameData
+    };
+    
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `session_report_${traceId}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    console.log('[GameResult] Session report exported:', traceId);
+  }
+
+  /**
    * 计算游戏统计数据
    */
   calculateStats() {

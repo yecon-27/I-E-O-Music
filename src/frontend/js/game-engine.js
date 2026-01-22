@@ -166,10 +166,8 @@ class GameEngine {
                 });
             }
 
-            // 记录点击轨迹
             this.appendTrailDot(b.note?.name, b.color);
         
-            // ✅ 只记录到“本局”的 notes
             if (this.roundActive) {
                 this.roundNotes.push({
                     dt: performance.now() - this.roundStart,
