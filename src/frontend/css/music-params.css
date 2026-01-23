@@ -1771,3 +1771,97 @@
         width: 100%;
     }
 }
+
+
+/* ===== Poster Mode - Larger fonts for presentations ===== */
+.expert-view.poster-mode,
+.expert-view {
+    /* Increase base font sizes for poster/presentation */
+}
+
+.expert-view .expert-title {
+    font-size: 1.4rem;
+}
+
+.expert-view .expert-panel-title {
+    font-size: 1.3rem;
+}
+
+.expert-view .expert-section h4 {
+    font-size: 1.1rem;
+}
+
+.expert-view .scatter-label {
+    font-size: 1rem;
+    width: 28px;
+}
+
+.expert-view .pattern-type-name {
+    font-size: 1.2rem;
+}
+
+.expert-view .pattern-rule {
+    font-size: 0.95rem;
+}
+
+.expert-view .score-label {
+    font-size: 1rem;
+    min-width: 100px;
+}
+
+.expert-view .score-value {
+    font-size: 1rem;
+}
+
+.expert-view .stats-inline {
+    font-size: 1rem;
+}
+
+.expert-view .mode-btn {
+    font-size: 0.95rem;
+    padding: 10px 16px;
+}
+
+.expert-view .param-item label span {
+    font-size: 1rem;
+}
+
+.expert-view .param-safe-range {
+    font-size: 0.9rem;
+}
+
+.expert-view .param-value {
+    font-size: 1rem;
+}
+
+.expert-view .param-btn {
+    font-size: 0.95rem;
+    padding: 10px 18px;
+}
+
+.expert-view .expert-exit-btn,
+.expert-view .refresh-expert-btn {
+    font-size: 1rem;
+    padding: 10px 20px;
+}
+
+/* Increase scatter dot size */
+.expert-view .scatter-dot {
+    width: 10px;
+    height: 10px;
+}
+
+.expert-view .scatter-dot.highlight {
+    width: 12px;
+    height: 12px;
+}
+
+/* Increase score bar height */
+.expert-view .score-bar-bg {
+    height: 12px;
+}
+
+/* Increase scatter track height */
+.expert-view .scatter-track {
+    height: 24px;
+}
