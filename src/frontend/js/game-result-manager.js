@@ -726,6 +726,9 @@ class GameResultManager {
     const session = window.game?.getLastSession?.() || null;
     const patternLabel = this._detectPatternLabel(session?.notes || []);
     
+    // Determine envelope mode from current config or UI state
+    const envelopeMode = this._detectEnvelopeMode();
+    
     // Get accent ratio (not clamped, same for requested and effective)
     const accentRatio = this._round2(rawParams?.rawAccentRatio ?? rawParams?.rawContrast ?? spectroData?.unconstrained?.rawParams?.rawAccentRatio);
     
@@ -773,12 +776,8 @@ class GameResultManager {
       derivationMethod: rawParams?.derivationMethod ?? 'unknown'
     };
     
-    // Envelope bounds configuration
-    const envelopeBounds = window.safetyEnvelope?.safeRanges || {
-      tempo: { min: 120, max: 130 },
-      gain: { min: 0.3, max: 0.8 },
-      accentRatio: { min: 0.0, max: 0.5 }
-    };
+    // Envelope bounds configuration (matching Table 3 in paper)
+    const envelopeBounds = this._getEnvelopeBounds(envelopeMode);
     
     // Full audio analysis metrics
     const audioAnalysis = {
@@ -817,6 +816,7 @@ class GameResultManager {
     const report = [{
       traceId,
       patternLabel,
+      envelopeMode,
       params: {
         requested,
         effective
@@ -906,6 +906,55 @@ class GameResultManager {
         energyChangeRate: constrainedEnergyRate
       }
     };
+  }
+
+  /**
+   * Detect current envelope mode from UI or config
+   */
+  _detectEnvelopeMode() {
+    // Check if there's a UI selector for envelope mode
+    const selector = document.getElementById('envelope-mode-select') || 
+                     document.querySelector('[data-envelope-mode]');
+    if (selector) {
+      return selector.value || selector.dataset.envelopeMode || 'default';
+    }
+    
+    // Check session config
+    if (window.sessionConfig?.envelopeMode) {
+      return window.sessionConfig.envelopeMode;
+    }
+    
+    // Check safety envelope state
+    const se = window.safetyEnvelope;
+    if (se?.unsafeMode) return 'relaxed';
+    
+    return 'default';
+  }
+
+  /**
+   * Get envelope bounds for a given mode (matching Table 3 in paper)
+   * Values in dB for gain, as per paper specification
+   */
+  _getEnvelopeBounds(mode) {
+    const configs = {
+      relaxed: {
+        tempo: { min: 60, max: 180 },
+        gain: { min: -60, max: 0, unit: 'dB' },
+        accentRatio: { min: 0.0, max: 1.0 }
+      },
+      default: {
+        tempo: { min: 120, max: 130 },
+        gain: { min: -10.5, max: -1.9, unit: 'dB' },
+        accentRatio: { min: 0.0, max: 0.5 }
+      },
+      tight: {
+        tempo: { min: 124, max: 126 },
+        gain: { min: -6.9, max: -5.2, unit: 'dB' },
+        accentRatio: { min: 0.0, max: 0.1 }
+      }
+    };
+    
+    return configs[mode] || configs.default;
   }
 
   /**
