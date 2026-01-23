@@ -912,6 +912,12 @@ class GameResultManager {
    * Detect current envelope mode from UI or config
    */
   _detectEnvelopeMode() {
+    // Check preset buttons (data-preset="relaxed|default|tight")
+    const activePreset = document.querySelector('#param-presets .mode-btn.active[data-preset]');
+    if (activePreset) {
+      return activePreset.dataset.preset;
+    }
+    
     // Check if there's a UI selector for envelope mode
     const selector = document.getElementById('envelope-mode-select') || 
                      document.querySelector('[data-envelope-mode]');
