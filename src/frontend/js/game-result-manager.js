@@ -1312,11 +1312,12 @@ class GameResultManager {
     // 计算三种模式的原始分数 (0-1)
     // Sequential: 基于 C->D->E->G->A 序列覆盖率
     // Repetitive: 基于主导 lane 占比
-    // Exploratory: 多样性高但非顺序 (diversity高 且 sequential低)
+    // Exploratory: 多样性高 且 非顺序 且 非重复
     const seqRaw = sequentialCoverage; // 直接使用覆盖率
     const repRaw = dominantRatio;      // 直接使用主导比例
-    // Exploratory = 多样性 * (1 - 顺序覆盖率)，即：用了很多lane但不是按顺序
-    const expRaw = (laneDiversity / 5) * (1 - sequentialCoverage);
+    // Exploratory = 多样性 * (1 - 顺序覆盖率) * (1 - 主导比例)
+    // 即：用了很多 lane，但不是按顺序，也不是重复某个 lane
+    const expRaw = (laneDiversity / 5) * (1 - sequentialCoverage) * (1 - dominantRatio);
     
     // 进度条显示原始指标值（各自独立，不归一化）
     const seqScore = Math.round(seqRaw * 100);
