@@ -1324,21 +1324,15 @@ class GameResultManager {
     const expScore = Math.round(expRaw * 100);
     const scores = { sequential: seqScore, repetitive: repScore, exploratory: expScore };
     
-    // 判断主导模式 - 使用加权分数
-    const seqWeighted = Math.min(1, (sequentialCoverage / 0.3) * 0.7 + (laneDiversity / 5) * 0.3);
-    const repWeighted = Math.min(1, dominantRatio / 0.6);
-    const expWeighted = Math.min(1, (laneDiversity / 5) * 0.6 + (1 - dominantRatio) * 0.4);
-    
+    // 判断主导模式 - 直接使用进度条显示的分数，选最高的
     let patternType, icon, name, rule;
     const rawScores = [
-      { type: "sequential", value: seqWeighted },
-      { type: "repetitive", value: repWeighted },
-      { type: "exploratory", value: expWeighted },
+      { type: "sequential", value: seqScore },
+      { type: "repetitive", value: repScore },
+      { type: "exploratory", value: expScore },
     ].sort((a, b) => b.value - a.value);
-    // 顺序型优先：若与最高分差距在0.05内，偏向顺序型
-    const top = rawScores[0];
-    const preferSequential = (top.type !== "sequential" && (rawScores.find(s => s.type === "sequential")?.value || 0) >= top.value - 0.05);
-    const chosen = preferSequential ? { type: "sequential", value: rawScores.find(s => s.type === "sequential")?.value || top.value } : top;
+    
+    const chosen = rawScores[0];
     
     if (chosen.type === "sequential") {
       patternType = "sequential";
