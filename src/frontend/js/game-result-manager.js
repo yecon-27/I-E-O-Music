@@ -965,11 +965,20 @@ class GameResultManager {
 
   /**
    * Detect pattern label from notes
+   * Uses the same logic as analyzePattern for consistency with UI display
    */
   _detectPatternLabel(notes) {
     if (!notes || notes.length < 3) return 'Unknown';
     
-    // Simple heuristic: check for sequential vs repetitive patterns
+    // Use analyzePattern if available (same logic as UI)
+    const pattern = this.analyzePattern(notes);
+    if (pattern && pattern.patternType) {
+      // Capitalize first letter
+      const type = pattern.patternType;
+      return type.charAt(0).toUpperCase() + type.slice(1);
+    }
+    
+    // Fallback: simple heuristic
     const pitches = notes.map(n => n.midi || n.pitch || 0);
     let sequential = 0, repetitive = 0;
     
