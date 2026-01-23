@@ -1313,14 +1313,14 @@ class GameResultManager {
     const seqRaw = Math.min(1, (sequentialCoverage / 0.3) * 0.7 + (laneDiversity / 5) * 0.3);
     const repRaw = Math.min(1, dominantRatio / 0.6);
     const expRaw = Math.min(1, (laneDiversity / 5) * 0.6 + (1 - dominantRatio) * 0.4);
-    // 归一化为比例分布（总和 = 100%）
-    const total = seqRaw + repRaw + expRaw;
-    let seqScore = 0, repScore = 0, expScore = 0;
-    if (total > 0) {
-      seqScore = Math.round((seqRaw / total) * 100);
-      repScore = Math.round((repRaw / total) * 100);
-      expScore = Math.max(0, 100 - seqScore - repScore);
-    }
+    
+    // 进度条显示原始指标值（与描述文字一致）
+    // Sequential: sequentialCoverage (C->D->E->G->A 覆盖率)
+    // Repetitive: dominantRatio (主导 lane 占比)
+    // Exploratory: laneDiversity / 5 (lane 多样性)
+    const seqScore = Math.round(sequentialCoverage * 100);
+    const repScore = Math.round(dominantRatio * 100);
+    const expScore = Math.round((laneDiversity / 5) * 100);
     const scores = { sequential: seqScore, repetitive: repScore, exploratory: expScore };
     
     // 判断主导模式（不再使用 mixed，始终选出最接近的模式）
@@ -1339,17 +1339,17 @@ class GameResultManager {
       patternType = "sequential";
       icon = PATTERN_ICONS.sequential;
       name = this.t('pat.sequential');
-      rule = this.t('pat.rule.sequential', { ratio: Math.round(sequentialCoverage * 100), diversity: laneDiversity });
+      rule = this.t('pat.rule.sequential', { ratio: seqScore, diversity: laneDiversity });
     } else if (chosen.type === "repetitive") {
       patternType = "repetitive";
       icon = PATTERN_ICONS.repetitive;
       name = this.t('pat.repetitive');
-      rule = this.t('pat.rule.repetitive', { ratio: Math.round(dominantRatio * 100), lane: dominantLane });
+      rule = this.t('pat.rule.repetitive', { ratio: repScore, lane: dominantLane });
     } else {
       patternType = "exploratory";
       icon = PATTERN_ICONS.exploratory;
       name = this.t('pat.exploratory');
-      rule = this.t('pat.rule.exploratory', { diversity: laneDiversity, ratio: Math.round(dominantRatio * 100) });
+      rule = this.t('pat.rule.exploratory', { diversity: laneDiversity, ratio: repScore });
     }
     
     const description = `${rule}`;
