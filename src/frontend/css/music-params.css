@@ -428,23 +428,10 @@
     flex-direction: column;
 }
 
-/* 右侧专家面板 - flexbox 布局让按钮固定在底部 */
+/* 右侧专家面板允许纵向滚动 */
 .expert-panel.expert-right {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    display: flex;
-    flex-direction: column;
-}
-
-/* 右侧面板内容区域可滚动 */
-.expert-panel.expert-right .music-params-grid {
-    flex: 1;
-}
-
-/* 右侧面板按钮固定在底部 */
-.expert-panel.expert-right .param-actions {
-    margin-top: auto;
-    flex-shrink: 0;
 }
 }
 
