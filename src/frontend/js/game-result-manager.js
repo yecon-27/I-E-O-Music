@@ -708,6 +708,7 @@ class GameResultManager {
   /**
    * Export session report as JSON file
    * Format matches envelope-diagnostic schema with baseline/constrained metrics
+   * Includes full derivation data to support paper claims
    */
   exportSessionReport() {
     const traceId = `trace_${Date.now()}`;
@@ -726,7 +727,7 @@ class GameResultManager {
     const patternLabel = this._detectPatternLabel(session?.notes || []);
     
     // Get accent ratio (not clamped, same for requested and effective)
-    const accentRatio = this._round2(rawParams?.rawAccentRatio ?? spectroData?.unconstrained?.rawParams?.rawAccentRatio);
+    const accentRatio = this._round2(rawParams?.rawAccentRatio ?? rawParams?.rawContrast ?? spectroData?.unconstrained?.rawParams?.rawAccentRatio);
     
     // Build params.requested (baseline/unconstrained)
     const requested = {
@@ -759,6 +760,39 @@ class GameResultManager {
     // Enforcement status
     const enforcementStatus = clampLog.length === 0 ? 'pass' : 'clamped';
     
+    // Derivation data - how params were computed from behavior
+    const derivation = {
+      clickCount: session?.notes?.length ?? 0,
+      sessionDurationSec: this._round2(session?.durationSec),
+      medianIntervalMs: this._round2(rawParams?.medianInterval),
+      robustCv: this._round2(rawParams?.robustCv),
+      hitsPerSec: this._round2(rawParams?.hitsPerSec),
+      derivationMethod: rawParams?.derivationMethod ?? 'unknown'
+    };
+    
+    // Envelope bounds configuration
+    const envelopeBounds = window.safetyEnvelope?.safeRanges || {
+      tempo: { min: 120, max: 130 },
+      gain: { min: 0.3, max: 0.8 },
+      accentRatio: { min: 0.0, max: 0.5 }
+    };
+    
+    // Full audio analysis metrics
+    const audioAnalysis = {
+      baseline: {
+        peakDb: this._round2(spectroData?.unconstrained?.metrics?.peakDb),
+        avgLoudness: this._round2(spectroData?.unconstrained?.metrics?.avgLoudness),
+        loudnessStd: this._round2(spectroData?.unconstrained?.metrics?.loudnessStd),
+        energyChangeRate: this._round2(spectroData?.unconstrained?.metrics?.energyChangeRate)
+      },
+      constrained: {
+        peakDb: this._round2(spectroData?.constrained?.metrics?.peakDb),
+        avgLoudness: this._round2(spectroData?.constrained?.metrics?.avgLoudness),
+        loudnessStd: this._round2(spectroData?.constrained?.metrics?.loudnessStd),
+        energyChangeRate: this._round2(spectroData?.constrained?.metrics?.energyChangeRate)
+      }
+    };
+    
     const report = [{
       traceId,
       patternLabel,
@@ -767,7 +801,17 @@ class GameResultManager {
         effective
       },
       metrics,
-      enforcementStatus
+      enforcementStatus,
+      derivation,
+      clampLog: clampLog.map(c => ({
+        param: c.param,
+        original: this._round2(c.original),
+        clamped: this._round2(c.clamped),
+        rule: c.rule
+      })),
+      envelopeBounds,
+      audioAnalysis,
+      exportedAt: new Date().toISOString()
     }];
     
     const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });

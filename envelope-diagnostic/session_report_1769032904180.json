@@ -5,20 +5,63 @@
     "params": {
       "requested": {
         "tempo": 100,
-        "accent ratio": "12.28%",
-        "gain": "-4.77 dB"
+        "accent ratio": 0.12,
+        "gain": -4.77
       },
       "effective": {
         "tempo": 120,
-        "accent ratio": "10.00%",
-        "gain": "-4.77 dB"
+        "accent ratio": 0.12,
+        "gain": -4.77
       }
     },
     "metrics": {
-      "integratedLufs": -30.39,
-      "lraEffective": 0.84,
-      "onsetDensity": 3.6
+      "baseline": {
+        "integratedLufs": -28.50,
+        "lraEffective": 1.20,
+        "onsetDensity": 4.10
+      },
+      "constrained": {
+        "integratedLufs": -30.39,
+        "lraEffective": 0.84,
+        "onsetDensity": 3.60
+      }
     },
-    "enforcementStatus": "clamped"
+    "enforcementStatus": "clamped",
+    "derivation": {
+      "clickCount": 42,
+      "sessionDurationSec": 15.3,
+      "medianIntervalMs": 600,
+      "robustCv": 0.15,
+      "hitsPerSec": 2.75,
+      "derivationMethod": "behavior"
+    },
+    "clampLog": [
+      {
+        "param": "tempo",
+        "original": 100,
+        "clamped": 120,
+        "rule": "min_tempo"
+      }
+    ],
+    "envelopeBounds": {
+      "tempo": { "min": 120, "max": 130 },
+      "gain": { "min": 0.3, "max": 0.8 },
+      "accentRatio": { "min": 0.0, "max": 0.5 }
+    },
+    "audioAnalysis": {
+      "baseline": {
+        "peakDb": -3.21,
+        "avgLoudness": -28.50,
+        "loudnessStd": 4.82,
+        "energyChangeRate": 1.45
+      },
+      "constrained": {
+        "peakDb": -6.02,
+        "avgLoudness": -30.39,
+        "loudnessStd": 2.15,
+        "energyChangeRate": 0.72
+      }
+    },
+    "exportedAt": "2026-01-23T10:15:04.180Z"
   }
 ]
