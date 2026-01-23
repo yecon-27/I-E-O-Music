@@ -1309,26 +1309,30 @@ class GameResultManager {
     }
     const sequentialCoverage = letters.length ? covered.size / letters.length : 0;
     
-    // 计算三种模式的原始分数 (0-1) —— 放宽顺序型判定
-    const seqRaw = Math.min(1, (sequentialCoverage / 0.3) * 0.7 + (laneDiversity / 5) * 0.3);
-    const repRaw = Math.min(1, dominantRatio / 0.6);
-    const expRaw = Math.min(1, (laneDiversity / 5) * 0.6 + (1 - dominantRatio) * 0.4);
+    // 计算三种模式的原始分数 (0-1)
+    // Sequential: 基于 C->D->E->G->A 序列覆盖率
+    // Repetitive: 基于主导 lane 占比
+    // Exploratory: 基于 lane 多样性
+    const seqRaw = sequentialCoverage; // 直接使用覆盖率
+    const repRaw = dominantRatio;      // 直接使用主导比例
+    const expRaw = laneDiversity / 5;  // lane 多样性 (5个lane为100%)
     
-    // 进度条显示原始指标值（与描述文字一致）
-    // Sequential: sequentialCoverage (C->D->E->G->A 覆盖率)
-    // Repetitive: dominantRatio (主导 lane 占比)
-    // Exploratory: laneDiversity / 5 (lane 多样性)
-    const seqScore = Math.round(sequentialCoverage * 100);
-    const repScore = Math.round(dominantRatio * 100);
-    const expScore = Math.round((laneDiversity / 5) * 100);
+    // 进度条显示原始指标值（各自独立，不归一化）
+    const seqScore = Math.round(seqRaw * 100);
+    const repScore = Math.round(repRaw * 100);
+    const expScore = Math.round(expRaw * 100);
     const scores = { sequential: seqScore, repetitive: repScore, exploratory: expScore };
     
-    // 判断主导模式（不再使用 mixed，始终选出最接近的模式）
+    // 判断主导模式 - 使用加权分数
+    const seqWeighted = Math.min(1, (sequentialCoverage / 0.3) * 0.7 + (laneDiversity / 5) * 0.3);
+    const repWeighted = Math.min(1, dominantRatio / 0.6);
+    const expWeighted = Math.min(1, (laneDiversity / 5) * 0.6 + (1 - dominantRatio) * 0.4);
+    
     let patternType, icon, name, rule;
     const rawScores = [
-      { type: "sequential", value: seqRaw },
-      { type: "repetitive", value: repRaw },
-      { type: "exploratory", value: expRaw },
+      { type: "sequential", value: seqWeighted },
+      { type: "repetitive", value: repWeighted },
+      { type: "exploratory", value: expWeighted },
     ].sort((a, b) => b.value - a.value);
     // 顺序型优先：若与最高分差距在0.05内，偏向顺序型
     const top = rawScores[0];
