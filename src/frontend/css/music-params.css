@@ -428,10 +428,24 @@
     flex-direction: column;
 }
 
-/* 右侧专家面板允许纵向滚动 */
+/* 右侧专家面板 - flexbox 布局让按钮固定在底部 */
 .expert-panel.expert-right {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 右侧面板内容区域可滚动 */
+.expert-panel.expert-right .music-params-grid {
+    flex: 1;
+}
+
+/* 右侧面板按钮固定在底部 */
+.expert-panel.expert-right .param-actions {
+    margin-top: auto;
+    flex-shrink: 0;
+}
 }
 
 .expert-panel-title {
@@ -540,8 +554,8 @@
 }
 
 .scatter-label {
-    width: 28px;
-    font-size: 1rem;
+    width: 20px;
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--text-secondary);
 }
@@ -557,17 +571,17 @@
 
 .scatter-dot {
     position: absolute;
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     top: 50%;
     transform: translateY(-50%);
 }
 
 .scatter-dot.highlight {
-    width: 14px;
-    height: 14px;
-    box-shadow: 0 0 6px currentColor;
+    width: 12px;
+    height: 12px;
+    box-shadow: 0 0 4px currentColor;
 }
 
 /* 模式得分 */
@@ -1772,99 +1786,21 @@
     }
 }
 
-
-/* ===== Poster Mode - Larger fonts for presentations ===== */
-.expert-view.poster-mode,
-.expert-view {
-    /* Increase base font sizes for poster/presentation */
-}
-
-.expert-view .expert-title {
-    font-size: 1.4rem;
-}
-
-.expert-view .expert-panel-title {
-    font-size: 1.3rem;
-}
-
-.expert-view .expert-section h4 {
-    font-size: 1.1rem;
-}
-
-.expert-view .scatter-label {
-    font-size: 1rem;
-    width: 28px;
-}
-
-.expert-view .pattern-type-name {
-    font-size: 1.2rem;
-}
-
-.expert-view .pattern-rule {
-    font-size: 0.95rem;
-}
-
-.expert-view .score-label {
-    font-size: 1rem;
-    min-width: 100px;
-}
-
-.expert-view .score-value {
-    font-size: 1rem;
-}
-
-.expert-view .stats-inline {
-    font-size: 1rem;
-}
-
-.expert-view .mode-btn {
-    font-size: 0.95rem;
-    padding: 10px 16px;
-}
-
-.expert-view .param-item label span {
-    font-size: 1rem;
-}
-
-.expert-view .param-safe-range {
-    font-size: 0.9rem;
-}
-
-.expert-view .param-value {
-    font-size: 1rem;
-}
-
-.expert-view .param-btn {
-    font-size: 0.95rem;
-    padding: 10px 18px;
-}
-
-.expert-view .expert-exit-btn,
-.expert-view .refresh-expert-btn {
-    font-size: 1rem;
-    padding: 10px 20px;
-}
-
-/* Increase scatter dot size */
-.expert-view .scatter-dot {
-    width: 14px;
-    height: 14px;
-}
-
-.expert-view .scatter-dot.highlight {
-    width: 16px;
-    height: 16px;
-}
-
-/* Increase score bar height */
-.expert-view .score-bar-bg {
-    height: 12px;
-}
-
 /* Scatter track as line instead of capsule */
-.expert-view .scatter-track {
+.scatter-track {
     height: 2px;
     background: #d1d5db;
     border-radius: 1px;
     overflow: visible;
+}
+
+/* Slightly larger scatter dots */
+.scatter-dot {
+    width: 10px;
+    height: 10px;
+}
+
+.scatter-dot.highlight {
+    width: 12px;
+    height: 12px;
 }

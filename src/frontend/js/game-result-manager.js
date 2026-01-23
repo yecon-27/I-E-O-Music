@@ -719,34 +719,60 @@ class GameResultManager {
     // Get generator params
     const generator = window._lastMusicGenerator || null;
     const rawParams = generator?.lastRawParams || null;
-    const constrainedParams = generator?.lastConstrainedParams || null;
-    const clampLog = constrainedParams?.clampLog || spectroData?.constrained?.clampLog || [];
+    
+    // Determine envelope mode from current config or UI state
+    const envelopeMode = this._detectEnvelopeMode();
+    const bounds = this._getEnvelopeBounds(envelopeMode);
     
     // Determine pattern label from session
     const session = window.game?.getLastSession?.() || null;
     const patternLabel = this._detectPatternLabel(session?.notes || []);
     
-    // Determine envelope mode from current config or UI state
-    const envelopeMode = this._detectEnvelopeMode();
+    // Get raw values
+    const rawTempo = rawParams?.rawBpm ?? spectroData?.unconstrained?.rawParams?.rawBpm ?? 125;
+    const rawGain = rawParams?.rawVolume ?? spectroData?.unconstrained?.rawParams?.rawVolume ?? 0.7;
+    const rawAccentRatio = rawParams?.rawContrast ?? rawParams?.rawAccentRatio ?? 0.1;
     
-    // Get accent ratio (not clamped, same for requested and effective)
-    const accentRatio = this._round2(rawParams?.rawAccentRatio ?? rawParams?.rawContrast ?? spectroData?.unconstrained?.rawParams?.rawAccentRatio);
+    // Calculate constrained values based on current envelope bounds
+    const clampLog = [];
+    
+    // Clamp tempo
+    let effectiveTempo = rawTempo;
+    if (rawTempo < bounds.tempo.min) {
+      effectiveTempo = bounds.tempo.min;
+      clampLog.push({ param: 'tempo', original: rawTempo, clamped: effectiveTempo, rule: 'min_tempo' });
+    } else if (rawTempo > bounds.tempo.max) {
+      effectiveTempo = bounds.tempo.max;
+      clampLog.push({ param: 'tempo', original: rawTempo, clamped: effectiveTempo, rule: 'max_tempo' });
+    }
+    
+    // Convert gain bounds from dB to linear for comparison
+    const rawGainDb = this._toDb(rawGain);
+    let effectiveGainDb = rawGainDb;
+    if (rawGainDb < bounds.gain.min) {
+      effectiveGainDb = bounds.gain.min;
+      clampLog.push({ param: 'gain', original: rawGainDb, clamped: effectiveGainDb, rule: 'min_gain' });
+    } else if (rawGainDb > bounds.gain.max) {
+      effectiveGainDb = bounds.gain.max;
+      clampLog.push({ param: 'gain', original: rawGainDb, clamped: effectiveGainDb, rule: 'max_gain' });
+    }
     
     // Build params.requested (baseline/unconstrained)
     const requested = {
-      tempo: this._round2(rawParams?.rawBpm ?? spectroData?.unconstrained?.rawParams?.rawBpm),
-      "accent ratio": accentRatio,
-      gain: this._round2(this._toDb(rawParams?.rawVolume ?? spectroData?.unconstrained?.rawParams?.rawVolume))
+      tempo: this._round2(rawTempo),
+      "accent ratio": this._round2(rawAccentRatio),
+      gain: this._round2(rawGainDb)
     };
     
-    // Build params.effective (constrained) - accent ratio stays the same
+    // Build params.effective (constrained)
     const effective = {
-      tempo: this._round2(constrainedParams?.safeBpm ?? spectroData?.constrained?.safeParams?.safeBpm ?? requested.tempo),
-      "accent ratio": accentRatio,
-      gain: this._round2(this._toDb(constrainedParams?.safeVolume ?? spectroData?.constrained?.safeParams?.safeVolume ?? rawParams?.rawVolume))
+      tempo: this._round2(effectiveTempo),
+      "accent ratio": this._round2(rawAccentRatio), // accent ratio not clamped
+      gain: this._round2(effectiveGainDb)
     };
     
     // Compute metrics from session if spectroData not available
+    const constrainedParams = { safeBpm: effectiveTempo, safeVolume: Math.pow(10, effectiveGainDb / 20), safeContrast: rawAccentRatio };
     const sessionMetrics = this._computeSessionMetrics(session, rawParams, constrainedParams);
     
     // Metrics with baseline and constrained sub-objects
