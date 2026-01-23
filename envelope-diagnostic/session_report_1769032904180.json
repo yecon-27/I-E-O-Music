@@ -17,19 +17,19 @@
     "metrics": {
       "baseline": {
         "integratedLufs": -28.50,
-        "lraEffective": 1.20,
-        "onsetDensity": 4.10
+        "lraEffective": 4.80,
+        "onsetDensity": 3.28
       },
       "constrained": {
         "integratedLufs": -30.39,
-        "lraEffective": 0.84,
-        "onsetDensity": 3.60
+        "lraEffective": 4.80,
+        "onsetDensity": 3.14
       }
     },
     "enforcementStatus": "clamped",
     "derivation": {
       "clickCount": 42,
-      "sessionDurationSec": 15.3,
+      "sessionDurationSec": 15.30,
       "medianIntervalMs": 600,
       "robustCv": 0.15,
       "hitsPerSec": 2.75,
@@ -52,14 +52,30 @@
       "baseline": {
         "peakDb": -3.21,
         "avgLoudness": -28.50,
-        "loudnessStd": 4.82,
-        "energyChangeRate": 1.45
+        "loudnessStd": 2.96,
+        "energyChangeRate": 0.93
       },
       "constrained": {
         "peakDb": -6.02,
         "avgLoudness": -30.39,
-        "loudnessStd": 2.15,
-        "energyChangeRate": 0.72
+        "loudnessStd": 2.96,
+        "energyChangeRate": 1.12
+      }
+    },
+    "_meta": {
+      "dataSource": "estimated",
+      "computationNotes": {
+        "params.requested.tempo": "Derived from median click interval: 60000 / medianIntervalMs",
+        "params.requested.accent ratio": "Robust CV (MAD/median) of click intervals, capped at 0.4",
+        "params.requested.gain": "Derived from click density (hitsPerSec), mapped to 0.5-1.0 range, then converted to dB",
+        "params.effective.*": "Clamped values after applying envelope bounds",
+        "metrics.*.integratedLufs": "Estimated: -23 + 20*log10(gain)",
+        "metrics.*.lraEffective": "Estimated: 3 + accentRatio * 15",
+        "metrics.*.onsetDensity": "Notes per second, scaled by tempo ratio",
+        "derivation.medianIntervalMs": "Median of click intervals (filtered for < 10s)",
+        "derivation.robustCv": "MAD / median of intervals (robust coefficient of variation)",
+        "derivation.hitsPerSec": "Total clicks / session duration",
+        "enforcementStatus": "pass if no params clamped, clamped otherwise"
       }
     },
     "exportedAt": "2026-01-23T10:15:04.180Z"

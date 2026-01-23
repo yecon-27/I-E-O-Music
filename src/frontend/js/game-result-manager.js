@@ -743,17 +743,20 @@ class GameResultManager {
       gain: this._round2(this._toDb(constrainedParams?.safeVolume ?? spectroData?.constrained?.safeParams?.safeVolume ?? rawParams?.rawVolume))
     };
     
+    // Compute metrics from session if spectroData not available
+    const sessionMetrics = this._computeSessionMetrics(session, rawParams, constrainedParams);
+    
     // Metrics with baseline and constrained sub-objects
     const metrics = {
       baseline: {
-        integratedLufs: this._round2(spectroData?.unconstrained?.metrics?.avgLoudness),
-        lraEffective: this._round2(spectroData?.unconstrained?.lra),
-        onsetDensity: this._round2(spectroData?.unconstrained?.metrics?.onsetDensity)
+        integratedLufs: this._round2(spectroData?.unconstrained?.metrics?.avgLoudness ?? sessionMetrics.baseline.integratedLufs),
+        lraEffective: this._round2(spectroData?.unconstrained?.lra ?? sessionMetrics.baseline.lraEffective),
+        onsetDensity: this._round2(spectroData?.unconstrained?.metrics?.onsetDensity ?? sessionMetrics.baseline.onsetDensity)
       },
       constrained: {
-        integratedLufs: this._round2(spectroData?.constrained?.metrics?.avgLoudness),
-        lraEffective: this._round2(spectroData?.constrained?.lra),
-        onsetDensity: this._round2(spectroData?.constrained?.metrics?.onsetDensity ?? this._computeOnsetDensity(session?.notes))
+        integratedLufs: this._round2(spectroData?.constrained?.metrics?.avgLoudness ?? sessionMetrics.constrained.integratedLufs),
+        lraEffective: this._round2(spectroData?.constrained?.lra ?? sessionMetrics.constrained.lraEffective),
+        onsetDensity: this._round2(spectroData?.constrained?.metrics?.onsetDensity ?? sessionMetrics.constrained.onsetDensity)
       }
     };
     
@@ -780,16 +783,34 @@ class GameResultManager {
     // Full audio analysis metrics
     const audioAnalysis = {
       baseline: {
-        peakDb: this._round2(spectroData?.unconstrained?.metrics?.peakDb),
-        avgLoudness: this._round2(spectroData?.unconstrained?.metrics?.avgLoudness),
-        loudnessStd: this._round2(spectroData?.unconstrained?.metrics?.loudnessStd),
-        energyChangeRate: this._round2(spectroData?.unconstrained?.metrics?.energyChangeRate)
+        peakDb: this._round2(spectroData?.unconstrained?.metrics?.peakDb ?? sessionMetrics.baseline.peakDb),
+        avgLoudness: this._round2(spectroData?.unconstrained?.metrics?.avgLoudness ?? sessionMetrics.baseline.integratedLufs),
+        loudnessStd: this._round2(spectroData?.unconstrained?.metrics?.loudnessStd ?? sessionMetrics.baseline.loudnessStd),
+        energyChangeRate: this._round2(spectroData?.unconstrained?.metrics?.energyChangeRate ?? sessionMetrics.baseline.energyChangeRate)
       },
       constrained: {
-        peakDb: this._round2(spectroData?.constrained?.metrics?.peakDb),
-        avgLoudness: this._round2(spectroData?.constrained?.metrics?.avgLoudness),
-        loudnessStd: this._round2(spectroData?.constrained?.metrics?.loudnessStd),
-        energyChangeRate: this._round2(spectroData?.constrained?.metrics?.energyChangeRate)
+        peakDb: this._round2(spectroData?.constrained?.metrics?.peakDb ?? sessionMetrics.constrained.peakDb),
+        avgLoudness: this._round2(spectroData?.constrained?.metrics?.avgLoudness ?? sessionMetrics.constrained.integratedLufs),
+        loudnessStd: this._round2(spectroData?.constrained?.metrics?.loudnessStd ?? sessionMetrics.constrained.loudnessStd),
+        energyChangeRate: this._round2(spectroData?.constrained?.metrics?.energyChangeRate ?? sessionMetrics.constrained.energyChangeRate)
+      }
+    };
+    
+    // Metadata explaining how values were computed
+    const _meta = {
+      dataSource: spectroData ? 'audio_analysis' : 'estimated',
+      computationNotes: {
+        "params.requested.tempo": "Derived from median click interval: 60000 / medianIntervalMs",
+        "params.requested.accent ratio": "Robust CV (MAD/median) of click intervals, capped at 0.4",
+        "params.requested.gain": "Derived from click density (hitsPerSec), mapped to 0.5-1.0 range, then converted to dB",
+        "params.effective.*": "Clamped values after applying envelope bounds",
+        "metrics.*.integratedLufs": spectroData ? "Computed from rendered audio using ITU-R BS.1770" : "Estimated: -23 + 20*log10(gain)",
+        "metrics.*.lraEffective": spectroData ? "Loudness Range (LRA) per EBU R128" : "Estimated: 3 + accentRatio * 15",
+        "metrics.*.onsetDensity": "Notes per second, scaled by tempo ratio",
+        "derivation.medianIntervalMs": "Median of click intervals (filtered for < 10s)",
+        "derivation.robustCv": "MAD / median of intervals (robust coefficient of variation)",
+        "derivation.hitsPerSec": "Total clicks / session duration",
+        "enforcementStatus": "pass if no params clamped, clamped otherwise"
       }
     };
     
@@ -811,6 +832,7 @@ class GameResultManager {
       })),
       envelopeBounds,
       audioAnalysis,
+      _meta,
       exportedAt: new Date().toISOString()
     }];
     
@@ -823,6 +845,67 @@ class GameResultManager {
     URL.revokeObjectURL(url);
     
     console.log('[GameResult] Session report exported:', traceId);
+  }
+
+  /**
+   * Compute estimated metrics from session data when spectroData is not available
+   */
+  _computeSessionMetrics(session, rawParams, constrainedParams) {
+    const notes = session?.notes || [];
+    const duration = session?.durationSec || 1;
+    
+    // Onset density from notes
+    const onsetDensity = notes.length / duration;
+    
+    // Estimate loudness from gain params
+    const rawGain = rawParams?.rawVolume ?? 0.7;
+    const safeGain = constrainedParams?.safeVolume ?? rawGain;
+    
+    // Convert gain to approximate LUFS (rough estimation)
+    // LUFS typically ranges from -60 to 0, with -23 being broadcast standard
+    const baselineLufs = -23 + (20 * Math.log10(Math.max(rawGain, 0.01)));
+    const constrainedLufs = -23 + (20 * Math.log10(Math.max(safeGain, 0.01)));
+    
+    // Estimate LRA from contrast/accent ratio
+    const rawContrast = rawParams?.rawContrast ?? rawParams?.rawAccentRatio ?? 0.1;
+    const safeContrast = constrainedParams?.safeContrast ?? rawContrast;
+    
+    // LRA typically 3-20 LU, higher contrast = higher LRA
+    const baselineLra = 3 + rawContrast * 15;
+    const constrainedLra = 3 + safeContrast * 15;
+    
+    // Estimate peak dB
+    const baselinePeakDb = -6 + (rawGain - 0.7) * 10;
+    const constrainedPeakDb = -6 + (safeGain - 0.7) * 10;
+    
+    // Estimate loudness std from contrast
+    const baselineLoudnessStd = 2 + rawContrast * 8;
+    const constrainedLoudnessStd = 2 + safeContrast * 8;
+    
+    // Estimate energy change rate from tempo and contrast
+    const rawBpm = rawParams?.rawBpm ?? 125;
+    const safeBpm = constrainedParams?.safeBpm ?? rawBpm;
+    const baselineEnergyRate = (rawBpm / 120) * (1 + rawContrast);
+    const constrainedEnergyRate = (safeBpm / 120) * (1 + safeContrast);
+    
+    return {
+      baseline: {
+        integratedLufs: baselineLufs,
+        lraEffective: baselineLra,
+        onsetDensity: onsetDensity * (rawBpm / 125), // Scale by tempo ratio
+        peakDb: baselinePeakDb,
+        loudnessStd: baselineLoudnessStd,
+        energyChangeRate: baselineEnergyRate
+      },
+      constrained: {
+        integratedLufs: constrainedLufs,
+        lraEffective: constrainedLra,
+        onsetDensity: onsetDensity * (safeBpm / 125),
+        peakDb: constrainedPeakDb,
+        loudnessStd: constrainedLoudnessStd,
+        energyChangeRate: constrainedEnergyRate
+      }
+    };
   }
 
   /**
