@@ -837,6 +837,7 @@ class MusicParamController {
         // Preview button
         const previewBtn = document.getElementById('param-preview-btn');
         const stopBtn = document.getElementById('param-stop-btn');
+        const baselineBtn = document.getElementById('play-baseline-btn');
         
         if (previewBtn) {
             previewBtn.addEventListener('click', () => {
@@ -851,12 +852,64 @@ class MusicParamController {
             });
         }
         
+        // Baseline (unconstrained) button
+        if (baselineBtn) {
+            baselineBtn.addEventListener('click', () => {
+                this.playBaselineMusic();
+            });
+        }
+        
         // Reset button
         const resetBtn = document.getElementById('param-reset-btn');
         if (resetBtn) {
             resetBtn.addEventListener('click', () => {
                 this.resetToDefaults();
             });
+        }
+    }
+    
+    /**
+     * Play baseline (unconstrained) music
+     */
+    async playBaselineMusic() {
+        const baselineBtn = document.getElementById('play-baseline-btn');
+        
+        // Get session data
+        const session = window.game?.getLastSession?.() || { notes: window.NoteLog?.get?.() || [] };
+        if (!session.notes || session.notes.length === 0) {
+            console.warn('[MusicParam] No session data for baseline music');
+            return;
+        }
+        
+        try {
+            if (baselineBtn) {
+                baselineBtn.disabled = true;
+                baselineBtn.textContent = 'Loading...';
+            }
+            
+            // Use createUnconstrainedMusic if available
+            if (window.createUnconstrainedMusic) {
+                const result = window.createUnconstrainedMusic(session);
+                console.log('[MusicParam] Baseline params:', result.rawParams);
+                
+                // Play using Magenta player
+                if (window.mm && result.sequence) {
+                    if (this.player) {
+                        this.player.stop();
+                    }
+                    this.player = new window.mm.Player();
+                    await this.player.start(result.sequence);
+                }
+            } else if (window.gameResultManager?.playUnconstrainedMusic) {
+                await window.gameResultManager.playUnconstrainedMusic();
+            }
+        } catch (err) {
+            console.error('[MusicParam] Baseline playback error:', err);
+        } finally {
+            if (baselineBtn) {
+                baselineBtn.disabled = false;
+                baselineBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg> Baseline`;
+            }
         }
     }
     
