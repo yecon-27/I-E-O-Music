@@ -540,34 +540,34 @@
 }
 
 .scatter-label {
-    width: 20px;
-    font-size: 0.75rem;
+    width: 28px;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-secondary);
 }
 
 .scatter-track {
     flex: 1;
-    height: 16px;
-    background: rgba(0, 0, 0, 0.04);
-    border-radius: 8px;
+    height: 2px;
+    background: #d1d5db;
+    border-radius: 1px;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .scatter-dot {
     position: absolute;
-    width: 8px;
-    height: 8px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     top: 50%;
     transform: translateY(-50%);
 }
 
 .scatter-dot.highlight {
-    width: 10px;
-    height: 10px;
-    box-shadow: 0 0 4px currentColor;
+    width: 14px;
+    height: 14px;
+    box-shadow: 0 0 6px currentColor;
 }
 
 /* 模式得分 */
@@ -1847,13 +1847,13 @@
 
 /* Increase scatter dot size */
 .expert-view .scatter-dot {
-    width: 10px;
-    height: 10px;
+    width: 14px;
+    height: 14px;
 }
 
 .expert-view .scatter-dot.highlight {
-    width: 12px;
-    height: 12px;
+    width: 16px;
+    height: 16px;
 }
 
 /* Increase score bar height */
@@ -1861,7 +1861,10 @@
     height: 12px;
 }
 
-/* Increase scatter track height */
+/* Scatter track as line instead of capsule */
 .expert-view .scatter-track {
-    height: 24px;
+    height: 2px;
+    background: #d1d5db;
+    border-radius: 1px;
+    overflow: visible;
 }

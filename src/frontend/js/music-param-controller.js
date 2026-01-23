@@ -870,6 +870,7 @@ class MusicParamController {
     
     /**
      * Play baseline (unconstrained) music
+     * Uses SoundFont player for better audio quality
      */
     async playBaselineMusic() {
         const baselineBtn = document.getElementById('play-baseline-btn');
@@ -887,22 +888,39 @@ class MusicParamController {
                 baselineBtn.textContent = 'Loading...';
             }
             
-            // Use createUnconstrainedMusic if available
-            if (window.createUnconstrainedMusic) {
-                const result = window.createUnconstrainedMusic(session);
-                console.log('[MusicParam] Baseline params:', result.rawParams);
-                
-                // Play using Magenta player
-                if (window.mm && result.sequence) {
-                    if (this.player) {
-                        this.player.stop();
-                    }
-                    this.player = new window.mm.Player();
-                    await this.player.start(result.sequence);
-                }
-            } else if (window.gameResultManager?.playUnconstrainedMusic) {
-                await window.gameResultManager.playUnconstrainedMusic();
+            // Generate unconstrained music
+            if (!window.createUnconstrainedMusic) {
+                console.error('[MusicParam] createUnconstrainedMusic not available');
+                return;
             }
+            
+            const result = window.createUnconstrainedMusic(session);
+            console.log('[MusicParam] Baseline params:', result.rawParams);
+            
+            if (!result.sequence || !result.sequence.notes?.length) {
+                console.warn('[MusicParam] No notes in baseline sequence');
+                return;
+            }
+            
+            // Stop any current playback
+            this.stopMusic();
+            
+            // Use SoundFont player for better quality (same as Preview)
+            const player = window.MAGENTA?.player || window.gameApp?.MAGENTA?.player;
+            if (player) {
+                await player.start(result.sequence);
+                console.log('[MusicParam] Playing baseline with SoundFont player');
+            } else if (window.mm) {
+                // Fallback: create SoundFont player
+                if (!this.baselinePlayer) {
+                    this.baselinePlayer = new mm.SoundFontPlayer(
+                        'https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus'
+                    );
+                }
+                await this.baselinePlayer.start(result.sequence);
+                console.log('[MusicParam] Playing baseline with new SoundFont player');
+            }
+            
         } catch (err) {
             console.error('[MusicParam] Baseline playback error:', err);
         } finally {
