@@ -42,9 +42,7 @@
     <img src="assets/wkuicon.png" height="25px" style="vertical-align: middle; margin-right: 24px;">
     <sup>1</sup>
     <img src="assets/umnicon.png" height="25px" style="vertical-align: middle;">
-    <sup>2</sup>
-    <img src="assets/GTicon.png" height="25px" style="vertical-align: middle;">
-    <sup>3</sup>
+    <sup>2,3</sup>
     <img src="assets/GTicon.png" height="25px" style="vertical-align: middle;">
   </p>
 
