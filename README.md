@@ -25,7 +25,7 @@
   <a href="https://musi-bubble-tokyo2020-media-pipe-pi.vercel.app/">
     <img src="https://img.shields.io/badge/Prototype-Demo-orange?logo=googlechrome&logoColor=FFCD00">
   </a>
-  <a href="https://srpo.pages.dev/">
+  <a href="https://">
     <img src="https://img.shields.io/badge/Project-Page-orange?logo=googlechrome&logoColor=FFCD00">
   </a>
 </p>
@@ -73,6 +73,9 @@ MusiBubbles is an auditable music reward prototype designed for sensory-sensitiv
 - **Auditable & Configurable**: Conservative defaults with expert-mode adjustments within bounds; all requested and effective values are logged.
 
 ### System Architecture
+<p align="center">
+  <img src="docs/static/images/Flow_page-0001.jpg" alt="Project Page Structure" width="700">
+</p>
 
 ```
 ┌─────────────┐     ┌──────────────────┐     ┌─────────────┐
@@ -85,6 +88,7 @@ MusiBubbles is an auditable music reward prototype designed for sensory-sensitiv
                     │  Audit Log   │
                     └──────────────┘
 ```
+
 
 ### Features
 
@@ -109,21 +113,6 @@ node scripts/build-vercel.js
 ```
 
 Build output is placed in `public/`.
-
-## Deployment
-
-### Vercel
-
-Configuration in `vercel.json`:
-- `installCommand`: `npm ci`
-- `buildCommand`: `node scripts/build-vercel.js`
-- `outputDirectory`: `public`
-
-### Local Network / iPad Access
-
-See scripts:
-- `scripts/start_for_ipad.py`
-- `scripts/start_https_server.py`
 
 ## Project Structure
 
