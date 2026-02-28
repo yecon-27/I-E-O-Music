@@ -25,7 +25,7 @@
   <a href="https://musi-bubble-tokyo2020-media-pipe-pi.vercel.app/">
     <img src="https://img.shields.io/badge/Prototype-Demo-orange?logo=googlechrome&logoColor=FFCD00">
   </a>
-  <a href="https://">
+  <a href="https://yecon-27.github.io/I-E-O-Music/">
     <img src="https://img.shields.io/badge/Project-Page-orange?logo=googlechrome&logoColor=FFCD00">
   </a>
 </p>
