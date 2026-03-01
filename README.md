@@ -72,7 +72,7 @@ MusiBubbles is an auditable music reward prototype designed for sensory-sensitiv
 
 ### System Architecture
 <p align="center">
-  <img src="docs/static/images/Flow_page-0001.jpg" alt="Project Page Structure" width="700">
+  <img src="docs/static/images/Flow_page-0001.jpg" alt="Project Page Structure" width="1000">
 </p>
 
 ```
